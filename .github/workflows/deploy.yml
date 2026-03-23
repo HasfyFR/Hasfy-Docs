@@ -92,7 +92,7 @@ jobs:
             docs=${{ env.IMAGE }}:${{ github.sha }} \
             -n ${{ env.NAMESPACE }}
           kubectl rollout status deployment/${{ env.DEPLOYMENT }} \
-            -n ${{ env.NAMESPACE }} --timeout=120s
+            -n ${{ env.NAMESPACE }} --timeout=300s
 
       - name: Smoke test
         run: |
