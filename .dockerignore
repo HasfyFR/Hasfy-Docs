@@ -1,0 +1,9 @@
+node_modules
+.next
+.git
+.github
+TO_ADD
+.env*
+!.env.local.example
+.DS_Store
+.vscode
