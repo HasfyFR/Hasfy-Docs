@@ -1,0 +1,592 @@
+# Guide de Migration - Elasticsearch sur GCP
+
+Guide complet pour migrer entre les différentes phases architecturales sans perte de données ni downtime.
+
+---
+
+## 🎯 Vue d'ensemble
+
+Ce guide couvre les migrations suivantes :
+
+| Migration | Durée | Downtime | Difficulté |
+|-----------|-------|----------|------------|
+| **Phase 1 → Phase 2** | 2-3h | ❌ Zéro | ⭐⭐ Moyenne |
+| **Phase 2 → Phase 3** | 1-2h | ❌ Zéro | ⭐ Facile |
+| **Rollback Phase 2 → Phase 1** | 1h | ⚠️ 15 min | ⭐⭐⭐ Complexe |
+
+---
+
+## 📋 Migration Phase 1 → Phase 2
+
+### Quand migrer ?
+
+Migrez vers Phase 2 quand vous atteignez :
+- ✅ **>150 agents** Fleet
+- ✅ **>75 GB/jour** d'ingestion
+- ✅ **>400 GB** de données stockées
+- ✅ **Latence queries >2s** persistante
+
+### Prérequis
+
+```bash
+# 1. Vérifier santé cluster actuel
+kubectl get elasticsearch -n elastic-system
+# Status doit être : green
+
+# 2. Vérifier espace disque disponible
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  df -h /usr/share/elasticsearch/data
+
+# 3. Vérifier quotas GCP
+gcloud compute project-info describe --project=$(gcloud config get-value project)
+
+# 4. Créer backup complet
+cd /Users/evanmse/Desktop/Opensearch\ Deploy/providers/gcp/scripts
+./backup.sh full
+```
+
+---
+
+## 🔄 Procédure Migration Phase 1 → Phase 2
+
+### Étape 1 : Snapshot de sécurité (10-20 min)
+
+```bash
+#!/bin/bash
+# Créer un snapshot avant migration
+
+# Récupérer le password
+export ELASTIC_PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user \
+  -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+
+# Port-forward Elasticsearch
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 5
+
+# Créer snapshot
+SNAPSHOT_NAME="pre-migration-phase2-$(date +%Y%m%d-%H%M%S)"
+
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X PUT \
+  "https://localhost:9200/_snapshot/gcs-repo/$SNAPSHOT_NAME?wait_for_completion=false" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "indices": "*",
+    "ignore_unavailable": true,
+    "include_global_state": true,
+    "metadata": {
+      "taken_by": "migration-script",
+      "migration": "phase1-to-phase2"
+    }
+  }'
+
+# Vérifier progression
+watch "curl -sk -u 'elastic:$ELASTIC_PASSWORD' \
+  https://localhost:9200/_snapshot/gcs-repo/$SNAPSHOT_NAME | jq '.snapshots[0].state'"
+
+# Attendre state: SUCCESS
+
+# Arrêter port-forward
+kill $PF_PID
+
+echo "✅ Snapshot créé : $SNAPSHOT_NAME"
+echo "📝 Sauvegarder ce nom pour rollback éventuel"
+echo "$SNAPSHOT_NAME" > .migration-snapshot.txt
+```
+
+### Étape 2 : Désactiver allocations shards (1 min)
+
+```bash
+# Empêcher le rebalancing pendant l'ajout des nœuds
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X PUT \
+  "https://localhost:9200/_cluster/settings" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "persistent": {
+      "cluster.routing.allocation.enable": "primaries",
+      "cluster.routing.rebalance.enable": "none"
+    }
+  }'
+
+echo "✅ Allocations désactivées"
+kill $PF_PID
+```
+
+### Étape 3 : Déployer nouveaux nœuds spécialisés (15-20 min)
+
+Créez le fichier `elasticsearch-phase2.yaml` :
+
+```yaml
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+  namespace: elastic-system
+spec:
+  version: 8.11.0
+  
+  # === NOUVEAUX NODESETS PHASE 2 ===
+  
+  # Nodeset 1: Master nodes (NOUVEAUX)
+  nodeSets:
+  - name: master
+    count: 3
+    config:
+      node.roles: ["master"]
+      node.store.allow_mmap: false
+    podTemplate:
+      metadata:
+        labels:
+          phase: "2"
+          role: "master"
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "4Gi"
+            limits:
+              cpu: "1000m"
+              memory: "4Gi"
+          env:
+          - name: ES_JAVA_OPTS
+            value: "-Xms2g -Xmx2g"
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: premium-rwo
+    podDisruptionBudget:
+      spec:
+        minAvailable: 2
+
+  # Nodeset 2: Data nodes (NOUVEAUX)
+  - name: data
+    count: 2
+    config:
+      node.roles: ["data", "data_content", "data_hot"]
+      node.store.allow_mmap: false
+    podTemplate:
+      metadata:
+        labels:
+          phase: "2"
+          role: "data"
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "12Gi"
+            limits:
+              cpu: "2000m"
+              memory: "12Gi"
+          env:
+          - name: ES_JAVA_OPTS
+            value: "-Xms6g -Xmx6g"
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 200Gi
+        storageClassName: premium-rwo
+    podDisruptionBudget:
+      spec:
+        minAvailable: 1
+
+  # Nodeset 3: Ingest node (NOUVEAU)
+  - name: ingest
+    count: 1
+    config:
+      node.roles: ["ingest"]
+      node.store.allow_mmap: false
+    podTemplate:
+      metadata:
+        labels:
+          phase: "2"
+          role: "ingest"
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "8Gi"
+            limits:
+              cpu: "2000m"
+              memory: "8Gi"
+          env:
+          - name: ES_JAVA_OPTS
+            value: "-Xms4g -Xmx4g"
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 20Gi
+        storageClassName: premium-rwo
+
+  # === ANCIENS NODESETS PHASE 1 (TEMPORAIRES) ===
+  
+  # Nodeset 4: Anciens multi-rôle (GARDER temporairement)
+  - name: default
+    count: 3  # On garde les 3 nœuds existants
+    config:
+      node.roles: ["master", "data", "ingest"]
+      node.store.allow_mmap: false
+    podTemplate:
+      metadata:
+        labels:
+          phase: "1"
+          role: "multi"
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              cpu: "2000m"
+              memory: "8Gi"
+            limits:
+              cpu: "2000m"
+              memory: "8Gi"
+          env:
+          - name: ES_JAVA_OPTS
+            value: "-Xms4g -Xmx4g"
+    volumeClaimTemplates:
+    - metadata:
+        name: elasticsearch-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+        storageClassName: premium-rwo
+
+  http:
+    tls:
+      selfSignedCertificate:
+        disabled: false
+  
+  podDisruptionBudget:
+    spec:
+      minAvailable: 2
+```
+
+Appliquez la configuration :
+
+```bash
+# Appliquer la nouvelle config
+kubectl apply -f elasticsearch-phase2.yaml
+
+echo "⏳ Création des 6 nouveaux pods en cours..."
+echo "📊 Suivez la progression avec : kubectl get pods -n elastic-system -w"
+```
+
+### Étape 4 : Monitoring de la création (15-20 min)
+
+Utilisez le script de monitoring :
+
+```bash
+cd /Users/evanmse/Desktop/Opensearch\ Deploy/providers/gcp/scripts
+./migration-monitor.sh
+```
+
+Ou manuellement :
+
+```bash
+# Surveiller les pods
+watch -n 5 'kubectl get pods -n elastic-system -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch'
+
+# Attendre que tous les nouveaux pods soient Running:
+# - elasticsearch-es-master-0/1/2
+# - elasticsearch-es-data-0/1
+# - elasticsearch-es-ingest-0
+# - elasticsearch-es-default-0/1/2 (anciens)
+
+# Vérifier health cluster (doit rester GREEN)
+watch -n 10 'kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 >/dev/null 2>&1 & \
+  sleep 2 && \
+  curl -sk -u "elastic:$ELASTIC_PASSWORD" https://localhost:9200/_cluster/health | jq .status && \
+  pkill -f "port-forward.*9200"'
+```
+
+### Étape 5 : Réactiver allocations et migrer shards (30-60 min)
+
+```bash
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+# Réactiver l'allocation
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X PUT \
+  "https://localhost:9200/_cluster/settings" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "persistent": {
+      "cluster.routing.allocation.enable": "all",
+      "cluster.routing.rebalance.enable": "all"
+    }
+  }'
+
+# Forcer rebalancing vers nouveaux nœuds
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X POST \
+  "https://localhost:9200/_cluster/reroute?retry_failed=true"
+
+echo "✅ Rebalancing activé"
+kill $PF_PID
+
+# Surveiller la migration des shards
+echo "📊 Surveillance migration shards (peut prendre 30-60 min)..."
+watch -n 10 './migration-monitor.sh shards'
+```
+
+### Étape 6 : Exclure anciens nœuds (30-60 min)
+
+Une fois tous les shards sur les nouveaux nœuds :
+
+```bash
+# Vérifier qu'il n'y a plus de shards relocating
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+RELOCATING=$(curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  https://localhost:9200/_cat/shards | grep RELOCATING | wc -l)
+
+if [ $RELOCATING -eq 0 ]; then
+  echo "✅ Tous les shards sont stabilisés"
+  
+  # Exclure les anciens nœuds default
+  curl -k -u "elastic:$ELASTIC_PASSWORD" -X PUT \
+    "https://localhost:9200/_cluster/settings" \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "persistent": {
+        "cluster.routing.allocation.exclude._name": "elasticsearch-es-default-*"
+      }
+    }'
+  
+  echo "⏳ Vidage des anciens nœuds en cours (30-60 min)..."
+else
+  echo "⚠️  Encore $RELOCATING shards en cours de relocation"
+  echo "Attendre avant d'exclure les anciens nœuds"
+fi
+
+kill $PF_PID
+
+# Surveiller le vidage
+watch -n 10 './migration-monitor.sh allocation'
+```
+
+### Étape 7 : Supprimer anciens nœuds (5 min)
+
+Une fois les anciens nœuds vides :
+
+```bash
+# Vérifier que les nœuds default n'ont plus de shards
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+DEFAULT_SHARDS=$(curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  "https://localhost:9200/_cat/allocation?v" | \
+  grep "elasticsearch-es-default" | \
+  awk '{sum+=$2} END {print sum}')
+
+if [ "$DEFAULT_SHARDS" = "0" ] || [ -z "$DEFAULT_SHARDS" ]; then
+  echo "✅ Anciens nœuds vides, suppression possible"
+  
+  # Éditer elasticsearch-phase2.yaml
+  # Supprimer le nodeset "default" (lignes du nodeset 4)
+  
+  # Ou via kubectl
+  kubectl patch elasticsearch elasticsearch -n elastic-system --type='json' \
+    -p='[{"op": "remove", "path": "/spec/nodeSets/3"}]'
+  
+  echo "✅ Anciens nœuds en cours de suppression..."
+else
+  echo "⚠️  Anciens nœuds ont encore $DEFAULT_SHARDS shards"
+  echo "Attendre qu'ils soient vides"
+fi
+
+kill $PF_PID
+```
+
+### Étape 8 : Vérification finale (5 min)
+
+```bash
+cd /Users/evanmse/Desktop/Opensearch\ Deploy/providers/gcp/scripts
+./health-check.sh
+
+# Vérifications manuelles
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+# 1. Cluster health GREEN
+echo "=== Cluster Health ==="
+curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  https://localhost:9200/_cluster/health?pretty
+
+# 2. Nodes (doit afficher 6 : 3 master + 2 data + 1 ingest)
+echo -e "\n=== Nodes ==="
+curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  https://localhost:9200/_cat/nodes?v
+
+# 3. Tous les shards alloués
+echo -e "\n=== Shards non alloués ==="
+UNASSIGNED=$(curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  https://localhost:9200/_cat/shards | grep UNASSIGNED | wc -l)
+echo "Shards non alloués : $UNASSIGNED (doit être 0)"
+
+# 4. Indices
+echo -e "\n=== Indices ==="
+curl -sk -u "elastic:$ELASTIC_PASSWORD" \
+  https://localhost:9200/_cat/indices?v
+
+kill $PF_PID
+
+echo -e "\n✅ Migration Phase 1 → Phase 2 TERMINÉE"
+```
+
+---
+
+## 🔙 Procédure de Rollback Phase 2 → Phase 1
+
+### Quand faire un rollback ?
+
+- ❌ Migration échoue après 4 heures
+- ❌ Cluster reste RED > 30 minutes
+- ❌ Perte de données détectée
+- ❌ Performance dégradée critique
+
+### ⚠️ Important
+
+**Downtime estimé** : 15-30 minutes  
+**Perte données potentielle** : Données depuis dernier snapshot (max 2h)
+
+### Étape 1 : Arrêt d'urgence (2 min)
+
+```bash
+# 1. Réactiver les anciens nœuds si exclus
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X PUT \
+  "https://localhost:9200/_cluster/settings" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "persistent": {
+      "cluster.routing.allocation.exclude._name": null
+    }
+  }'
+
+kill $PF_PID
+
+# 2. Supprimer les nouveaux nodesets
+kubectl patch elasticsearch elasticsearch -n elastic-system --type='json' \
+  -p='[
+    {"op": "remove", "path": "/spec/nodeSets/0"},
+    {"op": "remove", "path": "/spec/nodeSets/0"},
+    {"op": "remove", "path": "/spec/nodeSets/0"}
+  ]'
+
+echo "⏳ Suppression nouveaux nœuds..."
+sleep 60
+```
+
+### Étape 2 : Restauration snapshot (20-40 min)
+
+```bash
+# Récupérer le nom du snapshot pré-migration
+SNAPSHOT_NAME=$(cat .migration-snapshot.txt)
+
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PF_PID=$!
+sleep 3
+
+# Fermer tous les indices
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X POST \
+  "https://localhost:9200/_all/_close"
+
+# Restaurer snapshot
+curl -k -u "elastic:$ELASTIC_PASSWORD" -X POST \
+  "https://localhost:9200/_snapshot/gcs-repo/$SNAPSHOT_NAME/_restore" \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "indices": "*",
+    "include_global_state": true
+  }'
+
+# Surveiller restauration
+watch "curl -sk -u 'elastic:$ELASTIC_PASSWORD' \
+  https://localhost:9200/_recovery?active_only=true | jq"
+
+kill $PF_PID
+```
+
+### Étape 3 : Vérification (5 min)
+
+```bash
+./health-check.sh
+
+echo "✅ Rollback terminé - Configuration Phase 1 restaurée"
+echo "⚠️  Données perdues : depuis $SNAPSHOT_NAME"
+```
+
+---
+
+## 📊 Migration Phase 2 → Phase 3
+
+### Procédure simplifiée (1-2h)
+
+Phase 2 → Phase 3 est plus simple : juste activer l'auto-scaling
+
+```bash
+# 1. Mettre à jour elasticsearch.yaml
+# Augmenter count et ajouter HPA
+
+kubectl apply -f elasticsearch-phase3.yaml
+
+# 2. Configurer HPA
+kubectl apply -f hpa/
+
+# 3. Vérifier
+kubectl get hpa -n elastic-system
+```
+
+---
+
+## 📋 Timeline complète Migration Phase 1 → 2
+
+| Étape | Durée | Downtime | Critique |
+|-------|-------|----------|----------|
+| 1. Snapshot sécurité | 10-20 min | ❌ Non | ⭐⭐⭐ |
+| 2. Désactiver allocation | 1 min | ❌ Non | ⭐ |
+| 3. Déployer nouveaux nœuds | 15-20 min | ❌ Non | ⭐⭐ |
+| 4. Monitoring création | 15-20 min | ❌ Non | ⭐ |
+| 5. Migration shards | 30-60 min | ❌ Non | ⭐⭐⭐ |
+| 6. Exclure anciens nœuds | 30-60 min | ❌ Non | ⭐⭐ |
+| 7. Supprimer anciens nœuds | 5 min | ❌ Non | ⭐ |
+| 8. Vérification | 5 min | ❌ Non | ⭐ |
+| **TOTAL** | **2-3 heures** | **ZÉRO** | - |
+
+---
+
+**Contact support** : devops@hasfy.fr  
+**Dernière mise à jour** : Décembre 2024

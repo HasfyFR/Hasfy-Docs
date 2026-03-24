@@ -1,0 +1,168 @@
+# 💰 Coûts Infrastructure Elastic Stack sur GCP
+
+> Dernière mise à jour : 26 décembre 2024
+
+## Vue d'ensemble des coûts par phase
+
+| Phase | Environnement | Agents | Ingestion | Coût Mensuel | Coût Annuel |
+|-------|---------------|--------|-----------|--------------|-------------|
+| **Phase 1** 🧪 | Alpha | ~50 | ~25 GB/jour | ~250€ | ~3,000€ |
+| **Phase 2** 🔬 | Beta | ~200 | ~100 GB/jour | ~450€ | ~5,400€ |
+| **Phase 3** 🏭 | Production | ~500+ | ~250 GB/jour | ~750€ | ~9,000€ |
+
+---
+
+## Phase 1 - Alpha (État Actuel)
+
+### Infrastructure Compute
+
+| Ressource | Specs | Quantité | Coût/mois |
+|-----------|-------|----------|-----------|
+| **Elasticsearch** | 0.5-1 vCPU, 4GB RAM | 3 nodes | ~75€ |
+| **Kibana** | 0.2-0.5 vCPU, 1GB RAM | 1 replica | ~12€ |
+| **Fleet Server** | 0.25 vCPU, 512MB RAM | 2 replicas | ~15€ |
+| **GKE Autopilot** | Management fee | 1 cluster | ~72€ |
+| **Sous-total** | | | **~174€** |
+
+### Stockage
+
+| Ressource | Type | Taille | Coût/mois |
+|-----------|------|--------|-----------|
+| **Elasticsearch PVs** | HDD (standard-rwo) | 100 GB × 3 | ~12€ |
+| **Fleet Agent Data** | HDD (standard-rwo) | 10 GB × 2 | ~1€ |
+| **Sous-total** | | | **~13€** |
+
+### Réseau
+
+| Ressource | Quantité | Coût/mois |
+|-----------|----------|-----------|
+| **LoadBalancers** | 3 (ES, Kibana, Fleet) | ~54€ |
+| **Egress** | ~50 GB/mois | ~5€ |
+| **Sous-total** | | **~59€** |
+
+### Total Phase 1
+
+| Catégorie | Coût |
+|-----------|------|
+| Compute | ~174€ |
+| Stockage | ~13€ |
+| Réseau | ~59€ |
+| **TOTAL** | **~246€/mois** |
+
+---
+
+## Phase 2 - Beta
+
+### Infrastructure Compute
+
+| Ressource | Specs | Quantité | Coût/mois |
+|-----------|-------|----------|-----------|
+| **Elasticsearch** | 1.5-2 vCPU, 8GB RAM | 3 nodes | ~150€ |
+| **Kibana** | 0.5-1 vCPU, 2GB RAM | 2 replicas | ~30€ |
+| **Fleet Server** | 0.5-1 vCPU, 2GB RAM | 2 replicas | ~30€ |
+| **GKE Autopilot** | Management fee | 1 cluster | ~72€ |
+| **Sous-total** | | | **~282€** |
+
+### Stockage
+
+| Ressource | Type | Taille | Coût/mois |
+|-----------|------|--------|-----------|
+| **Elasticsearch PVs** | SSD (pd-ssd) | 200 GB × 3 | ~102€ |
+| **Fleet Agent Data** | HDD | 20 GB × 2 | ~2€ |
+| **Sous-total** | | | **~104€** |
+
+### Réseau
+
+| Ressource | Quantité | Coût/mois |
+|-----------|----------|-----------|
+| **LoadBalancers** | 3 | ~54€ |
+| **Egress** | ~150 GB/mois | ~12€ |
+| **Sous-total** | | **~66€** |
+
+### Total Phase 2
+
+| Catégorie | Coût |
+|-----------|------|
+| Compute | ~282€ |
+| Stockage | ~104€ |
+| Réseau | ~66€ |
+| **TOTAL** | **~452€/mois** |
+
+---
+
+## Phase 3 - Production
+
+### Infrastructure Compute
+
+| Ressource | Specs | Quantité | Coût/mois |
+|-----------|-------|----------|-----------|
+| **Elasticsearch** | 3.5-4 vCPU, 16GB RAM | 3 nodes | ~300€ |
+| **Kibana** | 1.5-2 vCPU, 4GB RAM | 2 replicas | ~60€ |
+| **Fleet Server** | 1-2 vCPU, 4GB RAM | 3 replicas | ~90€ |
+| **GKE Autopilot** | Management fee | 1 cluster | ~72€ |
+| **Sous-total** | | | **~522€** |
+
+### Stockage
+
+| Ressource | Type | Taille | Coût/mois |
+|-----------|------|--------|-----------|
+| **Elasticsearch PVs** | SSD (pd-ssd) | 500 GB × 3 | ~255€ |
+| **Fleet Agent Data** | SSD | 50 GB × 3 | ~26€ |
+| **Sous-total** | | | **~281€** |
+
+### Réseau
+
+| Ressource | Quantité | Coût/mois |
+|-----------|----------|-----------|
+| **LoadBalancers** | 3 | ~54€ |
+| **Egress** | ~300 GB/mois | ~25€ |
+| **Sous-total** | | **~79€** |
+
+### Total Phase 3
+
+| Catégorie | Coût |
+|-----------|------|
+| Compute | ~522€ |
+| Stockage | ~281€ |
+| Réseau | ~79€ |
+| **TOTAL** | **~752€/mois** |
+
+---
+
+## 📉 Optimisations Possibles
+
+### Phase 1 (Alpha) - Économies potentielles
+
+| Optimisation | Économie |
+|--------------|----------|
+| Committed Use Discounts (1 an) | -20% |
+| Spot VMs pour dev/test | -60-80% |
+| **Potentiel** | **~50-100€/mois** |
+
+### Général
+
+| Optimisation | Impact |
+|--------------|--------|
+| ILM (Index Lifecycle Management) | Réduction stockage 30-50% |
+| Snapshot vers GCS Nearline | Réduction coût backups 60% |
+| Compression des indices | Réduction stockage 20-30% |
+
+---
+
+## 📊 Comparaison avec Elastic Cloud
+
+| Configuration | GKE (nous) | Elastic Cloud | Différence |
+|---------------|------------|---------------|------------|
+| Phase 1 equiv. | ~250€/mois | ~400€/mois | -37% |
+| Phase 2 equiv. | ~450€/mois | ~800€/mois | -44% |
+| Phase 3 equiv. | ~750€/mois | ~1,500€/mois | -50% |
+
+> **Note** : Elastic Cloud inclut le support et des features managées. Notre solution nécessite une gestion interne.
+
+---
+
+## 🔗 Ressources
+
+- [GCP Pricing Calculator](https://cloud.google.com/products/calculator)
+- [GKE Autopilot Pricing](https://cloud.google.com/kubernetes-engine/pricing#autopilot_mode)
+- [Persistent Disk Pricing](https://cloud.google.com/compute/disks-image-pricing)

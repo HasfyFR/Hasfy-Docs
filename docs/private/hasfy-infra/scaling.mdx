@@ -1,0 +1,607 @@
+# Guide de Scaling - Tous Providers
+
+## 📊 Vue d'ensemble
+
+Ce guide explique comment scaler votre infrastructure Elasticsearch sur tous les providers supportés, avec des configurations pour la production et le développement.
+
+## 🎯 Stratégies de scaling
+
+### 1. Horizontal Pod Autoscaler (HPA)
+
+Tous les providers utilisent HPA pour scaler automatiquement les pods Kibana :
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: kibana-hpa
+  namespace: elastic-system
+spec:
+  scaleTargetRef:
+    apiVersion: kibana.k8s.elastic.co/v1
+    kind: Kibana
+    name: kibana
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+```
+
+**Configuration:**
+- **Seuils**: 70% CPU, 80% RAM
+- **Min replicas**: 2 (prod) / 1 (dev)
+- **Max replicas**: 5 (prod) / 3 (dev)
+
+### 2. Cluster Autoscaler
+
+Chaque provider a son propre mécanisme d'auto-scaling des nodes.
+
+---
+
+## 🔧 Scaling par Provider
+
+### GCP (GKE Autopilot)
+
+#### Auto-scaling natif
+
+GKE Autopilot gère automatiquement le scaling :
+
+- ✅ **Pas de configuration nécessaire**
+- ✅ **Scale automatiquement** selon les besoins
+- ✅ **Pas de nodes à gérer**
+
+#### Scaling manuel
+
+```bash
+# Scale Elasticsearch nodes
+kubectl patch elasticsearch elasticsearch -n elastic-system \
+  --type='json' \
+  -p='[{"op": "replace", "path": "/spec/nodeSets/0/count", "value": 5}]'
+
+# Vérifier le scaling
+kubectl get elasticsearch -n elastic-system
+kubectl get pods -n elastic-system -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch
+```
+
+#### Script de monitoring
+
+```bash
+cd providers/gcp/scripts
+
+# Voir les métriques
+./scale.sh metrics
+
+# Métriques CPU/RAM des nodes
+kubectl top nodes
+
+# Métriques des pods
+kubectl top pods -n elastic-system
+```
+
+---
+
+### AWS (EKS)
+
+#### Cluster Autoscaler
+
+Installation automatique via script :
+
+```bash
+cd providers/aws/scripts
+
+# Installer Cluster Autoscaler
+./scale.sh auto-scale
+```
+
+Configuration :
+- **Scale up** : Quand pods pending > 30s
+- **Scale down** : Quand node sous-utilisé > 10min
+- **Min nodes** : 3 (prod) / 1 (dev)
+- **Max nodes** : 6 (prod) / 3 (dev)
+
+#### Scaling manuel des nodes
+
+```bash
+# Scale up à 5 nodes
+./scale.sh scale-up 5
+
+# Scale down à 3 nodes
+./scale.sh scale-down 3
+
+# Scale Elasticsearch
+./scale.sh scale-es 5
+
+# Voir status
+./scale.sh status
+```
+
+#### Via AWS CLI
+
+```bash
+# Scale node group
+aws eks update-nodegroup-config \
+  --cluster-name elastic-prod \
+  --nodegroup-name elastic-nodes \
+  --region eu-west-3 \
+  --scaling-config minSize=3,maxSize=6,desiredSize=5
+
+# Via eksctl
+eksctl scale nodegroup \
+  --cluster=elastic-prod \
+  --name=elastic-nodes \
+  --region=eu-west-3 \
+  --nodes=5
+```
+
+#### Métriques
+
+```bash
+# Métriques CloudWatch
+aws cloudwatch get-metric-statistics \
+  --namespace AWS/EKS \
+  --metric-name node_cpu_utilization \
+  --dimensions Name=ClusterName,Value=elastic-prod \
+  --start-time 2024-12-09T00:00:00Z \
+  --end-time 2024-12-09T23:59:59Z \
+  --period 3600 \
+  --statistics Average
+
+# Via script
+./scale.sh metrics
+```
+
+---
+
+### Azure (AKS)
+
+#### Auto-scaling natif AKS
+
+Azure AKS a l'auto-scaling intégré :
+
+```bash
+# Activer l'autoscaler
+az aks nodepool update \
+  --resource-group elastic-prod-rg \
+  --cluster-name elastic-prod \
+  --name elastic \
+  --enable-cluster-autoscaler \
+  --min-count 3 \
+  --max-count 6
+```
+
+#### Scaling manuel
+
+```bash
+cd providers/azure/scripts
+
+# Scale nodes
+./scale.sh scale-up 5
+
+# Scale Elasticsearch
+./scale.sh scale-es 5
+
+# Via Azure CLI
+az aks nodepool scale \
+  --resource-group elastic-prod-rg \
+  --cluster-name elastic-prod \
+  --name elastic \
+  --node-count 5
+```
+
+#### Azure Monitor
+
+```bash
+# Voir métriques via Azure CLI
+az monitor metrics list \
+  --resource /subscriptions/{subscription}/resourceGroups/elastic-prod-rg/providers/Microsoft.ContainerService/managedClusters/elastic-prod \
+  --metric "node_cpu_usage_percentage"
+
+# Via script
+./scale.sh metrics
+```
+
+---
+
+### OVH (Managed Kubernetes)
+
+#### Auto-scaling node pool
+
+OVH supporte l'auto-scaling natif :
+
+```bash
+cd providers/ovh/scripts
+
+# Activer autoscaling via API OVH
+# Configuration dans terraform/main.tf :
+resource "ovh_cloud_project_kube_nodepool" "main" {
+  autoscale     = true
+  min_nodes     = 3
+  max_nodes     = 6
+}
+```
+
+#### Scaling manuel
+
+```bash
+# Via script
+./scale.sh scale-up 5
+./scale.sh scale-es 5
+
+# Via API OVH
+curl -X PUT "https://api.ovh.com/1.0/cloud/project/${SERVICE_NAME}/kube/${KUBE_ID}/nodepool/${POOL_ID}" \
+  -H "X-Ovh-Application: ${APP_KEY}" \
+  -d '{"desiredNodes": 5}'
+
+# Via kubectl direct
+kubectl scale --replicas=5 elasticsearch/elasticsearch -n elastic-system
+```
+
+#### Métriques
+
+```bash
+# Métriques Kubernetes
+./scale.sh metrics
+
+# Via kubectl
+kubectl top nodes
+kubectl top pods -n elastic-system
+```
+
+---
+
+### Scaleway (Kapsule)
+
+#### Kapsule Autoscaler
+
+Scaleway Kapsule a un autoscaler intégré optimisé :
+
+```bash
+cd providers/scaleway/scripts
+
+# Configuration dans terraform (déjà activé)
+resource "scaleway_k8s_pool" "main" {
+  autoscaling = true
+  autohealing = true
+  min_size    = 3
+  max_size    = 6
+}
+```
+
+Configuration autoscaler :
+- **Estimator** : binpacking (optimal)
+- **Expander** : most_pods
+- **Scale down delay** : 5 minutes
+- **Autohealing** : Activé
+
+#### Scaling manuel
+
+```bash
+# Via script
+./scale.sh scale-up 5
+./scale.sh scale-es 5
+
+# Via Scaleway CLI
+scw k8s pool update \
+  pool-id=${POOL_ID} \
+  size=5
+
+# Voir status
+scw k8s pool get pool-id=${POOL_ID}
+```
+
+#### Cockpit Monitoring (gratuit)
+
+```bash
+# Accéder au dashboard Cockpit
+# https://console.scaleway.com/cockpit
+
+# Voir métriques via script
+./scale.sh metrics
+```
+
+---
+
+## 📈 Configurations Production vs Development
+
+### Production (500€ budget)
+
+| Provider | Nodes | Instance Type | Auto-scale Min/Max |
+|----------|-------|---------------|-------------------|
+| **GCP** | 3 | e2-standard-4 | Autopilot |
+| **AWS** | 3 | t3.large | 3 / 6 |
+| **Azure** | 3 | D4s_v3 | 3 / 6 |
+| **OVH** | 3 | b2-15 | 3 / 6 |
+| **Scaleway** | 3 | GP1-M | 3 / 6 |
+
+**Elasticsearch:** 3 nodes, 6Gi RAM, 2 CPU each
+
+### Development (300€ budget)
+
+| Provider | Nodes | Instance Type | Auto-scale Min/Max |
+|----------|-------|---------------|-------------------|
+| **GCP** | 2 | e2-standard-2 | Autopilot |
+| **AWS** | 2 | t3.medium (spot) | 1 / 3 |
+| **Azure** | 2 | D2s_v3 | 1 / 3 |
+| **OVH** | 2 | b2-7 | 1 / 3 |
+| **Scaleway** | 2 | DEV1-L | 1 / 3 |
+
+**Elasticsearch:** 1 node, 3Gi RAM, 1 CPU
+
+---
+
+## 🔄 Procédures de Scaling
+
+### Scale Up (augmenter capacité)
+
+```bash
+# 1. Vérifier la charge actuelle
+./scale.sh metrics
+
+# 2. Scale les nodes
+./scale.sh scale-up 5
+
+# 3. Attendre que les nodes soient Ready
+kubectl wait --for=condition=Ready nodes --all --timeout=600s
+
+# 4. Scale Elasticsearch
+./scale.sh scale-es 5
+
+# 5. Vérifier le cluster Elasticsearch
+kubectl get elasticsearch -n elastic-system
+```
+
+### Scale Down (réduire capacité)
+
+```bash
+# 1. Vérifier qu'on peut réduire
+./scale.sh metrics
+
+# 2. Scale Elasticsearch en premier
+./scale.sh scale-es 3
+
+# 3. Attendre que les pods soient terminés
+kubectl wait --for=delete pod -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch -n elastic-system --timeout=600s
+
+# 4. Scale les nodes
+./scale.sh scale-down 3
+```
+
+### Scaling d'urgence
+
+En cas de charge élevée soudaine :
+
+```bash
+# Scale immédiat (tous providers)
+kubectl scale --replicas=10 deployment/kibana -n elastic-system
+./scale.sh scale-up 8
+
+# Surveiller
+watch kubectl get pods -n elastic-system
+```
+
+---
+
+## 📊 Monitoring du Scaling
+
+### Métriques à surveiller
+
+#### CPU Utilization
+```bash
+# Seuil alerte : > 70%
+kubectl top nodes
+kubectl top pods -n elastic-system
+```
+
+#### Memory Utilization
+```bash
+# Seuil alerte : > 80%
+kubectl top nodes
+kubectl top pods -n elastic-system
+```
+
+#### Disk IOPS
+```bash
+# Provider-specific
+# AWS: CloudWatch Metrics
+# GCP: Cloud Monitoring
+# Azure: Azure Monitor
+```
+
+#### Elasticsearch Health
+```bash
+# Cluster health doit être GREEN
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  curl -s -k -u elastic:$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system -o jsonpath='{.data.elastic}' | base64 -d) \
+  https://localhost:9200/_cluster/health
+```
+
+### Alertes recommandées
+
+```yaml
+# Exemple d'alerte (adapter par provider)
+- alert: HighCPUUsage
+  expr: node_cpu_usage > 70
+  for: 5m
+  annotations:
+    summary: "CPU usage above 70%"
+    description: "Consider scaling up"
+
+- alert: HighMemoryUsage
+  expr: node_memory_usage > 80
+  for: 5m
+  annotations:
+    summary: "Memory usage above 80%"
+    description: "Consider scaling up"
+
+- alert: ElasticsearchYellow
+  expr: elasticsearch_cluster_health_status{color="yellow"} == 1
+  for: 10m
+  annotations:
+    summary: "Elasticsearch cluster yellow"
+```
+
+---
+
+## 🎛️ Best Practices
+
+### 1. Scaling progressif
+
+❌ **Ne pas faire** :
+```bash
+# Scale de 3 à 10 d'un coup
+./scale.sh scale-up 10
+```
+
+✅ **Faire** :
+```bash
+# Scale progressivement
+./scale.sh scale-up 5   # Attendre stabilisation
+sleep 300
+./scale.sh scale-up 7   # Scale encore si nécessaire
+```
+
+### 2. Toujours scaler Elasticsearch avant les nodes
+
+```bash
+# ✅ Bon ordre
+./scale.sh scale-es 5
+sleep 60
+./scale.sh scale-up 5
+```
+
+### 3. Surveiller après chaque scaling
+
+```bash
+# Attendre stabilisation
+kubectl wait --for=condition=Ready pod -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch -n elastic-system --timeout=600s
+
+# Vérifier health
+./scale.sh metrics
+```
+
+### 4. Tester en dev d'abord
+
+Avant de scaler en production, tester en dev :
+
+```bash
+# Dev environment
+export ENVIRONMENT=development
+./scale.sh scale-up 3
+# Vérifier comportement
+./scale.sh metrics
+```
+
+---
+
+## 🚨 Troubleshooting Scaling
+
+### Pods en Pending
+
+```bash
+# Vérifier les événements
+kubectl get events -n elastic-system --sort-by='.lastTimestamp'
+
+# Vérifier les nodes
+kubectl describe nodes
+
+# Solution : Scale up nodes
+./scale.sh scale-up 5
+```
+
+### Cluster Elasticsearch Yellow/Red
+
+```bash
+# Vérifier la santé
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  curl -s -k -u elastic:PASSWORD https://localhost:9200/_cat/indices?v
+
+# Réallouer les shards
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  curl -s -k -u elastic:PASSWORD -X POST https://localhost:9200/_cluster/reroute?retry_failed
+```
+
+### Autoscaler ne fonctionne pas
+
+**AWS:**
+```bash
+# Vérifier logs Cluster Autoscaler
+kubectl logs -n kube-system deployment/cluster-autoscaler
+
+# Vérifier IAM permissions
+aws iam get-role-policy --role-name ClusterAutoscalerRole --policy-name ClusterAutoscalerPolicy
+```
+
+**Azure:**
+```bash
+# Vérifier status autoscaler
+az aks show --resource-group elastic-prod-rg --name elastic-prod --query "agentPoolProfiles[].enableAutoScaling"
+```
+
+**GCP:**
+```bash
+# Autopilot scale automatiquement, vérifier quotas
+gcloud compute project-info describe --project=YOUR_PROJECT
+```
+
+---
+
+## 📖 Commandes rapides par provider
+
+### GCP
+```bash
+cd providers/gcp/scripts
+./scale.sh metrics              # Voir métriques
+kubectl patch elasticsearch ... # Scale manuel
+```
+
+### AWS
+```bash
+cd providers/aws/scripts
+./scale.sh scale-up 5           # Scale nodes
+./scale.sh scale-es 5           # Scale Elasticsearch
+./scale.sh auto-scale           # Activer autoscaler
+./scale.sh metrics              # Métriques
+```
+
+### Azure
+```bash
+cd providers/azure/scripts
+./scale.sh scale-up 5
+./scale.sh scale-es 5
+./scale.sh metrics
+```
+
+### OVH
+```bash
+cd providers/ovh/scripts
+./scale.sh scale-up 5
+./scale.sh scale-es 5
+./scale.sh metrics
+```
+
+### Scaleway
+```bash
+cd providers/scaleway/scripts
+./scale.sh scale-up 5
+./scale.sh scale-es 5
+./scale.sh metrics
+```
+
+---
+
+## 🔗 Références
+
+- [Kubernetes HPA](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)
+- [Elasticsearch Scaling Best Practices](https://www.elastic.co/guide/en/elasticsearch/reference/current/scalability.html)
+- Provider-specific docs dans `providers/{provider}/docs/`

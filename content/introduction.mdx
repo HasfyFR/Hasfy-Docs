@@ -1,0 +1,89 @@
+---
+title: Introduction à Hasfy
+description: Découvrez Hasfy, la plateforme française de gestion et supervision de parc informatique pour les équipes IT et MSP.
+---
+
+# Introduction à Hasfy
+
+## Qu'est-ce que Hasfy ?
+
+Hasfy est une **plateforme SaaS française de gestion et supervision de parc informatique** (IT Asset Management & Monitoring). Elle permet aux équipes IT, prestataires de services managés (MSP) et entreprises de centraliser la gestion de l'ensemble de leurs actifs informatiques dans une interface moderne, intuitive et sécurisée.
+
+Accessible depuis **app.hasfy.fr**, Hasfy combine dans un seul outil les fonctions essentielles qui nécessitaient auparavant plusieurs logiciels distincts : inventaire du parc, supervision en temps réel, ticketing, planification des interventions et tableaux de bord analytiques.
+
+## Pourquoi Hasfy ?
+
+### Le problème
+
+La gestion d'un parc informatique implique traditionnellement une multitude d'outils fragmentés : un tableur pour l'inventaire, un logiciel de ticketing séparé, un outil de monitoring distinct, des échanges par email pour les interventions… Cette fragmentation entraîne :
+
+- **Perte de visibilité** : les informations sont dispersées et difficiles à croiser
+- **Temps perdu** : la saisie multiple et la navigation entre outils ralentissent les équipes
+- **Réactivité limitée** : sans monitoring centralisé, les problèmes sont détectés tardivement
+- **Collaboration difficile** : techniciens, administrateurs et clients utilisent des canaux différents
+
+### La solution Hasfy
+
+Hasfy unifie l'ensemble de ces fonctions dans une plateforme unique :
+
+| Besoin | Solution Hasfy |
+|--------|---------------|
+| Inventaire du parc | Module Équipements avec tags, cycle de vie et assignation |
+| Supervision temps réel | Agent Hasfy (basé sur Elastic Agent) installé sur chaque machine |
+| Ticketing | Système de tickets avec priorités, statuts, conversations et SLA |
+| Planification | Calendrier intégré avec fenêtres de maintenance et récurrence |
+| Reporting | Tableau de bord KPIs avec filtres et plages de dates personnalisables |
+| Collaboration | Rôles et permissions, notes internes, notifications en temps réel |
+
+## Fonctionnalités principales
+
+### Gestion des équipements
+Tenez un inventaire complet et à jour de tout votre parc informatique : postes de travail, serveurs, imprimantes, équipements réseau, périphériques mobiles. Chaque équipement dispose d'une fiche détaillée incluant ses caractéristiques matérielles, son historique d'interventions, ses métriques de santé et son statut dans le cycle de vie.
+
+### Supervision par agent
+L'**Agent Hasfy** — un agent léger basé sur Elastic Agent — s'installe sur vos machines Windows, macOS et Linux via un installateur desktop développé avec Tauri. Une fois déployé, l'agent remonte en continu les métriques système (CPU, RAM, disque, réseau, uptime) vers Hasfy, permettant une supervision proactive de votre parc.
+
+### Système de tickets
+Créez des tickets d'assistance depuis l'interface Hasfy ou recevez-les de vos utilisateurs. Chaque ticket peut être assigné à un technicien, priorisé, catégorisé et suivi à travers un workflow complet de résolution. Les conversations intégrées et les notes internes facilitent la collaboration.
+
+### Tableau de bord & KPIs
+Visualisez en un coup d'œil la santé globale de votre parc grâce aux indicateurs clés de performance : nombre d'équipements actifs, taux de résolution des tickets, alertes en cours, métriques de performance système. Les filtres et plages de dates vous permettent d'analyser les tendances.
+
+### Calendrier
+Planifiez vos interventions de maintenance, programmez des fenêtres de maintenance récurrentes et coordonnez votre équipe grâce au calendrier intégré. Chaque événement peut être lié à un ticket ou à un équipement spécifique.
+
+### Notifications intelligentes
+Recevez des alertes en temps réel dans l'application et par email lorsqu'un événement important survient : alerte de monitoring, nouveau ticket, changement de statut, échéance SLA approchante. Configurez vos préférences pour ne recevoir que les notifications pertinentes.
+
+### Intelligence artificielle
+L'assistant IA de Hasfy analyse vos tickets pour suggérer des solutions, catégorise automatiquement les demandes entrantes et identifie les tendances de panne pour une maintenance prédictive.
+
+### Marketplace de techniciens
+Trouvez des techniciens qualifiés dans votre région via la marketplace intégrée, demandez des devis et planifiez des interventions — idéal lorsque votre équipe interne n'est pas disponible ou qu'une expertise spécifique est requise.
+
+## À qui s'adresse Hasfy ?
+
+### Responsables IT d'entreprise
+Vous gérez le parc informatique d'une PME ou d'un grand groupe. Hasfy vous donne une **visibilité complète** sur l'état de vos équipements, automatise le suivi des interventions et fournit les KPIs nécessaires au reporting.
+
+### Prestataires de services managés (MSP)
+Vous gérez les parcs de plusieurs clients. Hasfy vous permet de **centraliser la gestion multi-clients** avec une séparation stricte des données par organisation, tout en offrant à vos clients un portail de suivi des interventions.
+
+### Équipes support et techniciens
+Vous intervenez quotidiennement sur des incidents. Hasfy organise votre charge de travail grâce au **ticketing intelligent**, au calendrier d'interventions et aux informations de diagnostic remontées par l'agent.
+
+### Directions des systèmes d'information (DSI)
+Vous pilotez la stratégie IT. Hasfy fournit les **indicateurs décisionnels** pour optimiser les budgets, anticiper les renouvellements et mesurer la performance du support.
+
+## Architecture de la plateforme
+
+Hasfy repose sur une architecture moderne et performante :
+
+- **Application web** accessible depuis tout navigateur moderne (app.hasfy.fr)
+- **Agent desktop** léger pour la supervision des postes (Windows, macOS, Linux)
+- **API REST** pour l'intégration avec vos outils existants
+- **Infrastructure sécurisée** hébergée en France avec chiffrement des données
+
+## Prochaine étape
+
+Prêt à commencer ? Suivez le guide [Quick Start](/quickstart) pour créer votre compte et ajouter votre premier équipement en quelques minutes.

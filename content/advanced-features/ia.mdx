@@ -1,0 +1,135 @@
+---
+title: Assistant IA
+description: Fonctionnalités d'intelligence artificielle de Hasfy — résolution assistée de tickets, catégorisation automatique, suggestions intelligentes et maintenance prédictive.
+---
+
+# Assistant IA
+
+L'**assistant IA** de Hasfy exploite l'intelligence artificielle pour accélérer la résolution des incidents, automatiser les tâches répétitives et fournir des insights prédictifs sur la santé de votre parc informatique.
+
+> **Disponibilité** : Les fonctionnalités IA sont disponibles sur les plans **Pro** et **Enterprise**. Le plan Starter bénéficie de la catégorisation automatique de base.
+
+## Résolution assistée de tickets
+
+### Comment ça fonctionne
+
+Lorsqu'un ticket est créé, l'assistant IA analyse automatiquement :
+
+1. **Le titre et la description** du ticket pour comprendre le problème
+2. **L'historique des tickets similaires** résolus dans votre organisation
+3. **Les métriques de l'équipement** concerné (si un agent est installé)
+4. **La base de connaissances** accumulée par Hasfy
+
+En quelques secondes, l'IA propose une ou plusieurs **suggestions de résolution** directement dans le fil du ticket.
+
+### Suggestions de résolution
+
+Les suggestions apparaissent dans un encart dédié en haut du ticket, marqué par le badge **« Suggestion IA »**. Chaque suggestion inclut :
+
+- **Diagnostic probable** : l'IA identifie la cause la plus probable du problème
+- **Étapes de résolution** : une procédure détaillée, étape par étape, pour résoudre l'incident
+- **Niveau de confiance** : indicateur de la fiabilité de la suggestion (élevé, moyen, faible)
+- **Tickets similaires** : liens vers des tickets passés qui ont présenté le même problème
+
+### Actions du technicien
+
+Face à une suggestion IA, le technicien peut :
+
+- **Appliquer** : marquer la suggestion comme utile et l'utiliser pour la résolution
+- **Adapter** : modifier la suggestion avant de l'appliquer
+- **Rejeter** : signaler que la suggestion n'est pas pertinente (améliore l'apprentissage)
+- **Ignorer** : ne pas utiliser la suggestion sans feedback
+
+> **Important** : L'IA est un outil d'aide à la décision. Le technicien reste toujours décisionnaire et responsable de la résolution finale.
+
+### Amélioration continue
+
+L'assistant IA s'améliore continuellement grâce aux retours de votre équipe :
+
+- Les suggestions **appliquées** renforcent les modèles pour des cas similaires
+- Les suggestions **rejetées** ajustent les pondérations pour éviter les faux positifs
+- Plus votre organisation utilise Hasfy, plus les suggestions deviennent pertinentes et précises
+
+## Catégorisation automatique
+
+### Classification des tickets entrants
+
+Lorsqu'un ticket est créé (notamment par un utilisateur Employee), l'IA analyse le contenu et propose automatiquement :
+
+- **Catégorie** : Incident, Demande de service, Maintenance
+- **Sous-catégorie** : Matériel, Logiciel, Réseau, Impression, Accès, Autre
+- **Priorité suggérée** : basée sur l'urgence perçue dans le message et l'impact potentiel
+- **Tags automatiques** : mots-clés extraits du contenu du ticket
+
+Ces suggestions sont pré-remplies dans les champs du ticket. Le technicien ou l'administrateur peut les modifier à tout moment.
+
+### Détection de doublons
+
+Avant la création d'un ticket, l'IA vérifie s'il existe des tickets similaires déjà ouverts :
+
+- Si un **doublon potentiel** est détecté, l'utilisateur est prévenu et peut choisir de se rattacher au ticket existant plutôt que d'en créer un nouveau
+- Si des **tickets résolus similaires** existent, une solution est proposée directement à l'utilisateur
+
+## Analyse prédictive
+
+### Maintenance prédictive
+
+En analysant les métriques remontées par les agents sur une période prolongée, l'IA identifie des **tendances de dégradation** :
+
+| Indicateur | Analyse IA | Action recommandée |
+|------------|-----------|-------------------|
+| Disque en remplissage progressif | Prédiction de saturation à J+15 | Nettoyage ou ajout d'espace disque |
+| Augmentation progressive du CPU | Possible dégradation matérielle ou logiciel parasite | Investigation des processus |
+| Fréquence de redémarrages | Nombre anormal de redémarrages détecté | Vérification matérielle (RAM, alimentation) |
+| Déconnexions agent fréquentes | Problème réseau ou instabilité système | Vérification de la connectivité |
+
+Les alertes de maintenance prédictive apparaissent dans le tableau de bord sous la section **« Recommandations IA »** et peuvent générer automatiquement des tickets de maintenance préventive.
+
+### Analyse des tendances de ticketing
+
+L'IA analyse les patterns dans vos tickets pour identifier :
+
+- **Pics récurrents** : jours ou périodes où le volume de tickets augmente
+- **Catégories en hausse** : types de problèmes de plus en plus fréquents
+- **Équipements problématiques** : machines générant un nombre anormal de tickets
+- **Temps de résolution anormaux** : tickets prenant plus de temps que la moyenne
+
+Ces insights sont présentés dans un rapport mensuel accessible depuis **Tableau de bord &gt; Insights IA**.
+
+## Réponses automatiques
+
+### Réponses de premier niveau
+
+Pour les demandes courantes (réinitialisation de mot de passe, guide d'utilisation, FAQ), l'IA peut fournir une **réponse automatique** immédiate à l'utilisateur :
+
+1. L'utilisateur crée un ticket
+2. L'IA identifie une demande courante avec un taux de confiance élevé
+3. Une réponse détaillée est publiée automatiquement dans le ticket
+4. L'utilisateur peut indiquer si la réponse a résolu son problème
+5. Si le problème persiste, le ticket est automatiquement escaladé à un technicien
+
+> **Configuration** : Les réponses automatiques sont désactivées par défaut. Activez-les depuis **Paramètres &gt; IA &gt; Réponses automatiques** et definissez le seuil de confiance minimum (recommandé : 85 %).
+
+## Configuration de l'IA
+
+### Paramètres disponibles
+
+Accédez à **Paramètres &gt; IA** pour configurer :
+
+| Paramètre | Description | Défaut |
+|-----------|-------------|--------|
+| Suggestions de résolution | Activer/désactiver les suggestions sur les tickets | Activé |
+| Catégorisation automatique | Pré-remplir catégorie, priorité et tags | Activé |
+| Détection de doublons | Vérifier les doublons à la création d'un ticket | Activé |
+| Maintenance prédictive | Analyser les tendances de métriques | Activé |
+| Réponses automatiques | Répondre automatiquement aux demandes courantes | Désactivé |
+| Seuil de confiance | Niveau minimum pour afficher une suggestion | 70 % |
+
+### Confidentialité des données
+
+L'IA de Hasfy traite les données **au sein de votre organisation uniquement** :
+
+- Les données d'une organisation ne sont jamais utilisées pour entraîner les modèles d'une autre organisation
+- Les modèles de base sont pré-entraînés sur des données anonymisées du domaine IT
+- L'affinement se fait exclusivement sur vos données organisationnelles
+- Vous pouvez désactiver toutes les fonctionnalités IA à tout moment sans perte de données

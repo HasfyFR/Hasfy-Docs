@@ -1,0 +1,114 @@
+---
+title: Pipeline CI/CD — Hasfy-App
+description: Workflows GitHub Actions, déploiement AWS Amplify, tests automatisés et notifications.
+---
+
+# Pipeline CI/CD
+
+## Architecture globale
+
+```
+Push → GitHub Actions → Build/Test → AWS Amplify → Déploiement → Post-Deploy
+                                                                    ├── Smoke Tests
+                                                                    ├── Discord Notification
+                                                                    └── (Optionnel) E2E / Lighthouse
+```
+
+## Environnements et branches
+
+| Propriété | Dev | Preprod | Production |
+|-----------|-----|---------|------------|
+| **Branches** | `dev`, `feat/*`, `fix/*`, `feature/*`, `hotfix/*` | `main` | `production` |
+| **URL** | `dev.hasfy.fr` | `test.hasfy.fr` | `app.hasfy.fr` |
+| **Trigger** | Push automatique | Push automatique | Push automatique |
+| **Discord** | `DISCORD_WEBHOOK_DEV` | `DISCORD_WEBHOOK_PREPROD` | `DISCORD_WEBHOOK_PROD` |
+| **Smoke Tests** | 4 checks | 4 checks | 4 checks |
+| **Attente Amplify** | 3 min + 10 retries (30s) | 5 min + 15 retries | 5 min + 20 retries |
+
+## Workflows GitHub Actions
+
+### 1. CI Pipeline (`ci.yml`)
+
+Déclenché sur **tout push et toute PR**.
+
+**Étapes :**
+1. **Lint** — ESLint avec config stricte
+2. **Type Check** — `tsc --noEmit`
+3. **Tests unitaires** — Vitest avec couverture
+4. **Build** — `next build` + bundle analysis
+5. **PR Comment** — Rapport automatique (couverture, taille bundle, sécurité, dépendances)
+
+### 2. Deploy Dev (`deploy-dev.yml`)
+
+Déclenché sur push vers `dev`, `feat/*`, `fix/*`.
+
+**Étapes :**
+1. Discord "Deploy Starting"
+2. Attente du build Amplify (3 min + retries)
+3. Smoke Tests (homepage, auth, API, temps de réponse)
+4. Discord rapport complet
+
+### 3. Deploy Preprod (`deploy-preprod.yml`)
+
+Déclenché sur push vers `main`.
+
+**Étapes identiques** au dev avec des timeouts plus longs.
+
+### 4. Deploy Production (`deploy-prod.yml`)
+
+Déclenché sur push vers `production`.
+
+**Étapes :**
+1. Discord "Deploy Starting"
+2. Attente Amplify (seuils plus stricts)
+3. Smoke Tests complets
+4. Discord rapport détaillé
+
+### 5. Post-Deploy (manuel — `workflow_dispatch`)
+
+**Tests E2E Playwright** — Suite complète de tests navigateur :
+- Dashboard, équipements, tickets, auth
+- Multi-navigateur (Chromium, Firefox, WebKit)
+
+**Lighthouse Audit** — Performance, accessibilité, SEO, bonnes pratiques.
+
+## Smoke Tests
+
+4 vérifications automatiques après chaque déploiement :
+
+| Check | Description | Seuil |
+|-------|-------------|-------|
+| **Homepage** | Page d'accueil accessible (HTTP 200) | Obligatoire |
+| **Auth** | Page de login accessible | Obligatoire |
+| **API** | Endpoint health check | Obligatoire |
+| **Response Time** | Temps de réponse acceptable | &lt; 3 secondes |
+
+## AWS Amplify
+
+AWS Amplify gère le hosting et le déploiement automatique :
+
+- **Build** : `pnpm build` (Next.js)
+- **Runtime** : Node.js 18
+- **SSL** : Certificat automatique
+- **CDN** : CloudFront distribution
+- **Branches** : Chaque branche a son propre environnement de preview
+
+## Notifications Discord
+
+Chaque workflow envoie des notifications Discord avec :
+- Statut du déploiement (succès / échec)
+- Lien vers le commit et l'auteur
+- Résultats des smoke tests
+- Temps total de déploiement
+- Liens directs vers l'environnement
+
+## Secrets GitHub
+
+| Secret | Description |
+|--------|-------------|
+| `DISCORD_WEBHOOK_DEV` | Webhook Discord channel dev |
+| `DISCORD_WEBHOOK_PREPROD` | Webhook Discord channel preprod |
+| `DISCORD_WEBHOOK_PROD` | Webhook Discord channel prod |
+| `AWS_ACCESS_KEY_ID` | Clé AWS pour Amplify API |
+| `AWS_SECRET_ACCESS_KEY` | Secret AWS |
+| `AMPLIFY_APP_ID` | ID application Amplify |

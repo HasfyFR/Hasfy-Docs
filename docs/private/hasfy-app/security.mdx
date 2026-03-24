@@ -1,0 +1,159 @@
+---
+title: Sécurité — Hasfy-App
+description: Modèle de sécurité, authentification, autorisation, RLS, audit et gestion des clés API.
+---
+
+# Sécurité
+
+## Modèle de sécurité
+
+La sécurité de Hasfy repose sur le principe de **défense en profondeur** avec plusieurs couches :
+
+1. **Authentification** — Supabase Auth (JWT, sessions)
+2. **Autorisation** — RBAC (rôles) + RLS (row-level)
+3. **Isolation** — Données cloisonnées par organisation
+4. **Audit** — Journalisation de toutes les actions
+5. **Chiffrement** — TLS en transit, AES-256 au repos
+
+## Authentification Supabase
+
+### Méthodes supportées
+
+| Méthode | Description |
+|---------|-------------|
+| **Email/Password** | Authentification classique |
+| **Magic Link** | Lien de connexion par email |
+| **OAuth** | Fournisseurs externes (si configurés) |
+
+### Flow d'authentification
+
+1. L'utilisateur se connecte via Supabase Auth
+2. Un JWT est généré et stocké dans un cookie HTTP-only
+3. Le middleware Next.js vérifie le JWT sur chaque requête
+4. Le `user_id` du JWT est utilisé pour les requêtes RLS
+
+### Tokens
+
+- **Access Token** : JWT courte durée (1h par défaut)
+- **Refresh Token** : Longue durée, rotation automatique
+- **Stockage** : Cookies HTTP-only, SameSite=Lax, Secure
+
+## Système de rôles (RBAC)
+
+### Hiérarchie des rôles
+
+| Rôle | Équipements | Tickets | Utilisateurs | Billing | Admin |
+|------|-------------|---------|-------------|---------|-------|
+| **Owner** | CRUD | CRUD | CRUD + Delete | Oui | Oui |
+| **Admin** | CRUD | CRUD | CRUD (sauf delete) | Lecture | Oui |
+| **Technician** | Lecture + Modifier | CRUD | Lecture | Non | Non |
+| **Employee** | Lecture (les siens) | Créer + Voir | Non | Non | Non |
+
+### Vérification des rôles
+
+La vérification se fait **toujours côté serveur** :
+
+```typescript
+// Dans une route API privée
+const { data: membership } = await supabase
+  .from('organization_users')
+  .select('role')
+  .eq('user_id', user.id)
+  .eq('organization_id', orgId)
+  .single();
+
+if (!['owner', 'admin'].includes(membership.role)) {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+}
+```
+
+## Row Level Security (RLS)
+
+**Toutes les tables** ont RLS activé. C'est la deuxième ligne de défense après l'API middleware.
+
+### Principes
+
+- Un utilisateur ne voit **que les données de son organisation**
+- Les policies vérifient `organization_id` via `organization_users`
+- Les mutations vérifient le **rôle** en plus de l'appartenance
+
+### Exemples de policies
+
+```sql
+-- Lecture : membre de l'organisation
+CREATE POLICY "org_read" ON equipments FOR SELECT
+  USING (organization_id IN (
+    SELECT organization_id FROM organization_users WHERE user_id = auth.uid()
+  ));
+
+-- Écriture : admin ou technicien
+CREATE POLICY "org_write" ON equipments FOR INSERT
+  WITH CHECK (organization_id IN (
+    SELECT organization_id FROM organization_users
+    WHERE user_id = auth.uid() AND role IN ('owner', 'admin', 'technician')
+  ));
+```
+
+## Gestion des clés API
+
+### Cycle de vie
+
+1. **Création** : L'admin génère une clé via l'interface
+2. **Affichage unique** : La clé complète n'est montrée qu'une seule fois
+3. **Stockage** : Hashée en base (SHA-256), seul le préfixe est visible
+4. **Utilisation** : Header `x-api-key` sur les routes `/api/v1/*`
+5. **Révocation** : Désactivation immédiate, l'impact est instantané
+
+### Format
+
+Les clés suivent le format `hfk_{random_32_chars}` :
+- Préfixe `hfk_` pour identification
+- 32 caractères aléatoires cryptographiquement sûrs
+- Le préfixe (8 premiers caractères) est stocké en clair pour identification
+
+## Audit
+
+### Journal d'audit
+
+Toutes les actions sensibles sont enregistrées dans `audit_logs` :
+
+- Création, modification, suppression de ressources
+- Changements de rôles
+- Connexions et déconnexions
+- Génération et révocation de clés API
+- Changements d'abonnement
+
+### Données enregistrées
+
+| Champ | Description |
+|-------|-------------|
+| `user_id` | Qui a effectué l'action |
+| `action` | Type (create, update, delete, login, etc.) |
+| `resource_type` | Table/resource concernée |
+| `resource_id` | ID de l'objet |
+| `details` | Diff avant/après (jsonb) |
+| `ip_address` | Adresse IP du client |
+| `user_agent` | Navigateur/client |
+
+## Tokens d'installation Agent
+
+Les tokens d'installation sont **single-use** et à durée limitée :
+
+- **Durée de vie** : 30 minutes
+- **Usage unique** : Marqué comme utilisé après échange
+- **Révocable** : L'admin peut révoquer un token non utilisé
+- **Contenu** : Pas de données sensibles, sert uniquement de référence
+
+Le flow complet :
+1. Admin génère un token dans l'interface
+2. Token envoyé au desktop installer (copié ou QR code)
+3. Installer échange le token contre les Fleet credentials
+4. Token marqué comme utilisé, ne peut plus être réutilisé
+
+## Recommandations de déploiement
+
+- **Variables d'environnement** : Ne jamais committer les secrets dans le code
+- **`SUPABASE_SERVICE_ROLE_KEY`** : Uniquement côté serveur, jamais dans le bundle client
+- **CORS** : Restreindre aux domaines `*.hasfy.fr`
+- **CSP** : Content Security Policy configurée dans Next.js
+- **Headers de sécurité** : HSTS, X-Content-Type-Options, X-Frame-Options

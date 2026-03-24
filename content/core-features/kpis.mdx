@@ -1,0 +1,152 @@
+---
+title: Tableau de bord & KPIs
+description: Visualisez la santé de votre parc informatique, suivez les indicateurs clés de performance et analysez les tendances avec le tableau de bord Hasfy.
+---
+
+# Tableau de bord & KPIs
+
+Le module **Tableau de bord** de Hasfy offre une vision synthétique et en temps réel de l'état de votre parc informatique. Les indicateurs clés de performance (KPIs) vous permettent de piloter votre activité IT, d'identifier les tendances et de prendre des décisions éclairées.
+
+## Cartes de synthèse
+
+En haut du tableau de bord, quatre cartes de synthèse affichent les métriques essentielles :
+
+| Carte | Contenu | Détail |
+|-------|---------|--------|
+| **Équipements** | Nombre total d'équipements actifs | Répartition par statut (actif, maintenance, retiré) |
+| **Agents connectés** | Nombre de machines supervisées en ligne | Pourcentage de couverture agent |
+| **Tickets ouverts** | Nombre de tickets en cours de traitement | Répartition par priorité |
+| **Alertes actives** | Nombre d'alertes de monitoring non résolues | Criticité (avertissement vs critique) |
+
+Chaque carte affiche également la **tendance** par rapport à la période précédente (flèche hausse/baisse avec pourcentage).
+
+## Indicateurs de santé du parc
+
+### Score de santé global
+
+Un indicateur visuel circulaire affiche le **score de santé global** du parc sur une échelle de 0 à 100 :
+
+- **90-100** 🟢 : Parc en excellent état
+- **70-89** 🟡 : Quelques points d'attention
+- **50-69** 🟠 : Interventions recommandées
+- **0-49** 🔴 : Situation critique nécessitant une action immédiate
+
+Ce score est calculé à partir de :
+- État de connexion des agents
+- Métriques système (CPU, RAM, disque)
+- Nombre d'alertes actives
+- Taux de résolution des tickets
+
+### Répartition de la santé
+
+Un graphique en barres horizontales montre la répartition des équipements par état de santé :
+
+- **Normal** : métriques dans les seuils acceptables, aucune alerte
+- **Avertissement** : au moins une métrique dépasse le seuil d'avertissement (ex. disque à 80 %)
+- **Critique** : au moins une métrique dépasse le seuil critique (ex. disque à 95 %, agent déconnecté)
+
+## Métriques de monitoring
+
+### Utilisation moyenne des ressources
+
+Des graphiques linéaires affichent l'évolution des métriques moyennes de votre parc :
+
+- **CPU moyen** : utilisation moyenne du processeur sur l'ensemble des machines supervisées
+- **RAM moyenne** : occupation mémoire moyenne
+- **Disque moyen** : taux d'occupation disque moyen
+
+Chaque graphique est interactif :
+- **Survol** : affichez la valeur exacte à un instant donné
+- **Zoom** : sélectionnez une zone pour zoomer sur une période
+- **Période** : basculez entre 24 h, 7 jours, 30 jours, 90 jours
+
+### Top équipements consommateurs
+
+Un classement affiche les 10 équipements les plus sollicités :
+- **Top CPU** : machines avec le plus haut taux d'utilisation CPU
+- **Top RAM** : machines utilisant le plus de mémoire
+- **Top Disque** : machines avec le moins d'espace disque disponible
+
+Ce classement permet d'identifier rapidement les machines nécessitant une attention particulière (surcharge, besoin d'upgrade, processus anormal).
+
+## Indicateurs de ticketing
+
+### Métriques de résolution
+
+| KPI | Description | Période |
+|-----|-------------|---------|
+| **Tickets créés** | Nombre de tickets ouverts sur la période | Configurable |
+| **Tickets résolus** | Nombre de tickets passés en « Résolu » | Configurable |
+| **Temps moyen de première réponse** | Délai moyen entre la création et la première réponse technique | 30 jours glissants |
+| **Temps moyen de résolution** | Délai moyen entre la création et la résolution | 30 jours glissants |
+| **Taux de respect SLA** | Pourcentage de tickets résolus dans les délais SLA | 30 jours glissants |
+| **Taux de réouverture** | Pourcentage de tickets réouverts après résolution | 30 jours glissants |
+
+### Graphique d'évolution
+
+Un graphique à double axe affiche :
+- **Barres** : tickets créés vs tickets résolus par jour/semaine/mois
+- **Ligne** : temps moyen de résolution
+
+Ce graphique permet d'identifier les périodes de forte charge et de mesurer la capacité de votre équipe à absorber la demande.
+
+### Répartition des tickets
+
+Deux graphiques camembert montrent :
+- **Par catégorie** : Incidents, Demandes, Maintenance
+- **Par priorité** : Urgente, Haute, Normale, Basse
+
+## Filtres et personnalisation
+
+### Filtres globaux
+
+Appliquez des filtres pour ajuster tous les widgets simultanément :
+
+- **Plage de dates** : sélectionnez une période personnalisée ou un preset (aujourd'hui, 7 jours, 30 jours, 90 jours, 12 mois, personnalisé)
+- **Équipements** : filtrez par type d'équipement, tag ou groupe
+- **Technicien** : affichez les métriques d'un technicien spécifique
+- **Comparaison** : activez le mode comparaison pour superposer les données de deux périodes
+
+### Personnalisation des widgets
+
+Chaque widget du tableau de bord peut être :
+
+1. **Redimensionné** : tirez les bords pour ajuster la taille
+2. **Déplacé** : glissez-déposez pour réorganiser l'agencement
+3. **Configuré** : cliquez sur l'icône ⚙️ pour ajuster les paramètres spécifiques (seuils, métriques affichées, type de graphique)
+4. **Masqué** : cliquez sur ✕ pour retirer un widget de votre vue
+5. **Ajouté** : ouvrez le panneau « Widgets » pour ajouter des indicateurs supplémentaires
+
+> **Note** : La disposition du tableau de bord est sauvegardée par utilisateur. Chaque membre de l'équipe peut personnaliser son propre affichage sans affecter les autres.
+
+## Export et rapports
+
+### Export rapide
+
+Depuis le tableau de bord, cliquez sur **« Exporter »** pour télécharger un rapport :
+
+- **Format PDF** : rapport formaté avec graphiques, prêt à être partagé ou imprimé
+- **Format CSV** : données brutes pour analyse dans un tableur
+
+### Rapport périodique automatique
+
+Configurez un envoi automatique de rapports :
+
+1. Accédez à **Paramètres &gt; Rapports**
+2. Activez les **rapports automatiques**
+3. Configurez :
+   - **Fréquence** : hebdomadaire (chaque lundi) ou mensuel (le 1er du mois)
+   - **Destinataires** : adresses email des personnes devant recevoir le rapport
+   - **Contenu** : sélectionnez les sections à inclure
+4. Le rapport est envoyé automatiquement par email au format PDF
+
+## Alertes basées sur les KPIs
+
+Définissez des alertes automatiques liées aux seuils de vos indicateurs :
+
+- **Taux de résolution SLA** : alerte si le taux descend sous un seuil défini (ex. &lt; 80 %)
+- **Tickets non assignés** : alerte si le nombre de tickets sans technicien dépasse un seuil
+- **Santé du parc** : alerte si le score global passe sous un seuil critique
+- **Espace disque** : alerte si le disque moyen dépasse un seuil d'occupation
+
+Ces alertes sont configurables dans **Paramètres &gt; Alertes &gt; KPIs**.

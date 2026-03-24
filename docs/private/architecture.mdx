@@ -1,0 +1,35 @@
+---
+title: Architecture technique
+description: Architecture interne de la plateforme Hasfy
+order: 2
+tags: [architecture, technique, interne]
+---
+
+# Architecture technique
+
+## Vue d'ensemble
+
+Hasfy est une plateforme SaaS de gestion de maintenance construite sur une architecture moderne.
+
+### Stack principale
+
+- **Frontend** : Next.js 15 (App Router) + React 19
+- **Backend** : Supabase (PostgreSQL + Auth + Storage)
+- **Infrastructure** : GCP GKE Autopilot (Elasticsearch + Fleet)
+- **Documentation** : Nextra 4 + MDX
+
+### Base de données
+
+Le schéma Supabase comprend :
+- `profiles` : profils utilisateurs avec rôles
+- `categories` : catégories de documentation
+- `docs` : documents avec metadata et versioning
+- `doc_versions` : historique des versions
+- `audit_logs` : journal d'audit
+
+### Sécurité
+
+- Row Level Security (RLS) sur toutes les tables
+- Middleware de protection des routes
+- Rôles : admin, editor, reader
+- Authentification : email/password + magic link

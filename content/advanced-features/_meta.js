@@ -1,6 +1,6 @@
 const meta = {
-  'ia': 'AI Assistant',
-  'technician-marketplace': 'Technician Marketplace',
+  'ia': 'Assistant IA',
+  'technician-marketplace': 'Marketplace technicien',
 }
 
 export default meta;

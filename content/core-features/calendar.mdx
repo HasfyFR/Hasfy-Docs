@@ -1,0 +1,155 @@
+---
+title: Calendrier
+description: Planifiez vos interventions, maintenances et événements IT avec le calendrier intégré de Hasfy.
+---
+
+# Calendrier
+
+Le module **Calendrier** de Hasfy centralise la planification de toutes les activités liées à la gestion de votre parc informatique : interventions de maintenance, rendez-vous techniques, fenêtres de maintenance planifiées et rappels.
+
+## Vues du calendrier
+
+Le calendrier propose plusieurs modes d'affichage, accessibles via les boutons en haut à droite :
+
+| Vue | Description | Usage recommandé |
+|-----|-------------|-----------------|
+| **Mois** | Vue mensuelle classique avec aperçu des événements par jour | Vue d'ensemble de la charge mensuelle |
+| **Semaine** | Vue détaillée sur 7 jours avec créneaux horaires | Planification fine des interventions |
+| **Jour** | Vue heure par heure d'une journée | Suivi précis lors des journées chargées |
+| **Liste** | Liste chronologique des événements à venir | Impression et export |
+
+### Navigation
+
+- **Aujourd'hui** : cliquez sur le bouton « Aujourd'hui » pour revenir à la date courante
+- **Navigation** : utilisez les flèches ◀ ▶ pour naviguer entre les périodes
+- **Sélection rapide** : cliquez sur une date dans le mini-calendrier latéral pour y accéder directement
+
+## Types d'événements
+
+### Intervention planifiée
+
+Une intervention technique programmée à l'avance :
+
+- Liée à un **ticket** existant et/ou à un **équipement** spécifique
+- Assignée à un **technicien** qui recevra un rappel avant l'intervention
+- Durée estimée configurable
+- Peut être récurrente
+
+### Fenêtre de maintenance
+
+Une plage horaire définie pour effectuer des opérations de maintenance :
+
+- Période pendant laquelle des interruptions de service sont possibles
+- Affichée de manière distincte (barre colorée) sur le calendrier
+- Les alertes de monitoring peuvent être mises en sourdine pendant ces fenêtres
+- Notification automatique aux utilisateurs concernés
+
+### Rappel
+
+Un événement simple de type mémo :
+
+- Date d'expiration de garantie
+- Échéance de renouvellement de licence
+- Vérification périodique à effectuer
+- Tout autre rappel lié à la gestion du parc
+
+### Événement lié à un ticket
+
+Lorsqu'un ticket nécessite une intervention programmée, un événement est automatiquement créé dans le calendrier avec un lien bidirectionnel : depuis le ticket vers l'événement et inversement.
+
+## Créer un événement
+
+1. **Méthode rapide** : cliquez directement sur un créneau horaire dans le calendrier
+2. **Méthode complète** : cliquez sur **« + Nouvel événement »** en haut à droite
+
+### Formulaire de création
+
+- **Titre** *(obligatoire)* : description courte de l'événement (ex. « Maintenance serveur prod », « Remplacement poste PC-042 »)
+- **Type** : Intervention, Fenêtre de maintenance, Rappel
+- **Date et heure de début** *(obligatoire)*
+- **Date et heure de fin** *(obligatoire)*
+- **Journée entière** : cochez pour un événement sans heure précise
+- **Description** : détails complémentaires, instructions, procédure à suivre
+- **Technicien assigné** : sélectionnez le technicien responsable
+- **Équipement concerné** : liez l'événement à un équipement
+- **Ticket associé** : liez l'événement à un ticket existant
+- **Couleur** : choisissez une couleur pour identifier visuellement le type d'événement
+- **Rappel** : configurez un rappel (15 min, 30 min, 1h, 1 jour avant)
+
+### Événements récurrents
+
+Pour les maintenances régulières, configurez la récurrence :
+
+1. Lors de la création d'un événement, activez **« Récurrence »**
+2. Choisissez la fréquence :
+   - **Quotidienne** : chaque jour ou tous les X jours
+   - **Hebdomadaire** : choisissez les jours de la semaine (ex. tous les mardis et jeudis)
+   - **Mensuelle** : un jour spécifique du mois (ex. le 1er de chaque mois) ou un jour relatif (ex. le 2ᵉ lundi)
+   - **Personnalisée** : intervalle sur mesure
+3. Définissez la **fin de récurrence** :
+   - Jamais (se répète indéfiniment)
+   - Après X occurrences
+   - À une date précise
+
+> **Astuce** : Les événements récurrents sont particulièrement utiles pour les maintenances préventives planifiées (vérification des sauvegardes chaque lundi, redémarrage serveur mensuel, etc.).
+
+## Modifier et supprimer un événement
+
+### Modification
+
+1. Cliquez sur l'événement dans le calendrier
+2. Modifiez les champs souhaités dans le panneau qui s'ouvre
+3. Cliquez sur **« Enregistrer »**
+
+Pour un événement récurrent, Hasfy vous demande si la modification s'applique à :
+- **Cet événement uniquement**
+- **Cet événement et les suivants**
+- **Tous les événements de la série**
+
+### Glisser-déposer
+
+Pour reprogrammer rapidement un événement :
+- **Déplacer** : glissez l'événement vers un autre créneau
+- **Redimensionner** : tirez le bord inférieur de l'événement pour modifier sa durée
+
+### Suppression
+
+1. Cliquez sur l'événement
+2. Cliquez sur **« Supprimer »**
+3. Pour un événement récurrent, choisissez de supprimer uniquement l'occurrence ou toute la série
+
+## Filtrage et affichage
+
+### Filtres
+
+Utilisez le panneau de filtres latéral pour personnaliser l'affichage :
+
+- **Par type** : Intervention, Fenêtre de maintenance, Rappel
+- **Par technicien** : affichez les événements d'un technicien spécifique
+- **Par équipement** : événements liés à un équipement donné
+- **Par couleur/catégorie** : filtrez par code couleur
+
+### Calendriers superposés
+
+Si votre organisation compte plusieurs techniciens, vous pouvez superposer leurs calendriers pour visualiser la disponibilité de l'équipe et éviter les conflits de planification. Chaque technicien est identifié par une couleur distincte.
+
+## Notifications du calendrier
+
+Le calendrier génère des notifications automatiques :
+
+| Événement | Notification | Destinataire |
+|-----------|-------------|-------------|
+| Rappel avant intervention | In-app + email (selon préférences) | Technicien assigné |
+| Fenêtre de maintenance imminente | In-app | Tous les membres de l'organisation |
+| Événement modifié | In-app | Participants concernés |
+| Événement annulé | In-app + email | Participants concernés |
+| Conflit de planification | In-app | Administrateur |
+
+## Intégration avec les autres modules
+
+Le calendrier s'intègre naturellement avec les autres fonctionnalités de Hasfy :
+
+- **Tickets** : les interventions planifiées depuis un ticket apparaissent dans le calendrier
+- **Équipements** : les fenêtres de maintenance liées à un équipement sont visibles sur sa fiche
+- **Notifications** : les rappels du calendrier génèrent des notifications configurables
+- **KPIs** : le nombre d'interventions planifiées et réalisées alimente les indicateurs de performance

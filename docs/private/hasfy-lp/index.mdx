@@ -1,0 +1,134 @@
+---
+title: Hasfy-LP-V2 — Landing Page
+description: Documentation technique de la landing page Hasfy, composants, SEO et déploiement.
+---
+
+# Hasfy-LP-V2 — Landing Page
+
+## Présentation
+
+Hasfy-LP-V2 est le site vitrine de Hasfy, accessible sur `https://hasfy.fr`. C'est une application Next.js avec internationalisation (FR/EN), animations Framer Motion et un design orienté conversion.
+
+**Repo :** `github.com/HasfyFR/Hasfy-LP-V2`
+**URL Production :** `https://hasfy.fr`
+**Déploiement :** Vercel
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| **Framework** | Next.js (App Router) |
+| **Internationalisation** | `next-intl` (FR/EN) |
+| **UI** | Tailwind CSS, shadcn/ui, Radix |
+| **Animations** | Framer Motion |
+| **Calendrier démo** | Cal.com Embed |
+| **Fonts** | League Spartan, Geist |
+| **Déploiement** | Vercel |
+| **SEO** | Schema.org (JSON-LD), sitemap, alternates hreflang |
+
+## Structure des routes
+
+```
+app/[locale]/
+├── page.tsx              # Page d'accueil (Hero, Benefits, HowItWorks, Features, Demo, FAQ)
+├── layout.tsx            # Layout avec JSON-LD, metadata dynamique
+├── features/             # Page fonctionnalités (carousel, hero, benefits)
+├── pricing/              # Tarification (plans, comparaison, feature categories)
+├── demo/                 # Réservation démo (Cal.com embed)
+├── roi-calculator/       # Calculateur de ROI interactif
+├── security/             # Page sécurité et données
+├── privacy-policy/       # Politique de confidentialité
+└── terms-of-services/    # Conditions générales
+```
+
+## Composants principaux
+
+### Sections (page d'accueil)
+
+| Composant | Description |
+|-----------|-------------|
+| `Hero` | Hero section avec badge, titre, CTA |
+| `Benefits` | Grille de bénéfices (GlassCard) |
+| `HowItWorks` | 3 étapes illustrées |
+| `Features` | Bento grid avec animations |
+| `Demo` | Section Cal.com embed |
+| `FAQ` | Accordéon FAQ |
+| `LastCTA` | Call-to-action final (FlickeringGrid) |
+| `ContactFooter` | Footer avec liens sociaux |
+
+### Features Grid (Bento)
+
+Composants avancés pour la grille de fonctionnalités :
+- `BentoGrid` + `BentoCard` — Layout grille responsive
+- `AnimatedListDemo` — Liste de notifications animée
+- `AnimatedBeamDemo` — Faisceau animé (connexion appareils)
+- `UserTreeDemo` — Arborescence organisationnelle
+- `OrbitingCirclesDemo` — Cercles orbitaux (intégrations)
+
+### Features Page
+
+- `FeaturesHero` — Hero avec beams animés (Monitor, Ticket, IA, Search, Calendar, Security)
+- `FeaturesCarousel` — Carousel interactif des fonctionnalités avec images
+- `FeaturesBenefits` — Alternance gauche/droite des bénéfices
+
+### Header
+
+Navigation desktop et mobile avec :
+- Menu produits (dropdowns avec animations)
+- Menu ressources (documentation, support)
+- Gestion du variant (default/white) selon la page
+- Responsive avec menu hamburger
+
+## Tarification
+
+3 plans affichés sur la page pricing :
+
+| Plan | Prix | Cible |
+|------|------|-------|
+| **Starter** | 5€/user/mois | Petites équipes |
+| **Pro** | Variable | Entreprises en croissance |
+| **Enterprise** | Sur devis | Grandes organisations |
+
+La comparaison détaillée affiche 7 catégories de features avec un carousel automatique.
+
+## Calculateur ROI
+
+Page interactive (`/roi-calculator`) permettant aux prospects de calculer :
+- Temps économisé en gestion IT
+- Réduction des coûts d'opération
+- Gains de productivité
+- ROI estimé sur 12 mois
+
+## SEO et structured data
+
+### Schema.org
+
+- **SoftwareApplication** — metadata globale de l'application
+- **Product + Offer** — page pricing (plans avec prix)
+- **FAQPage** — page d'accueil (questions/réponses)
+
+### Metadata dynamique
+
+Chaque page génère ses propres metadata (title, description, og:image) en fonction de la locale via `generateMetadata()`.
+
+### Alternates hreflang
+
+Toutes les pages ont des alternates `fr` et `en` pour le SEO multi-langue.
+
+## Internationalisation
+
+Les traductions sont gérées via `next-intl` avec des fichiers JSON par locale. Les clés de traduction suivent une structure hiérarchique :
+
+```
+messages/
+├── fr.json    # Traductions françaises
+└── en.json    # Traductions anglaises
+```
+
+## Déploiement
+
+Le site est déployé sur **Vercel** avec :
+- Preview deployments automatiques sur chaque PR
+- Production deploy sur push vers `main`
+- Edge Network global
+- Analytics et Web Vitals intégrés

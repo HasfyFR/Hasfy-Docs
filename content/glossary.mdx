@@ -1,0 +1,138 @@
+---
+title: Glossaire
+description: Définitions des termes clés utilisés dans Hasfy — vocabulaire IT, gestion de parc, monitoring et ITSM.
+---
+
+# Glossaire
+
+Ce glossaire définit les termes techniques et métier utilisés dans Hasfy et dans le domaine de la gestion de parc informatique.
+
+---
+
+### Agent
+
+Logiciel léger installé sur un poste de travail ou un serveur pour collecter et remonter des métriques de supervision (CPU, RAM, disque, réseau) vers Hasfy. L'agent Hasfy est basé sur **Elastic Agent** et est disponible pour Windows, macOS et Linux.
+
+### Alerte
+
+Notification déclenchée automatiquement lorsqu'une métrique dépasse un seuil configuré (ex. CPU &gt; 90 %, espace disque &lt; 10 %). Les alertes peuvent être de type **avertissement** (seuil intermédiaire) ou **critique** (seuil urgent nécessitant une action immédiate).
+
+### API (Application Programming Interface)
+
+Interface de programmation permettant à des applications externes de communiquer avec Hasfy par requêtes HTTP. L'API REST de Hasfy permet de lire et écrire des données (équipements, tickets, métriques) de manière programmatique.
+
+### Assignation
+
+Action d'attribuer un ticket ou un équipement à un utilisateur spécifique (généralement un technicien). L'assignation détermine la responsabilité de traitement et déclenche des notifications.
+
+### Backlog
+
+Ensemble des tickets ouverts et non encore résolus dans le système de ticketing. Le suivi du backlog permet de mesurer la charge de travail de l'équipe support.
+
+### CMDB (Configuration Management Database)
+
+Base de données de gestion des configurations recensant tous les actifs informatiques et leurs relations. Dans Hasfy, le module Équipements joue ce rôle en centralisant l'inventaire du parc.
+
+### Cycle de vie
+
+Succession des états d'un équipement de son acquisition à son retrait : **Actif** → **En maintenance** → **Retiré**. Le suivi du cycle de vie permet d'anticiper les renouvellements et de tracer l'historique.
+
+### Dashboard (Tableau de bord)
+
+Interface visuelle regroupant des indicateurs clés (KPIs), des graphiques et des statistiques offrant une vue d'ensemble de l'état du parc informatique et de l'activité de l'équipe support.
+
+### Elastic Agent
+
+Agent de collecte de données développé par Elastic, utilisé comme base technologique de l'agent Hasfy. Il permet la remontée de métriques système vers une infrastructure Elasticsearch.
+
+### Enrôlement
+
+Processus d'inscription d'un agent auprès du serveur Hasfy. L'enrôlement s'effectue via une **clé d'enrôlement** unique qui authentifie la machine et l'associe à un équipement dans l'inventaire.
+
+### Équipement
+
+Tout actif informatique géré dans Hasfy : poste de travail, serveur, imprimante, équipement réseau (switch, routeur, point d'accès), périphérique mobile, etc. Chaque équipement dispose d'une fiche détaillée dans l'inventaire.
+
+### Escalade
+
+Processus de transfert d'un ticket vers un niveau de support supérieur ou vers un responsable lorsque le technicien initial ne peut pas résoudre le problème ou que le SLA est dépassé.
+
+### Fleet
+
+Système de gestion centralisée des agents Hasfy. Fleet permet de déployer, configurer et mettre à jour les agents installés sur l'ensemble du parc depuis l'interface Hasfy.
+
+### ITSM (IT Service Management)
+
+Gestion des services informatiques — ensemble de pratiques et de processus pour planifier, délivrer, gérer et améliorer les services IT. Hasfy couvre les fonctions ITSM principales : gestion des incidents, des demandes, des actifs et des changements.
+
+### KPI (Key Performance Indicator)
+
+Indicateur clé de performance utilisé pour mesurer l'efficacité de la gestion IT. Exemples dans Hasfy : taux de résolution SLA, temps moyen de résolution, nombre d'équipements en alerte, score de santé du parc.
+
+### Lien magique (Magic Link)
+
+Méthode d'authentification sans mot de passe. Un lien de connexion unique et temporaire est envoyé par email. En cliquant dessus, l'utilisateur est automatiquement connecté à Hasfy.
+
+### Marketplace
+
+Place de marché intégrée à Hasfy permettant de mettre en relation les organisations avec des techniciens indépendants qualifiés pour des interventions ponctuelles.
+
+### Métrique
+
+Donnée quantitative collectée par l'agent de supervision : utilisation CPU (%), utilisation RAM (%), espace disque libre (Go/%), bande passante réseau, uptime, etc. Les métriques alimentent le tableau de bord et le système d'alertes.
+
+### MFA / 2FA (Multi-Factor Authentication / Two-Factor Authentication)
+
+Authentification multi-facteurs — méthode de sécurité exigeant deux preuves d'identité distinctes pour se connecter. Dans Hasfy : mot de passe + code TOTP (via application d'authentification) ou code email.
+
+### MSP (Managed Service Provider)
+
+Prestataire de services managés — entreprise qui fournit des services IT externalisés (gestion de parc, support, supervision) à d'autres organisations. Hasfy est conçu pour répondre aux besoins spécifiques des MSP.
+
+### Note interne
+
+Message dans un ticket visible uniquement par les techniciens et les administrateurs, invisible pour les utilisateurs Employee. Utilisé pour les discussions techniques internes et les procédures non destinées au client.
+
+### Onboarding
+
+Processus de configuration initiale guidé proposé aux nouveaux utilisateurs de Hasfy : création de l'organisation, saisie des informations de profil, calibrage des préférences et invitation de l'équipe.
+
+### Organisation
+
+Entité de regroupement dans Hasfy représentant une entreprise, un service ou un prestataire. Toutes les données (équipements, tickets, utilisateurs) sont cloisonnées par organisation.
+
+### Owner (Propriétaire)
+
+Rôle de plus haut niveau dans une organisation Hasfy. Le Owner dispose de tous les droits, y compris la gestion de la facturation, le transfert de propriété et la suppression de l'organisation. Chaque organisation a un seul Owner.
+
+### RLS (Row Level Security)
+
+Sécurité au niveau des lignes — mécanisme de base de données garantissant que chaque utilisateur n'accède qu'aux données de sa propre organisation. Utilisé par Hasfy pour assurer le cloisonnement strict des données.
+
+### RMM (Remote Monitoring and Management)
+
+Supervision et gestion à distance — catégorie d'outils permettant de surveiller et administrer des systèmes informatiques à distance. Hasfy intègre des fonctions RMM via son agent de supervision.
+
+### SLA (Service Level Agreement)
+
+Accord de niveau de service définissant les délais de prise en charge et de résolution des tickets selon leur priorité. Dans Hasfy, les SLA sont configurables et leur respect est suivi en temps réel.
+
+### Tag
+
+Étiquette associée à un équipement ou un ticket pour faciliter la classification et le filtrage. Les tags sont librement définis par l'organisation (ex. « Critique », « Comptabilité », « VIP »).
+
+### Ticket
+
+Enregistrement d'un incident, d'une demande de service ou d'une tâche de maintenance dans le système de ticketing. Chaque ticket a un identifiant unique, un statut, une priorité, un assigné et un historique de conversations.
+
+### TOTP (Time-based One-Time Password)
+
+Mot de passe à usage unique basé sur le temps — algorithme générant un code à 6 chiffres qui change toutes les 30 secondes, utilisé pour l'authentification multi-facteurs.
+
+### Uptime
+
+Durée de fonctionnement continu d'un équipement depuis son dernier redémarrage. L'uptime est l'une des métriques de base remontées par l'agent de supervision.
+
+### Webhook
+
+Mécanisme de notification automatique par lequel Hasfy envoie une requête HTTP vers une URL externe lorsqu'un événement se produit (ex. nouveau ticket, alerte déclenchée). Fonctionnalité prévue dans la feuille de route.

@@ -1,0 +1,179 @@
+---
+title: Assistance & Tickets
+description: Système de ticketing Hasfy — création de tickets, assignation, priorités, conversations, notes internes, workflow de résolution et suivi SLA.
+---
+
+# Assistance & Tickets
+
+Le module **Assistance** de Hasfy fournit un système de ticketing complet pour gérer les incidents, les demandes de service et les interventions de maintenance. Il centralise la communication entre les utilisateurs, les techniciens et les administrateurs.
+
+## Vue d'ensemble des tickets
+
+La page principale affiche la liste de tous les tickets sous forme de tableau avec des colonnes configurables :
+
+| Colonne | Description |
+|---------|-------------|
+| **ID** | Numéro unique du ticket (ex. #TKT-0042) |
+| **Titre** | Résumé court du problème ou de la demande |
+| **Statut** | Nouveau, En cours, En attente, Résolu, Fermé |
+| **Priorité** | Basse, Normale, Haute, Urgente |
+| **Catégorie** | Type de demande (Incident, Demande, Maintenance, Autre) |
+| **Assigné à** | Technicien responsable |
+| **Équipement** | Équipement concerné (lien vers sa fiche) |
+| **Créé le** | Date de création |
+| **Mis à jour** | Date de dernière modification |
+
+### Filtres disponibles
+
+- **Par statut** : affichez les tickets ouverts, en attente, résolus, etc.
+- **Par priorité** : filtrez par niveau de priorité
+- **Par assignation** : vos tickets, non assignés, assignés à un technicien spécifique
+- **Par catégorie** : Incident, Demande, Maintenance
+- **Par équipement** : tickets liés à un équipement précis
+- **Par période** : plage de dates de création
+- **Par créateur** : tickets créés par un utilisateur spécifique
+
+## Créer un ticket
+
+### Depuis le module Assistance
+
+1. Cliquez sur **« + Nouveau ticket »**
+2. Renseignez les informations :
+
+**Champs obligatoires :**
+- **Titre** : résumé clair et concis du problème (ex. « Imprimante RH ne répond plus », « Demande d'installation de logiciel »)
+- **Description** : détail complet du problème ou de la demande. Soyez aussi précis que possible : messages d'erreur, contexte, actions déjà tentées
+- **Catégorie** : Incident (dysfonctionnement), Demande (nouvelle installation, accès), Maintenance (préventive ou corrective)
+- **Priorité** : Basse, Normale, Haute, Urgente
+
+**Champs optionnels :**
+- **Équipement concerné** : sélectionnez dans la liste de vos équipements
+- **Assigné à** : sélectionnez un technicien (sinon le ticket est créé comme « Non assigné »)
+- **Pièces jointes** : captures d'écran, logs, documents (max 10 Mo par fichier, formats courants acceptés)
+- **Tags** : mots-clés pour faciliter le classement
+
+3. Cliquez sur **« Créer le ticket »**
+
+### Depuis la fiche d'un équipement
+
+Vous pouvez créer un ticket directement depuis la fiche d'un équipement. L'équipement est automatiquement pré-rempli dans le formulaire de création.
+
+### En tant qu'employé (client)
+
+Les utilisateurs avec le rôle **Employee** disposent d'un formulaire simplifié pour soumettre des demandes. Ils renseignent le titre, la description et la priorité. La catégorisation et l'assignation sont gérées par l'équipe IT.
+
+## Workflow de résolution
+
+### Statuts d'un ticket
+
+Un ticket suit un workflow défini par ses statuts :
+
+```
+Nouveau → En cours → Résolu → Fermé
+Nouveau → En cours → En attente → En cours → Résolu → Fermé
+```
+
+| Statut | Description | Qui peut changer |
+|--------|-------------|-----------------|
+| **Nouveau** | Ticket venant d'être créé, pas encore pris en charge | Automatique à la création |
+| **En cours** | Un technicien travaille activement sur le ticket | Technicien, Admin |
+| **En attente** | Le ticket nécessite une information ou action externe (attente pièce, réponse client) | Technicien, Admin |
+| **Résolu** | Le problème est résolu, en attente de confirmation | Technicien, Admin |
+| **Fermé** | Ticket définitivement clos | Admin, ou automatique après 7 jours en « Résolu » |
+
+### Changer le statut d'un ticket
+
+1. Ouvrez le ticket concerné
+2. Cliquez sur le bouton de statut actuel (en haut de la page)
+3. Sélectionnez le nouveau statut
+4. Ajoutez un **commentaire de transition** pour expliquer le changement (recommandé)
+5. Confirmez
+
+### Assigner un ticket
+
+Pour assigner ou réassigner un ticket :
+
+1. Ouvrez le ticket
+2. Dans le panneau latéral, cliquez sur **« Assigné à »**
+3. Sélectionnez un technicien dans la liste
+4. Le technicien reçoit une notification d'assignation
+
+> **Astuce** : Les tickets non assignés apparaissent en haut de la liste avec un indicateur visuel rouge. Configurez des alertes pour être notifié des tickets non assignés après un certain délai.
+
+## Priorités
+
+Les priorités déterminent l'ordre de traitement et les délais SLA associés :
+
+| Priorité | Couleur | Délai de première réponse (SLA) | Délai de résolution (SLA) |
+|----------|---------|-------------------------------|--------------------------|
+| **Urgente** | 🔴 Rouge | 30 minutes | 4 heures |
+| **Haute** | 🟠 Orange | 2 heures | 8 heures |
+| **Normale** | 🔵 Bleu | 4 heures | 24 heures |
+| **Basse** | ⚪ Gris | 8 heures | 72 heures |
+
+> **Note** : Les délais SLA sont indicatifs et configurables par l'administrateur de l'organisation dans **Paramètres &gt; SLA**.
+
+## Conversations et collaboration
+
+### Fil de discussion
+
+Chaque ticket dispose d'un fil de discussion chronologique permettant l'échange entre toutes les parties :
+
+- **Messages publics** : visibles par le créateur du ticket, les techniciens et les administrateurs. Utilisez-les pour communiquer avec l'utilisateur qui a soumis la demande
+- **Notes internes** : visibles uniquement par les techniciens et administrateurs. Utilisez-les pour les discussions techniques internes, les procédures suivies ou les informations sensibles
+
+Pour ajouter un message :
+1. Saisissez votre texte dans la zone de réponse en bas du ticket
+2. Choisissez entre **« Réponse publique »** et **« Note interne »** via le sélecteur
+3. Ajoutez des **pièces jointes** si nécessaire (captures d'écran, logs)
+4. Cliquez sur **« Envoyer »**
+
+### Mentions
+
+Mentionnez un collègue dans un message en tapant `@` suivi de son nom. La personne mentionnée recevra une notification spécifique.
+
+### Pièces jointes
+
+Chaque message peut inclure des fichiers joints :
+- **Formats acceptés** : images (JPG, PNG, GIF), documents (PDF, DOC, DOCX, XLS), archives (ZIP), logs (TXT, LOG)
+- **Taille maximale** : 10 Mo par fichier
+- **Nombre maximum** : 5 fichiers par message
+
+## Suivi SLA
+
+Le suivi des accords de niveau de service (SLA) est intégré à chaque ticket :
+
+### Indicateurs SLA
+
+- **Temps de première réponse** : délai entre la création du ticket et le premier message d'un technicien
+- **Temps de résolution** : délai entre la création et le passage au statut « Résolu »
+- **Compteur en temps réel** : un chronomètre affiché sur chaque ticket indique le temps restant avant dépassement du SLA
+
+### Alertes SLA
+
+- **Avertissement** : notification envoyée lorsque 75 % du délai SLA est écoulé
+- **Dépassement** : notification d'escalade envoyée à l'administrateur lorsque le SLA est dépassé
+- Les tickets en dépassement SLA sont mis en évidence dans la liste (bordure rouge)
+
+## Catégorisation automatique
+
+Si l'assistant IA est activé (voir [Fonctionnalités IA](/advanced-features/ia)), les tickets entrants sont automatiquement :
+
+- **Catégorisés** : Incident, Demande ou Maintenance
+- **Priorisés** : suggestion de priorité basée sur l'analyse du contenu
+- **Tagués** : mots-clés extraits automatiquement
+
+Le technicien peut modifier ces suggestions à tout moment.
+
+## Statistiques des tickets
+
+Depuis la vue Assistance, un panneau de statistiques affiche :
+
+- **Tickets ouverts** : nombre de tickets actifs (Nouveau + En cours + En attente)
+- **Temps moyen de résolution** : calculé sur les 30 derniers jours
+- **Taux de respect SLA** : pourcentage de tickets résolus dans les délais
+- **Répartition par catégorie** : graphique camembert
+- **Répartition par priorité** : graphique barres
+- **Top techniciens** : classement par nombre de tickets résolus
+
+Ces statistiques sont également disponibles de manière plus détaillée dans le module [KPIs](/core-features/kpis).

@@ -1,0 +1,595 @@
+# Guide de démarrage rapide - GCP Phase 1
+
+Déployez Elasticsearch **Phase 1** (3 nodes multi-rôle) sur GCP en **30 minutes**.
+
+**Coût** : 381€/mois | **Capacité** : 100 agents, 50 GB/jour
+
+---
+
+## 🎯 Qu'allez-vous déployer ?
+
+**Architecture Phase 1** :
+- ✅ 3 nœuds Elasticsearch multi-rôle [master, data, ingest]
+- ✅ 1 Kibana (avec auto-scale jusqu'à 2 replicas)
+- ✅ 2 Fleet Server
+- ✅ Load Balancer multiplexé (1 IP)
+- ✅ Backups quotidiens GCS
+- ✅ SSL/TLS automatique
+
+**Quand migrer vers Phase 2** : >150 agents OU >75 GB/jour
+
+---
+
+## ⚡ Installation express
+
+### 1. Prérequis (5 min)
+
+```bash
+# Installer les outils nécessaires
+brew install terraform kubectl google-cloud-sdk jq
+
+# Se connecter à GCP
+gcloud auth login
+gcloud auth application-default login
+
+# Définir le projet
+gcloud config set project YOUR_PROJECT_ID
+
+# Activer les APIs nécessaires
+gcloud services enable \
+  container.googleapis.com \
+  compute.googleapis.com \
+  storage.googleapis.com
+```
+
+### 2. Configuration Phase 1 (5 min)
+
+```bash
+# Naviguer vers le provider GCP
+cd providers/gcp
+
+# Configurer Terraform
+cd terraform
+cp terraform.tfvars.example terraform.tfvars
+
+# Éditer les variables
+nano terraform.tfvars
+```
+
+**Variables Phase 1 (minimum requis)** :
+```hcl
+# Projet GCP
+project_id  = "your-project-id"
+region      = "europe-west9"  # Paris
+zone        = "europe-west9-a"
+
+# Domaine (optionnel - peut utiliser IP)
+base_domain = "hasfy.fr"
+
+# Phase 1 : Architecture multi-rôle
+deployment_phase = "phase1"  # Phase 1 par défaut
+
+# Elasticsearch Phase 1 : 3 nodes multi-rôle
+elasticsearch_node_count = 3
+elasticsearch_node_roles = ["master", "data", "ingest"]
+elasticsearch_cpu        = "2000m"
+elasticsearch_memory     = "8Gi"
+elasticsearch_storage    = "100Gi"
+
+# Kibana Phase 1
+kibana_replicas = 1
+
+# Fleet Server Phase 1
+fleet_replicas = 2
+
+# Environnement
+environment = "production"
+```
+
+### 3. Déploiement automatique (20 min)
+
+```bash
+# Retour au dossier scripts
+cd ../scripts
+
+# Rendre le script exécutable
+chmod +x deploy.sh
+
+# Lancer le déploiement Phase 1
+./deploy.sh
+```
+
+**Le script va** :
+1. ✅ Vérifier les prérequis (gcloud, kubectl, terraform)
+2. ✅ Déployer GKE Autopilot (5 min)
+3. ✅ Créer les ressources réseau (VPC, subnets)
+4. ✅ Réserver 1 IP Load Balancer
+5. ✅ Installer ECK Operator (2 min)
+6. ✅ Déployer 3 nœuds Elasticsearch Phase 1 (8 min)
+7. ✅ Déployer Kibana (3 min)
+8. ✅ Déployer Fleet Server (2 min)
+9. ✅ Configurer DNS et SSL
+10. ✅ Configurer Fleet Server automatiquement
+11. ✅ Afficher credentials
+
+**⏱️ Temps total** : 20-25 minutes
+
+### 4. Vérification (2 min)
+
+```bash
+# Vérifier les pods Phase 1
+kubectl get pods -n elastic-system
+
+# Doit afficher (Phase 1) :
+# NAME                                READY   STATUS    RESTARTS   AGE
+# elasticsearch-es-default-0          1/1     Running   0          10m
+# elasticsearch-es-default-1          1/1     Running   0          10m
+# elasticsearch-es-default-2          1/1     Running   0          10m
+# kibana-kb-xxx                       1/1     Running   0          8m
+# fleet-server-agent-xxx              1/1     Running   0          6m
+# fleet-server-agent-yyy              1/1     Running   0          6m
+
+# Vérifier santé cluster
+kubectl get elasticsearch -n elastic-system
+
+# Doit afficher :
+# NAME            HEALTH   NODES   VERSION   PHASE   AGE
+# elasticsearch   green    3       8.11.0    Ready   10m
+```
+
+### 5. Récupérer les credentials (1 min)
+
+```bash
+# Récupérer le mot de passe Elasticsearch
+kubectl get secret elasticsearch-es-elastic-user \
+  -n elastic-system \
+  -o go-template='{{.data.elastic | base64decode}}'
+
+# Sauvegarder (IMPORTANT)
+echo "Elasticsearch password: [VOTRE_MOT_DE_PASSE]" > .credentials.txt
+
+# Récupérer l'URL du Load Balancer
+kubectl get ingress -n elastic-system
+
+# Ou via Terraform
+cd ../terraform
+terraform output load_balancer_ip
+```
+
+**Se connecter à Kibana** :
+
+**Option 1 - Avec domaine configuré** :
+1. Ouvrir `https://kibana.hasfy.fr` (ou votre domaine)
+2. Username : `elastic`
+3. Password : (celui récupéré ci-dessus)
+
+**Option 2 - Sans domaine (test local)** :
+```bash
+# Port-forward temporaire
+kubectl port-forward -n elastic-system svc/kibana-kb-http 5601:5601 &
+
+# Ouvrir https://localhost:5601
+# Username: elastic
+# Password: (celui récupéré)
+
+# Arrêter port-forward
+pkill -f "port-forward.*5601"
+```
+
+---
+
+## 🧪 Tests Phase 1
+
+### Test 1 : Elasticsearch cluster health
+
+```bash
+# Port-forward Elasticsearch
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+
+# Récupérer password
+PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user \
+  -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+
+# Test santé (doit retourner "green")
+curl -k -u "elastic:$PASSWORD" https://localhost:9200/_cluster/health | jq .status
+
+# Doit afficher: "green"
+
+# Vérifier nodes (doit afficher 3 nodes Phase 1)
+curl -k -u "elastic:$PASSWORD" https://localhost:9200/_cat/nodes?v
+
+# Arrêter port-forward
+pkill -f "port-forward.*9200"
+```
+
+### Test 2 : Kibana accessible
+
+```bash
+# Si domaine configuré
+curl -I https://kibana.hasfy.fr
+
+# Doit retourner: HTTP/2 200
+
+# Sinon, utiliser port-forward
+kubectl port-forward -n elastic-system svc/kibana-kb-http 5601:5601 &
+curl -k -I https://localhost:5601
+```
+
+### Test 3 : Fleet Server opérationnel
+
+```bash
+# Vérifier agent Fleet
+kubectl get agent -n elastic-system
+
+# Doit afficher :
+# NAME          HEALTH   AVAILABLE   VERSION   AGE
+# fleet-server  green    2           8.11.0    10m
+
+# Logs Fleet Server
+kubectl logs -n elastic-system -l app=fleet-server --tail=50
+```
+
+### Test 4 : Capacité Phase 1
+
+```bash
+# Vérifier storage disponible
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  df -h /usr/share/elasticsearch/data
+
+# Doit afficher ~100GB par node
+
+# Vérifier mémoire allouée
+kubectl top pods -n elastic-system
+
+# Elasticsearch pods : ~8Gi chacun
+```
+
+---
+
+## 📊 Monitoring Phase 1
+
+### Dashboard Kibana
+
+1. Ouvrir Kibana
+2. Menu → Stack Monitoring
+3. Vérifier :
+   - ✅ 3 nodes actifs
+   - ✅ Cluster health : GREEN
+   - ✅ Shards : tous alloués
+   - ✅ CPU/Memory : &lt;70%
+
+### CLI Monitoring
+
+```bash
+# Script de monitoring complet
+cd ../scripts
+chmod +x health-check.sh
+./health-check.sh
+
+# Résumé attendu Phase 1 :
+# ✅ Cluster: green, 3 nodes
+# ✅ Storage: 300 GB total (100GB × 3)
+# ✅ Memory: 24 GB total (8GB × 3)
+# ✅ Agents: 0-100 (capacité Phase 1)
+```
+
+---
+
+## 🚀 Prochaines étapes
+
+### 1. Ajouter votre premier agent Fleet
+
+```bash
+# Depuis Kibana
+# 1. Menu → Fleet → Agents
+# 2. Click "Add agent"
+# 3. Copier la commande d'installation
+# 4. Exécuter sur votre serveur cible
+
+# Exemple (Linux) :
+curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.11.0-linux-x86_64.tar.gz
+tar xzvf elastic-agent-8.11.0-linux-x86_64.tar.gz
+cd elastic-agent-8.11.0-linux-x86_64
+sudo ./elastic-agent install \
+  --url=https://fleet.hasfy.fr \
+  --enrollment-token=YOUR_TOKEN
+```
+
+### 2. Configurer les intégrations
+
+```bash
+# Kibana → Management → Integrations
+# Intégrations recommandées Phase 1 :
+# - System (logs + metrics système)
+# - Kubernetes (si monitoring K8s)
+# - Nginx/Apache (logs web)
+# - MySQL/PostgreSQL (databases)
+```
+
+### 3. Créer des dashboards
+
+```bash
+# Kibana → Analytics → Discover
+# 1. Explorer vos logs
+# 2. Créer des visualisations
+# 3. Sauvegarder dans Dashboard
+```
+
+### 4. Configurer les alertes
+
+```bash
+# Kibana → Stack Management → Rules
+# Alertes recommandées Phase 1 :
+# - Disk usage > 80%
+# - CPU sustained > 80%
+# - Cluster health != GREEN
+# - Agent offline > 5 min
+```
+
+---
+
+## 🔄 Migration vers Phase 2
+
+**Quand migrer** :
+- ✅ >150 agents Fleet
+- ✅ >75 GB/jour ingestion
+- ✅ >400 GB données stockées
+- ✅ Latence queries >2s
+
+**Procédure** :
+```bash
+# Voir le guide de migration complet
+cat docs/MIGRATION-GUIDE.md
+
+# Migration automatique (zéro downtime, 2-3h)
+cd scripts
+./migrate-to-phase2.sh
+
+# Monitoring pendant migration
+./migration-monitor.sh
+```
+
+**Nouveau coût Phase 2** : 580€/mois (+199€)  
+**Nouvelle capacité** : 200-500 agents, 100-200 GB/jour
+
+---
+
+## 🎉 Phase 1 déployée avec succès
+
+Vous avez maintenant :
+
+- ✅ **3 nœuds Elasticsearch** multi-rôle (master + data + ingest)
+- ✅ **Kibana** accessible avec SSL
+- ✅ **Fleet Server** prêt pour 100 agents
+- ✅ **Backups quotidiens** automatiques (GCS)
+- ✅ **Monitoring** activé
+- ✅ **Coût maîtrisé** : 381€/mois
+
+**Capacité Phase 1** :
+- 100 agents Fleet max
+- 50 GB/jour ingestion
+- 300 GB storage total
+- 5-10 utilisateurs Kibana
+- RTO 2h / RPO 30min
+
+---
+
+---
+
+## 🆘 Troubleshooting Phase 1
+
+### Pods ne démarrent pas
+
+```bash
+# Vérifier events
+kubectl get events -n elastic-system --sort-by='.lastTimestamp' | tail -20
+
+# Vérifier logs Elasticsearch
+kubectl logs -n elastic-system elasticsearch-es-default-0 --tail=100
+
+# Vérifier ressources disponibles (GKE Autopilot scale automatiquement)
+kubectl describe pod -n elastic-system elasticsearch-es-default-0
+```
+
+**Cause fréquente** : GKE Autopilot en cours de provisioning de nodes. **Attendre 5-10 minutes**.
+
+### Cluster health YELLOW ou RED
+
+```bash
+# Diagnostic complet
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+
+# Vérifier shards non alloués
+curl -k -u "elastic:$PASSWORD" https://localhost:9200/_cat/shards?v | grep UNASSIGNED
+
+# Réallocation forcée
+curl -k -u "elastic:$PASSWORD" -X POST \
+  https://localhost:9200/_cluster/reroute?retry_failed=true
+
+pkill -f "port-forward.*9200"
+```
+
+### Kibana inaccessible
+
+```bash
+# Vérifier Ingress/Load Balancer
+kubectl get ingress -n elastic-system
+kubectl describe ingress -n elastic-system
+
+# Vérifier certificat SSL (si domaine configuré)
+kubectl get managedcertificate -n elastic-system
+kubectl describe managedcertificate -n elastic-system
+
+# Port-forward en fallback
+kubectl port-forward -n elastic-system svc/kibana-kb-http 5601:5601
+# Puis ouvrir https://localhost:5601
+```
+
+**Causes fréquentes** :
+1. DNS pas encore propagé (jusqu'à 48h)
+2. Certificat SSL en cours de provisioning (15-30 min)
+3. Firewall bloquant le port 443
+
+### Fleet Server ne démarre pas
+
+```bash
+# Vérifier logs
+kubectl logs -n elastic-system -l app=fleet-server --tail=100
+
+# Vérifier connexion Elasticsearch
+kubectl exec -n elastic-system -it $(kubectl get pod -n elastic-system -l app=fleet-server -o jsonpath='{.items[0].metadata.name}') -- \
+  curl -k https://elasticsearch-es-http:9200
+
+# Recréer Fleet Server
+kubectl delete -n elastic-system -l app=fleet-server
+./scripts/deploy.sh  # Redéploie uniquement Fleet
+```
+
+### Espace disque insuffisant
+
+```bash
+# Phase 1 : 100GB par node = 300GB total
+# Si >80% utilisé, nettoyer ou migrer Phase 2
+
+# Vérifier utilisation
+kubectl exec -n elastic-system elasticsearch-es-default-0 -- \
+  df -h /usr/share/elasticsearch/data
+
+# Nettoyer anciens indices (>30 jours)
+PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+
+curl -k -u "elastic:$PASSWORD" -X DELETE \
+  "https://localhost:9200/logs-*-$(date -d '30 days ago' +%Y.%m)*"
+
+pkill -f "port-forward.*9200"
+```
+
+**Recommandation** : Si >80% disk, migrer vers Phase 2 (580€/mois, 1 TB storage)
+
+---
+
+## 💡 Astuces Phase 1
+
+### Optimiser les performances
+
+```bash
+# Augmenter refresh interval (moins de I/O)
+PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+
+curl -k -u "elastic:$PASSWORD" -X PUT \
+  "https://localhost:9200/_all/_settings" \
+  -H 'Content-Type: application/json' \
+  -d '{"index": {"refresh_interval": "30s"}}'
+
+pkill -f "port-forward.*9200"
+```
+
+### Monitoring en temps réel
+
+```bash
+# Logs temps réel Elasticsearch
+kubectl logs -n elastic-system -f -l elasticsearch.k8s.elastic.co/cluster-name=elasticsearch
+
+# Logs Kibana
+kubectl logs -n elastic-system -f -l kibana.k8s.elastic.co/name=kibana
+
+# Logs Fleet
+kubectl logs -n elastic-system -f -l app=fleet-server
+
+# Utilisation ressources
+watch -n 5 'kubectl top pods -n elastic-system'
+```
+
+### Backup manuel
+
+```bash
+# Créer snapshot manuel
+PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+kubectl port-forward -n elastic-system svc/elasticsearch-es-http 9200:9200 &
+
+SNAPSHOT_NAME="manual-$(date +%Y%m%d-%H%M%S)"
+
+curl -k -u "elastic:$PASSWORD" -X PUT \
+  "https://localhost:9200/_snapshot/gcs-repo/$SNAPSHOT_NAME?wait_for_completion=false" \
+  -H 'Content-Type: application/json' \
+  -d '{"indices": "*", "ignore_unavailable": true}'
+
+# Vérifier progression
+curl -k -u "elastic:$PASSWORD" \
+  "https://localhost:9200/_snapshot/gcs-repo/$SNAPSHOT_NAME"
+
+pkill -f "port-forward.*9200"
+```
+
+### Accès shell Elasticsearch
+
+```bash
+# Shell dans pod Elasticsearch
+kubectl exec -it -n elastic-system elasticsearch-es-default-0 -- /bin/bash
+
+# Une fois dans le pod :
+# - Config : /usr/share/elasticsearch/config/elasticsearch.yml
+# - Data : /usr/share/elasticsearch/data
+# - Logs : /usr/share/elasticsearch/logs
+```
+
+---
+
+## 🔄 Mise à jour Phase 1
+
+### Update Elasticsearch version
+
+```bash
+# Phase 1 : Rolling update automatique (zero downtime)
+kubectl patch elasticsearch elasticsearch -n elastic-system \
+  --type=merge -p '{"spec":{"version":"8.12.0"}}'
+
+# ECK gère le rolling update automatiquement
+# Durée : ~15 min (1 node à la fois)
+
+# Suivre la progression
+kubectl get elasticsearch -n elastic-system -w
+```
+
+### Scale Kibana (HPA)
+
+```bash
+# Kibana scale automatiquement 1-2 replicas en Phase 1
+# Forcer scale manuel si besoin :
+
+kubectl scale deployment kibana-kb -n elastic-system --replicas=2
+
+# Retour auto-scale
+kubectl autoscale deployment kibana-kb -n elastic-system \
+  --min=1 --max=2 --cpu-percent=70
+```
+
+---
+
+## 🗑️ Désinstallation complète
+
+```bash
+# ATTENTION : Supprime tout (infrastructure + données)
+
+# 1. Supprimer resources Kubernetes
+kubectl delete namespace elastic-system
+
+# 2. Supprimer infrastructure Terraform
+cd terraform
+terraform destroy -auto-approve
+
+# 3. Nettoyer backups GCS (optionnel)
+gsutil rm -r gs://YOUR-BACKUP-BUCKET
+
+# Total cleanup time: ~10 minutes
+```
+
+---
+
+**Temps total déploiement Phase 1** : 30 minutes  
+**Coût mensuel Phase 1** : 381 EUR  
+**Capacité** : 100 agents, 50 GB/jour, 300 GB storage  
+**Support** : Voir [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)

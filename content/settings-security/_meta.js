@@ -1,8 +1,8 @@
 const meta = {
-  'databackup': 'Data Backup',
-  'mfas': 'Multi-Factor Authentication',
-  'usermanagment': 'User Management',
-  'goodpratices': 'Good Pratices',
+  'usermanagment': 'Gestion des utilisateurs',
+  'mfas': 'Authentification multi-facteurs',
+  'databackup': 'Sauvegarde des données',
+  'goodpratices': 'Bonnes pratiques',
 }
 
 export default meta;

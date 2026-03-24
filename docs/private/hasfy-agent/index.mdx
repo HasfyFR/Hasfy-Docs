@@ -1,0 +1,233 @@
+---
+title: Hasfy Agent — Documentation technique
+description: Application desktop Tauri pour l'installation et la gestion de l'agent Elastic sur les équipements.
+---
+
+# Hasfy Agent (Installer)
+
+## Présentation
+
+Le Hasfy Installer est une application desktop développée avec **Tauri 2.0** qui permet d'installer l'Elastic Agent sur les équipements des utilisateurs et de les connecter à la plateforme Hasfy pour le monitoring temps réel.
+
+**Repo :** `github.com/HasfyFR/Hasfy-Agent`
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| **Framework Desktop** | Tauri 2.0 |
+| **Backend** | Rust (tokio, reqwest, serde) |
+| **Frontend** | React 18 + TypeScript |
+| **Styling** | Tailwind CSS + shadcn/ui |
+| **State Management** | Zustand |
+| **Build** | Vite |
+| **Distribution** | DMG (macOS), MSI (Windows), DEB (Linux) |
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Hasfy-App (Next.js)                                         │
+│  1. Génère un token d'installation (single-use, 30 min)     │
+│  2. Fournit le lien de téléchargement                       │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Hasfy Installer (Tauri Desktop App)                         │
+│  Frontend (React + Tailwind)                                 │
+│  ├── Wizard d'installation                                   │
+│  ├── Barre de progression                                    │
+│  └── Messages d'erreur                                       │
+│  Backend (Rust)                                               │
+│  ├── Échange du token contre les credentials Fleet           │
+│  ├── Téléchargement d'Elastic Agent                          │
+│  ├── Installation locale                                      │
+│  └── Enregistrement auprès de Hasfy                          │
+└──────────────────────────┬──────────────────────────────────┘
+                           │
+                           ▼
+┌─────────────────────────────────────────────────────────────┐
+│  Fleet Server (fleet.hasfy.fr)                               │
+│  Agent se connecte et envoie les métriques                   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Structure du projet
+
+```
+hasfy-agent/
+├── src/                       # Frontend React
+│   ├── components/
+│   │   ├── ui/               # shadcn/ui (Button, Input, Card)
+│   │   ├── TokenInput.tsx    # Saisie du token
+│   │   ├── ProgressSteps.tsx # Indicateur d'étapes
+│   │   ├── InstallProgress.tsx
+│   │   ├── InstallWizard.tsx # Wizard d'installation
+│   │   ├── AgentStatus.tsx   # Status de l'agent installé
+│   │   ├── SuccessDisplay.tsx
+│   │   ├── ErrorScreen.tsx
+│   │   └── SettingsPanel.tsx
+│   ├── hooks/
+│   │   ├── useInstallation.ts
+│   │   └── useSystemInfo.ts
+│   ├── lib/
+│   │   ├── api.ts            # Types et client API
+│   │   ├── constants.ts      # URLs, endpoints, version Agent
+│   │   └── utils.ts
+│   ├── stores/
+│   │   └── installStore.ts   # Zustand store
+│   ├── App.tsx
+│   └── main.tsx
+│
+├── src-tauri/                 # Backend Rust
+│   ├── src/
+│   │   ├── main.rs
+│   │   ├── commands/
+│   │   │   ├── mod.rs
+│   │   │   ├── auth.rs       # Échange de token
+│   │   │   ├── install.rs    # Commande d'installation
+│   │   │   ├── status.rs     # Vérification status agent
+│   │   │   └── storage.rs    # Persistance locale
+│   │   ├── installer/
+│   │   │   ├── download.rs   # Téléchargement Elastic Agent
+│   │   │   ├── extract.rs    # Extraction archive
+│   │   │   └── service.rs    # Gestion service système
+│   │   └── logging.rs
+│   ├── Cargo.toml
+│   └── tauri.conf.json
+│
+├── docs/installer/            # Documentation développeur
+│   ├── README.md
+│   ├── API_REFERENCE.md
+│   ├── ARCHITECTURE.md
+│   ├── SECURITY.md
+│   └── DEVELOPMENT.md
+│
+├── package.json
+├── vite.config.ts
+└── tailwind.config.js
+```
+
+## Flux d'installation
+
+### 1. Initialisation
+
+L'application détecte automatiquement :
+- **OS et version** (Windows, macOS, Linux)
+- **Droits administrateur** (requis pour l'installation)
+- **Espace disque disponible** (minimum 500 MB)
+- **Connectivité réseau** vers `app.hasfy.fr` et `fleet.hasfy.fr`
+
+### 2. Validation du token
+
+L'utilisateur colle le token copié depuis l'interface web Hasfy.
+
+```
+POST https://app.hasfy.fr/api/v1/installer/credentials
+Body: { "token": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" }
+```
+
+Le serveur vérifie le token et retourne les credentials Fleet si valide.
+
+**Codes d'erreur :**
+- `INVALID` — Format invalide
+- `EXPIRED` — Token expiré (plus de 30 min)
+- `ALREADY_USED` — Token déjà consommé
+- `REVOKED` — Token révoqué par l'admin
+- `NOT_FOUND` — Token inexistant
+
+### 3. Téléchargement de l'agent
+
+Le binaire Elastic Agent est téléchargé depuis les serveurs officiels Elastic :
+
+| OS | Archive |
+|----|---------|
+| Windows | `elastic-agent-8.17.0-windows-x86_64.zip` |
+| macOS | `elastic-agent-8.17.0-darwin-aarch64.tar.gz` |
+| Linux | `elastic-agent-8.17.0-linux-x86_64.tar.gz` |
+
+- Vérification du **checksum SHA512** après téléchargement
+- Barre de progression avec estimation du temps restant
+
+### 4. Installation et enrollment
+
+L'agent est installé et enrollé en une seule commande :
+
+```bash
+elastic-agent install \
+  --url=fleet.hasfy.fr:443 \
+  --enrollment-token=TOKEN_FLEET \
+  --tag=equipment_id:EQUIP_ID \
+  --tag=user_id:USER_ID \
+  --tag=org_id:ORG_ID \
+  --non-interactive
+```
+
+**Chemins d'installation :**
+- Windows : `C:\Program Files\Elastic\Agent\`
+- macOS : `/Library/Elastic/Agent/`
+- Linux : `/opt/Elastic/Agent/`
+
+### 5. Finalisation
+
+Après l'installation, l'agent Hasfy :
+1. Récupère l'**Agent ID** réel via Fleet API ou `elastic-agent status`
+2. Enregistre l'agent auprès de Hasfy (`POST /api/v1/installer/register`)
+3. L'équipement apparaît comme "connecté" dans le dashboard
+
+## Gestion du status
+
+Le composant `AgentStatus` affiche en temps réel :
+- **État** : Installé / Non installé / En cours
+- **Santé** : Healthy / Degraded / Failed
+- **Version** : Version d'Elastic Agent
+- **Fleet Status** : Connected / Disconnected
+- **Agent ID** : Identifiant unique
+- **Composants** : Liste des composants actifs
+
+## Désinstallation
+
+La commande `uninstall_agent` :
+1. Notifie l'API Hasfy de la désinstallation
+2. Exécute `elastic-agent uninstall --force`
+3. Nettoie les informations locales
+4. L'équipement passe en état "déconnecté" dans le dashboard
+
+## Sécurité
+
+- **Tokens single-use** : Chaque token ne peut être utilisé qu'une seule fois
+- **Expiration** : Tokens valides 30 minutes maximum
+- **TLS** : Toutes les communications chiffrées (HTTPS/TLS)
+- **CSP Tauri** : `connect-src` restreint à `app.hasfy.fr` et `fleet.hasfy.fr`
+- **Pas de stockage de secrets** : Les Fleet credentials sont utilisées immédiatement, jamais stockées
+
+## Configuration développeur
+
+```bash
+# Clone et installation
+git clone https://github.com/HasfyFR/hasfy-agent.git
+cd hasfy-agent && pnpm install
+
+# Mode développement
+pnpm tauri dev
+
+# Build production
+pnpm tauri build
+```
+
+Variables d'environnement (.env) :
+```
+VITE_API_BASE_URL=http://localhost:3000
+VITE_API_PRODUCTION_URL=https://app.hasfy.fr
+VITE_ENABLE_DEV_TOOLS=true
+```
+
+## API Endpoints utilisés
+
+| Endpoint | Méthode | Description |
+|----------|---------|-------------|
+| `/api/v1/installer/credentials` | POST | Échanger token → Fleet credentials |
+| `/api/v1/installer/register` | POST | Enregistrer un agent installé |
+| `/api/v1/installer/health` | GET | Health check |
+| `/api/v1/installer/uninstall` | POST | Notifier désinstallation |

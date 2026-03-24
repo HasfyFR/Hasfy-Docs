@@ -1,0 +1,174 @@
+---
+title: Architecture Frontend — Hasfy-App
+description: Organisation des composants, hooks, state management et patterns UI de Hasfy-App.
+---
+
+# Architecture Frontend
+
+## Stack UI
+
+| Technologie | Usage |
+|------------|-------|
+| **React 18** | Framework UI |
+| **Next.js 15** | App Router, Server Components, Server Actions |
+| **Tailwind CSS** | Styling utility-first |
+| **shadcn/ui** | Composants Radix + Tailwind |
+| **TanStack Query** | State management serveur, cache |
+| **TanStack Table** | Tables de données avancées |
+| **Framer Motion** | Animations (onboarding) |
+| **Resend** | Templates emails (React Email) |
+
+## Organisation des composants
+
+Les composants sont organisés **par domaine métier** à la racine du repository :
+
+```
+components/
+├── ui/                    # Primitives shadcn/ui (Button, Card, Input, Dialog...)
+├── equipments/            # Composants équipements
+│   ├── equipment-table.tsx
+│   ├── equipment-detail.tsx
+│   ├── equipment-form.tsx
+│   └── equipment-metrics.tsx
+├── dashboard/             # Composants dashboard
+│   ├── stat-card.tsx
+│   ├── activity-feed.tsx
+│   └── health-overview.tsx
+├── tickets/               # Composants ticketing
+│   ├── ticket-list.tsx
+│   ├── ticket-detail.tsx
+│   ├── ticket-chat.tsx
+│   └── ticket-form.tsx
+├── onboarding/            # Wizard d'onboarding
+│   ├── onboarding-sidebar.tsx
+│   ├── context-questions.tsx
+│   └── step-components/
+├── emails/                # Templates React Email (Resend)
+│   ├── client-invitation-email.tsx
+│   └── ...
+└── ...
+```
+
+## State Management
+
+### Principe : Pas de store global
+
+Hasfy n'utilise **ni Redux, ni Zustand, ni aucun state manager global**. Tout le state serveur est géré via **TanStack Query** :
+
+- **Cache automatique** avec invalidation intelligente
+- **Optimistic updates** pour une UX réactive
+- **Background refetching** pour garder les données fraîches
+- **Error boundaries** et retry automatique
+
+### Structure des hooks
+
+```
+hooks/
+├── auth/
+│   ├── use-auth-query.ts        # Wrapper générique queries auth
+│   ├── useInviteUser.ts         # Invitation via API route
+│   ├── useUserManagement.ts     # Gestion comptes via API route
+│   └── useUsers.ts              # Liste membres via RPC
+├── equipment/
+│   ├── apiClient.ts             # Client API centralisé
+│   ├── queryKeys.ts             # Clés de cache standardisées
+│   ├── useEquipments.ts         # CRUD équipements via RLS
+│   ├── useEquipmentHooks.ts     # Hooks consolidés (metrics, health)
+│   ├── useEquipmentMetrics.ts   # Métriques via API route
+│   ├── useInstaller.ts          # Installation via API route
+│   ├── useOsqueryPack.ts        # Osquery via API route
+│   └── useSecurityHealthStatus.ts
+├── ticket/
+│   ├── useTechnicians.ts        # Liste techniciens via RLS
+│   ├── useTickets.ts            # CRUD tickets via RLS
+│   ├── useTicketMessages.ts     # Chat temps réel via RLS
+│   ├── useTicketNotes.ts        # Notes internes via RLS
+│   └── useTicketTable.ts        # État table + filtres
+├── notification/
+│   └── use-create-notification.ts
+├── onboarding/
+│   └── useOnboarding.ts         # Toutes les étapes via API routes
+├── organization/
+│   └── useOrganization.ts       # Info Fleet via API route
+├── useDashboardStats.ts         # Stats dashboard via RLS
+├── useSearch.ts                 # Recherche globale via RLS
+└── use-toast.ts                 # Toast notifications UI
+```
+
+### Pattern de hook standard
+
+```typescript
+// Exemple : hooks/equipment/useEquipments.ts
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from './queryKeys';
+
+export function useEquipments() {
+  return useQuery({
+    queryKey: queryKeys.equipments.all,
+    queryFn: async () => {
+      const res = await fetch('/api/private/equipment');
+      if (!res.ok) throw new Error('Failed to fetch');
+      return res.json();
+    },
+  });
+}
+
+export function useCreateEquipment() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: CreateEquipmentInput) => {
+      const res = await fetch('/api/private/equipment', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.equipments.all });
+    },
+  });
+}
+```
+
+### Sécurité des hooks
+
+Règles strictes appliquées :
+- **Jamais de `service_role_key`** dans les hooks — uniquement `anon_key` via RLS
+- Les hooks qui nécessitent des opérations admin passent par les **API routes** privées
+- Les mutations sensibles (invite, deactivate, delete user) passent **toujours** par l'API, jamais par Supabase directement
+
+## Tables de données
+
+TanStack Table est utilisé pour toutes les listes de données avec :
+- Tri multi-colonnes
+- Filtres avancés
+- Pagination serveur
+- Sélection en masse
+- Export CSV
+- Colonnes redimensionnables
+
+## Flow d'authentification
+
+1. **Login** : Email/password ou Magic Link via Supabase Auth
+2. **Callback** : `auth/callback` échange le code contre une session
+3. **Middleware** : Vérifie la session sur chaque route protégée
+4. **Onboarding** : Si le profil est incomplet, redirection vers le wizard
+5. **App Shell** : Layout principal avec sidebar, header, notifications
+
+## Onboarding
+
+Le wizard d'onboarding comprend :
+1. **Questions de calibration** — Rôle, taille d'équipe, objectifs
+2. **Profil** — Nom, avatar
+3. **Organisation** — Nom de la société, secteur
+4. **Équipe** — Invitation de membres
+5. **Premier équipement** — Installation de l'agent
+
+Chaque étape est sauvegardée côté serveur. L'utilisateur peut reprendre là où il s'est arrêté.
+
+## Performance
+
+- **Server Components** par défaut (pas de JS envoyé au client sauf nécessité)
+- **Streaming** via les Suspense boundaries
+- **Image optimization** via `next/image`
+- **Bundle analysis** dans le CI pour détecter les régressions

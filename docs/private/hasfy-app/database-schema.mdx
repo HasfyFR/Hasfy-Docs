@@ -1,0 +1,235 @@
+---
+title: Schéma de base de données — Hasfy-App
+description: Documentation complète du schéma PostgreSQL Supabase, tables, relations et politiques RLS.
+---
+
+# Schéma de base de données
+
+## Vue d'ensemble
+
+Hasfy utilise **Supabase** (PostgreSQL) comme base de données principale. L'architecture repose sur Row Level Security (RLS) pour isoler les données par organisation.
+
+## Tables principales
+
+### 1. Authentification et utilisateurs
+
+#### `profiles`
+
+Extension de `auth.users` de Supabase. Contient les informations utilisateur métier.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK, FK → auth.users) | ID utilisateur Supabase |
+| `email` | text | Email de l'utilisateur |
+| `full_name` | text | Nom complet |
+| `avatar_url` | text | URL de l'avatar (Supabase Storage) |
+| `role` | text | Rôle dans l'organisation |
+| `created_at` | timestamptz | Date de création |
+| `updated_at` | timestamptz | Dernière mise à jour |
+
+#### `roles`
+
+Définition des rôles disponibles dans le système.
+
+| Rôle | Description | Permissions |
+|------|-------------|-------------|
+| `owner` | Propriétaire de l'organisation | Accès complet, gestion billing |
+| `admin` | Administrateur | CRUD complet, gestion utilisateurs |
+| `technician` | Technicien | Gestion tickets et équipements |
+| `employee` | Employé/Client | Création tickets, vue équipements |
+
+#### `organization_users`
+
+Table de liaison entre utilisateurs et organisations avec le rôle.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `user_id` | uuid (FK → profiles) | Utilisateur |
+| `organization_id` | uuid (FK → organizations) | Organisation |
+| `role` | text | Rôle dans cette organisation |
+| `invited_by` | uuid | Qui a invité |
+| `invited_at` | timestamptz | Date d'invitation |
+| `joined_at` | timestamptz | Date d'acceptation |
+
+### 2. Organisations et abonnements
+
+#### `organizations`
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `name` | text | Nom de l'organisation |
+| `slug` | text (unique) | Identifiant URL |
+| `logo_url` | text | Logo |
+| `stripe_customer_id` | text | ID client Stripe |
+| `stripe_subscription_id` | text | ID abonnement Stripe |
+| `plan_id` | uuid (FK → plans) | Plan actuel |
+| `subscription_status` | text | Status (active, trialing, past_due) |
+| `fleet_enrollment_token` | text | Token Fleet encrypté |
+| `fleet_policy_id` | text | ID politique Fleet |
+| `elasticsearch_username` | text | User Elasticsearch dédié |
+
+#### `plans`
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `name` | text | Nom du plan (Starter, Pro, Enterprise) |
+| `stripe_price_id` | text | ID prix Stripe |
+| `price_monthly` | numeric | Prix mensuel par siège |
+| `max_users` | integer | Limite d'utilisateurs |
+| `max_devices_per_user` | integer | Limite d'appareils par utilisateur |
+| `features` | jsonb | Features activées |
+
+### 3. Équipements et assets IT
+
+#### `equipments`
+
+Table principale de gestion des assets IT.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `organization_id` | uuid (FK) | Organisation propriétaire |
+| `name` | text | Nom de l'équipement |
+| `type` | text | Type (laptop, desktop, server, mobile) |
+| `serial_number` | text | Numéro de série |
+| `manufacturer` | text | Fabricant |
+| `model` | text | Modèle |
+| `os` | text | Système d'exploitation |
+| `os_version` | text | Version OS |
+| `assigned_to` | uuid (FK → profiles) | Utilisateur assigné |
+| `status` | text | État (active, maintenance, retired) |
+| `agent_id` | text | ID Elastic Agent |
+| `agent_status` | text | État de l'agent (connected, disconnected) |
+| `last_seen` | timestamptz | Dernier contact de l'agent |
+| `tags` | text[] | Tags de classification |
+| `location` | text | Localisation physique |
+| `purchase_date` | date | Date d'achat |
+| `warranty_expiry` | date | Expiration garantie |
+| `notes` | text | Notes internes |
+| `metadata` | jsonb | Métadonnées additionnelles |
+
+### 4. Système de ticketing
+
+#### `tickets`
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `organization_id` | uuid (FK) | Organisation |
+| `title` | text | Titre du ticket |
+| `description` | text | Description détaillée |
+| `status` | text | État (open, in_progress, waiting, resolved, closed) |
+| `priority` | text | Priorité (low, medium, high, critical) |
+| `category` | text | Catégorie |
+| `created_by` | uuid (FK → profiles) | Créateur |
+| `assigned_to` | uuid (FK → profiles) | Technicien assigné |
+| `equipment_id` | uuid (FK → equipments) | Équipement concerné |
+| `resolved_at` | timestamptz | Date de résolution |
+| `sla_deadline` | timestamptz | Deadline SLA |
+
+#### `ticket_messages`
+
+Système de conversation sur les tickets.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `ticket_id` | uuid (FK → tickets) | Ticket parent |
+| `author_id` | uuid (FK → profiles) | Auteur du message |
+| `content` | text | Contenu du message |
+| `is_internal` | boolean | Note interne (invisible au client) |
+| `attachments` | jsonb | Pièces jointes |
+| `created_at` | timestamptz | Date de création |
+
+#### `ticket_technicians`
+
+Assignation multiple de techniciens.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `ticket_id` | uuid (FK → tickets) | Ticket |
+| `technician_id` | uuid (FK → profiles) | Technicien |
+| `assigned_at` | timestamptz | Date d'assignation |
+
+### 5. Clés API
+
+#### `api_keys`
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `organization_id` | uuid (FK) | Organisation |
+| `name` | text | Nom descriptif |
+| `key` | text (unique) | Clé API hashée |
+| `prefix` | text | Préfixe visible (hfk_...) |
+| `is_active` | boolean | Active ou révoquée |
+| `last_used_at` | timestamptz | Dernière utilisation |
+| `created_by` | uuid (FK → profiles) | Créateur |
+| `expires_at` | timestamptz | Date d'expiration |
+
+### 6. Logging et métriques
+
+#### `audit_logs`
+
+Journal d'audit de toutes les actions.
+
+| Colonne | Type | Description |
+|---------|------|-------------|
+| `id` | uuid (PK) | ID unique |
+| `organization_id` | uuid (FK) | Organisation |
+| `user_id` | uuid (FK → profiles) | Utilisateur |
+| `action` | text | Type d'action (create, update, delete) |
+| `resource_type` | text | Type de ressource |
+| `resource_id` | uuid | ID de la ressource |
+| `details` | jsonb | Détails de l'action |
+| `ip_address` | inet | Adresse IP |
+| `created_at` | timestamptz | Timestamp |
+
+## Row Level Security (RLS)
+
+Toutes les tables ont RLS activé. Les politiques isolent les données par organisation :
+
+```sql
+-- Exemple de politique RLS sur equipments
+CREATE POLICY "Users can view own org equipments"
+  ON equipments FOR SELECT
+  USING (
+    organization_id IN (
+      SELECT organization_id FROM organization_users
+      WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Admins can insert equipments"
+  ON equipments FOR INSERT
+  WITH CHECK (
+    organization_id IN (
+      SELECT organization_id FROM organization_users
+      WHERE user_id = auth.uid()
+      AND role IN ('owner', 'admin', 'technician')
+    )
+  );
+```
+
+## Stockage Supabase
+
+| Bucket | Accès | Contenu |
+|--------|-------|---------|
+| `avatars` | Authentifié | Photos de profil |
+| `organization-assets` | Authentifié (par org) | Logos, documents |
+| `ticket-attachments` | Authentifié (par org) | Pièces jointes tickets |
+
+## Données dans Elasticsearch
+
+Les métriques agents ne sont **pas** stockées dans PostgreSQL mais dans Elasticsearch :
+
+- **Métriques système** : CPU, RAM, disque, réseau
+- **Processus** : Liste des processus actifs
+- **Sécurité** : Alertes et événements
+- **Logs** : Logs système collectés
+- **Santé** : État général de l'équipement
+
+L'accès se fait via les indices Elasticsearch, filtré par `organization_id` dans les tags de l'agent.

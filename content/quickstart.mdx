@@ -1,0 +1,124 @@
+---
+title: Quick Start — Démarrage rapide
+description: Guide pas à pas pour créer votre compte Hasfy, configurer votre organisation, ajouter votre premier équipement et installer l'agent de supervision.
+---
+
+# Quick Start — Démarrage rapide
+
+Ce guide vous accompagne de la création de votre compte jusqu'à la visualisation de vos premières métriques de supervision. Comptez environ **10 minutes** pour compléter l'ensemble des étapes.
+
+## Prérequis
+
+Avant de commencer, assurez-vous de disposer de :
+
+- Une adresse email professionnelle valide
+- Un navigateur web moderne (Chrome, Firefox, Safari, Edge)
+- Un poste de travail (Windows 10+, macOS 12+ ou Linux) pour l'installation de l'agent *(optionnel pour cette première prise en main)*
+
+## Étape 1 : Créer votre compte
+
+1. Rendez-vous sur **[app.hasfy.fr](https://app.hasfy.fr)** et cliquez sur **« Créer un compte »**
+2. Saisissez votre **adresse email** et choisissez un **mot de passe sécurisé** (minimum 8 caractères, incluant majuscule, minuscule et chiffre)
+3. Vous pouvez également vous inscrire via un **lien magique** (magic link) envoyé par email — aucun mot de passe nécessaire dans ce cas
+4. Validez votre inscription en cliquant sur le lien de confirmation reçu par email
+5. Vous êtes redirigé vers l'écran d'onboarding
+
+> **Astuce** : Le lien magique est particulièrement pratique pour une première connexion rapide. Vous pourrez configurer un mot de passe définitif ultérieurement dans les paramètres de votre compte.
+
+## Étape 2 : Compléter l'onboarding
+
+L'onboarding Hasfy vous guide dans la configuration initiale de votre espace de travail :
+
+1. **Informations personnelles** : complétez votre nom, prénom et téléphone de contact
+2. **Création de l'organisation** : donnez un nom à votre organisation (ex. « Acme Corp IT ») et renseignez son secteur d'activité
+3. **Questions de calibrage** : répondez à quelques questions sur la taille de votre parc informatique, vos besoins prioritaires et votre niveau d'expérience. Ces réponses permettent à Hasfy de personnaliser votre expérience
+4. **Photo de profil** *(optionnel)* : uploadez un avatar pour personnaliser votre compte
+5. Cliquez sur **« Terminer la configuration »**
+
+Vous accédez alors au **tableau de bord** de votre organisation, prêt à être alimenté.
+
+## Étape 3 : Ajouter votre premier équipement
+
+Depuis le tableau de bord, accédez au module **Équipements** :
+
+1. Cliquez sur le bouton **« + Ajouter un équipement »** en haut à droite
+2. Remplissez les informations de base :
+   - **Nom** : un identifiant parlant (ex. « PC-Bureau-Martin », « Serveur-Prod-01 »)
+   - **Type** : sélectionnez le type d'équipement (Poste de travail, Serveur, Imprimante, Réseau, Mobile, Autre)
+   - **Système d'exploitation** : Windows, macOS, Linux ou Autre
+   - **Numéro de série** *(optionnel)* : le numéro de série du fabricant
+   - **Assignation** *(optionnel)* : attribuez l'équipement à un utilisateur de votre organisation
+3. Ajoutez des **tags** pour faciliter le filtrage (ex. « Comptabilité », « Salle serveur », « Critique »)
+4. Cliquez sur **« Enregistrer »**
+
+L'équipement apparaît désormais dans votre inventaire avec le statut **« Actif — En attente d'agent »**.
+
+> **Note** : Vous pouvez ajouter des équipements manuellement même sans installer l'agent. L'inventaire fonctionnera alors comme un registre statique. L'agent apporte la dimension de supervision en temps réel.
+
+## Étape 4 : Installer l'agent Hasfy
+
+L'agent Hasfy est un logiciel léger qui s'installe sur chaque machine que vous souhaitez superviser. Il remonte automatiquement les métriques système vers votre tableau de bord.
+
+### Téléchargement
+
+1. Depuis la fiche de l'équipement, cliquez sur **« Installer l'agent »**, ou rendez-vous dans **Paramètres &gt; Agents &gt; Télécharger**
+2. Sélectionnez le **système d'exploitation** de la machine cible :
+   - **Windows** : installateur `.exe` (compatible Windows 10 et supérieur)
+   - **macOS** : installateur `.dmg` (compatible macOS 12 Monterey et supérieur)
+   - **Linux** : paquet `.deb` (Debian/Ubuntu) ou `.rpm` (RHEL/Fedora)
+
+### Installation
+
+**Sur Windows :**
+1. Exécutez le fichier `.exe` téléchargé
+2. Suivez l'assistant d'installation (acceptez les conditions, choisissez le dossier d'installation)
+3. À l'étape « Configuration », collez la **clé d'enrôlement** fournie par Hasfy
+4. L'agent démarre automatiquement en tant que service Windows
+
+**Sur macOS :**
+1. Ouvrez le fichier `.dmg` et glissez l'application dans le dossier Applications
+2. Lancez l'application — elle vous demandera la **clé d'enrôlement**
+3. Autorisez les permissions système demandées (accès disque, réseau)
+4. L'agent s'exécute en arrière-plan et démarre automatiquement au boot
+
+**Sur Linux :**
+```bash
+# Debian/Ubuntu
+sudo dpkg -i hasfy-agent_latest_amd64.deb
+sudo hasfy-agent enroll --key VOTRE_CLE_DENROLEMENT
+sudo systemctl enable --now hasfy-agent
+
+# RHEL/Fedora
+sudo rpm -i hasfy-agent_latest_x86_64.rpm
+sudo hasfy-agent enroll --key VOTRE_CLE_DENROLEMENT
+sudo systemctl enable --now hasfy-agent
+```
+
+### Vérification
+
+Après l'installation, retournez sur Hasfy :
+1. Ouvrez la fiche de l'équipement concerné
+2. Le statut passe de **« En attente d'agent »** à **« Agent connecté »** (indicateur vert)
+3. Les premières métriques apparaissent sous quelques secondes : CPU, RAM, espace disque, réseau
+
+## Étape 5 : Explorer le tableau de bord
+
+Rendez-vous sur la page **Tableau de bord** pour visualiser vos données :
+
+- **Cartes de synthèse** : nombre total d'équipements, équipements en ligne, alertes actives, tickets ouverts
+- **Graphique de santé** : état global du parc (normal, avertissement, critique)
+- **Métriques temps réel** : utilisation CPU, RAM et disque de vos machines supervisées
+- **Activité récente** : dernières actions effectuées dans votre organisation
+
+## Et ensuite ?
+
+Vous avez maintenant un compte Hasfy opérationnel avec votre premier équipement supervisé. Voici les prochaines étapes recommandées :
+
+| Action | Guide |
+|--------|-------|
+| Inviter votre équipe | [Gestion des utilisateurs](/settings-security/usermanagment) |
+| Configurer les notifications | [Notifications](/core-features/notifications) |
+| Créer votre premier ticket | [Assistance & Tickets](/core-features/assistance) |
+| Personnaliser votre tableau de bord | [KPIs & Dashboard](/core-features/kpis) |
+| Activer l'authentification 2FA | [Authentification multi-facteurs](/settings-security/mfas) |
+| Explorer les plans tarifaires | [Tarification](/pricing) |

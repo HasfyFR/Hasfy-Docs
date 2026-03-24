@@ -1,0 +1,193 @@
+---
+title: Gestion des équipements
+description: Gérez l'inventaire complet de votre parc informatique avec Hasfy — ajout, édition, tags, cycle de vie, métriques de santé et opérations en masse.
+---
+
+# Gestion des équipements
+
+Le module **Équipements** est le cœur de Hasfy. Il centralise l'inventaire de tous vos actifs informatiques et offre une vision complète de leur état, de leur historique et de leurs métriques de performance.
+
+## Vue d'ensemble
+
+La page principale du module affiche la liste de tous les équipements de votre organisation sous forme de **tableau interactif** :
+
+| Colonne | Description |
+|---------|-------------|
+| **Nom** | Identifiant de l'équipement (lien vers sa fiche détaillée) |
+| **Type** | Poste de travail, Serveur, Imprimante, Réseau, Mobile, Autre |
+| **Statut** | Actif, En maintenance, Retiré, En attente d'agent |
+| **OS** | Système d'exploitation détecté ou renseigné |
+| **Assigné à** | Utilisateur responsable de l'équipement |
+| **Agent** | Indicateur de connexion de l'agent (vert/rouge/gris) |
+| **Santé** | Indicateur de santé basé sur les métriques (bon, avertissement, critique) |
+| **Dernière activité** | Date de la dernière métrique ou action |
+
+### Filtrage et recherche
+
+Utilisez la barre de recherche et les filtres pour retrouver rapidement un équipement :
+
+- **Recherche textuelle** : par nom, numéro de série, adresse IP ou nom d'utilisateur assigné
+- **Filtre par type** : affichez uniquement les postes de travail, serveurs, etc.
+- **Filtre par statut** : Actif, En maintenance, Retiré
+- **Filtre par tags** : sélectionnez un ou plusieurs tags
+- **Filtre par santé** : Normal, Avertissement, Critique
+- **Filtre par agent** : Connecté, Déconnecté, Non installé
+
+Les filtres sont combinables et persistent pendant votre session de navigation.
+
+### Tri
+
+Cliquez sur l'en-tête de n'importe quelle colonne pour trier la liste par ordre croissant ou décroissant. Le tri par défaut est alphabétique sur le nom.
+
+## Ajouter un équipement
+
+### Ajout unitaire
+
+1. Cliquez sur **« + Ajouter un équipement »** dans le coin supérieur droit
+2. Remplissez le formulaire :
+
+**Informations essentielles :**
+- **Nom** *(obligatoire)* : identifiant parlant (ex. « PC-RH-001 », « SRV-PROD-02 »)
+- **Type** *(obligatoire)* : sélectionnez dans la liste (Poste de travail, Serveur, Imprimante, Réseau, Mobile, Autre)
+- **Système d'exploitation** : Windows, macOS, Linux, iOS, Android, Autre, N/A
+
+**Informations complémentaires :**
+- **Numéro de série** : numéro du fabricant pour le suivi d'inventaire
+- **Fabricant** : Dell, HP, Lenovo, Apple, etc.
+- **Modèle** : référence exacte du modèle
+- **Date d'achat** : pour le suivi du cycle de vie et des garanties
+- **Date de fin de garantie** : Hasfy vous alertera avant l'expiration
+- **Localisation** : bâtiment, étage, salle (texte libre)
+- **Adresse IP** : adresse réseau si connue
+
+**Assignation :**
+- **Assigné à** : sélectionnez un utilisateur de votre organisation
+- **Service / Département** : texte libre ou sélection si des départements sont configurés
+
+**Tags :**
+- Ajoutez un ou plusieurs tags pour la catégorisation (ex. « Critique », « Comptabilité », « Salle serveur »)
+- Créez de nouveaux tags à la volée en saisissant leur nom
+
+3. Cliquez sur **« Enregistrer »**
+
+### Import en masse (CSV)
+
+Pour importer un grand nombre d'équipements :
+
+1. Cliquez sur **« Importer »** dans le menu d'actions
+2. Téléchargez le **modèle CSV** fourni par Hasfy
+3. Remplissez le fichier CSV avec vos données (une ligne par équipement)
+4. Uploadez le fichier complété
+5. Hasfy affiche un **aperçu** des données à importer avec la détection des erreurs
+6. Corrigez les éventuelles erreurs signalées
+7. Cliquez sur **« Importer X équipements »**
+
+Le modèle CSV inclut les colonnes : `nom`, `type`, `os`, `numero_serie`, `fabricant`, `modele`, `date_achat`, `localisation`, `assigne_a_email`, `tags`.
+
+## Fiche détaillée d'un équipement
+
+Cliquez sur le nom d'un équipement pour accéder à sa fiche complète, organisée en onglets :
+
+### Onglet Général
+
+- Toutes les informations saisies lors de la création
+- Bouton **« Modifier »** pour éditer les champs
+- Statut actuel avec possibilité de changement
+- QR code unique de l'équipement (imprimable pour l'étiquetage physique)
+
+### Onglet Métriques (Agent requis)
+
+Lorsque l'agent Hasfy est installé et connecté, cet onglet affiche les métriques en temps réel :
+
+- **CPU** : utilisation en pourcentage avec graphique sur 24h/7j/30j
+- **Mémoire RAM** : utilisation et capacité totale
+- **Disque** : espace utilisé, espace libre, taux d'occupation par partition
+- **Réseau** : bande passante entrante/sortante, latence
+- **Uptime** : durée depuis le dernier redémarrage
+- **Processus** : liste des processus les plus consommateurs
+
+Les graphiques permettent de zoomer sur une période spécifique et d'identifier les pics d'utilisation.
+
+### Onglet Historique
+
+L'historique chronologique de toutes les actions liées à l'équipement :
+
+- Création et modifications de la fiche
+- Changements de statut
+- Assignations et réassignations
+- Tickets associés (avec lien direct)
+- Alertes de monitoring déclenchées
+- Installations et mises à jour de l'agent
+
+### Onglet Tickets
+
+Liste de tous les tickets liés à cet équipement, filtrables par statut (ouverts, résolus, tous). Possibilité de créer un nouveau ticket directement lié à l'équipement via le bouton **« Créer un ticket »**.
+
+## Cycle de vie des équipements
+
+Chaque équipement suit un cycle de vie défini par son statut :
+
+```
+Actif → En maintenance → Actif (retour en service)
+Actif → Retiré (fin de vie)
+En maintenance → Retiré (irréparable)
+```
+
+### Statuts disponibles
+
+| Statut | Description | Couleur |
+|--------|-------------|---------|
+| **Actif** | Équipement en service, opérationnel | 🟢 Vert |
+| **En maintenance** | Équipement temporairement hors service pour réparation ou mise à jour | 🟠 Orange |
+| **Retiré** | Équipement définitivement hors service (recyclé, vendu, détruit) | 🔴 Rouge |
+| **En attente d'agent** | Équipement enregistré mais agent non encore installé | ⚪ Gris |
+
+Pour changer le statut d'un équipement :
+1. Ouvrez la fiche de l'équipement
+2. Cliquez sur le badge de statut actuel
+3. Sélectionnez le nouveau statut
+4. Ajoutez un **commentaire** *(optionnel mais recommandé)* pour tracer la raison du changement
+5. Confirmez
+
+## Tags et organisation
+
+Les tags permettent de catégoriser vos équipements au-delà de la classification par type :
+
+### Exemples de stratégies de tagging
+
+- **Par département** : Comptabilité, RH, Direction, R&D
+- **Par criticité** : Critique, Important, Standard
+- **Par localisation** : Bâtiment A, Étage 2, Salle serveur
+- **Par projet** : Migration 2025, Nouveau site
+- **Par contrat** : Garantie, Leasing, Propriété
+
+### Gestion des tags
+
+- Créez des tags en les saisissant lors de l'édition d'un équipement
+- Gérez la liste complète des tags depuis **Paramètres &gt; Tags**
+- Attribuez des couleurs aux tags pour une identification visuelle rapide
+- Supprimez les tags inutilisés pour garder votre liste propre
+
+## Opérations en masse
+
+Sélectionnez plusieurs équipements via les cases à cocher pour effectuer des actions groupées :
+
+- **Changer le statut** : passer tous les équipements sélectionnés à un même statut
+- **Assigner** : attribuer les équipements à un utilisateur
+- **Ajouter des tags** : appliquer un ou plusieurs tags à la sélection
+- **Exporter** : télécharger un fichier CSV des équipements sélectionnés
+- **Supprimer** : supprimer définitivement les équipements sélectionnés (action irréversible)
+
+> **Attention** : La suppression d'un équipement est définitive. L'historique, les métriques et les tickets associés seront conservés mais l'équipement ne sera plus accessible. Préférez le statut « Retiré » pour conserver la traçabilité.
+
+## Export de données
+
+Exportez vos données d'inventaire à tout moment :
+
+1. Depuis la liste des équipements, cliquez sur **« Exporter »**
+2. Choisissez le format : **CSV** ou **PDF**
+3. Sélectionnez les colonnes à inclure
+4. Appliquez éventuellement des filtres (seuls les équipements filtrés seront exportés)
+5. Cliquez sur **« Télécharger »**
+
+L'export CSV est compatible avec Excel, Google Sheets et tous les outils de tableur courants. L'export PDF génère un rapport formaté prêt à être partagé.

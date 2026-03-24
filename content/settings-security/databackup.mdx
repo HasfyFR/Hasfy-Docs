@@ -1,0 +1,169 @@
+---
+title: Données & Sauvegardes
+description: Politique de stockage des données, sauvegardes automatiques, export de données, rétention et conformité RGPD de la plateforme Hasfy.
+---
+
+# Données & Sauvegardes
+
+Hasfy prend la protection de vos données au sérieux. Cette page détaille comment vos données sont stockées, sauvegardées, exportées et protégées, en conformité avec la réglementation européenne.
+
+## Stockage des données
+
+### Localisation
+
+Toutes les données de Hasfy sont hébergées sur des **serveurs situés en France**, conformément aux exigences de souveraineté des données :
+
+- **Base de données** : PostgreSQL hébergé via Supabase, datacenter européen
+- **Fichiers et pièces jointes** : Supabase Storage avec réplication
+- **Métriques de monitoring** : Elasticsearch pour les données de supervision remontées par les agents
+- **Sauvegardes** : stockage géographiquement séparé pour la résilience
+
+### Types de données stockées
+
+| Catégorie | Données | Durée de rétention |
+|-----------|---------|-------------------|
+| **Profils utilisateurs** | Nom, email, avatar, rôle | Durée du compte |
+| **Organisation** | Nom, paramètres, configuration | Durée de l'abonnement |
+| **Équipements** | Fiches, caractéristiques, tags | Durée de l'abonnement |
+| **Tickets** | Contenu, conversations, pièces jointes | Durée de l'abonnement |
+| **Métriques** | CPU, RAM, disque, réseau (via agent) | 90 jours (Starter), 1 an (Pro), 2 ans (Enterprise) |
+| **Logs d'audit** | Actions utilisateurs, modifications | 1 an (Pro), 3 ans (Enterprise) |
+| **Événements calendrier** | Interventions, maintenances | Durée de l'abonnement |
+| **Factures** | Historique de facturation | 10 ans (obligation légale) |
+
+### Chiffrement
+
+- **En transit** : toutes les communications entre votre navigateur, l'agent et les serveurs Hasfy sont chiffrées via **TLS 1.3**
+- **Au repos** : les données sont chiffrées au repos avec **AES-256** sur les volumes de stockage
+- **Pièces jointes** : les fichiers uploadés sont chiffrés individuellement avant stockage
+
+## Sauvegardes automatiques
+
+### Politique de sauvegarde
+
+Hasfy effectue des sauvegardes automatiques à plusieurs niveaux :
+
+| Type de sauvegarde | Fréquence | Rétention | Délai de restauration |
+|-------------------|-----------|-----------|----------------------|
+| **Snapshot base de données** | Toutes les 6 heures | 7 jours | &lt; 1 heure |
+| **Sauvegarde complète** | Quotidienne (02:00 UTC) | 30 jours | &lt; 4 heures |
+| **Sauvegarde hebdomadaire** | Chaque dimanche | 12 semaines | &lt; 8 heures |
+| **Sauvegarde mensuelle** | 1er du mois | 12 mois | &lt; 12 heures |
+| **Fichiers et pièces jointes** | Continue (réplication) | Identique aux données | &lt; 1 heure |
+
+### Vérification des sauvegardes
+
+Les sauvegardes sont **testées automatiquement** chaque semaine :
+- Restauration sur un environnement de test
+- Vérification de l'intégrité des données
+- Rapport de validation envoyé à l'équipe infrastructure Hasfy
+
+### Restauration
+
+En cas de besoin de restauration (perte de données accidentelle, corruption) :
+
+1. Contactez le support Hasfy via **support@hasfy.fr** ou depuis l'interface
+2. Précisez la **nature de la perte** et la **date approximative** de la dernière version correcte
+3. L'équipe Hasfy procède à l'analyse et propose une restauration
+4. Après validation, les données sont restaurées dans les délais indiqués ci-dessus
+
+> **Plan Enterprise** : Les clients Enterprise disposent d'un accès à la restauration en self-service pour les snapshots des 24 dernières heures, directement depuis **Paramètres &gt; Données &gt; Restauration**.
+
+## Export de données
+
+### Export depuis l'interface
+
+Vous pouvez exporter vos données à tout moment depuis l'interface Hasfy :
+
+| Données | Format | Accès |
+|---------|--------|-------|
+| Équipements | CSV, PDF | Paramètres &gt; Données &gt; Export |
+| Tickets | CSV, PDF | Paramètres &gt; Données &gt; Export |
+| Métriques de monitoring | CSV | Paramètres &gt; Données &gt; Export |
+| Utilisateurs | CSV | Paramètres &gt; Données &gt; Export |
+| Logs d'audit | CSV | Paramètres &gt; Données &gt; Export |
+| Rapport complet | ZIP (CSV + fichiers) | Paramètres &gt; Données &gt; Export complet |
+
+### Export complet (portabilité)
+
+Conformément au RGPD, vous pouvez demander un **export complet** de toutes vos données :
+
+1. Accédez à **Paramètres &gt; Données &gt; Export complet**
+2. Cliquez sur **« Demander un export complet »**
+3. Hasfy prépare une archive ZIP contenant toutes vos données en format ouvert (CSV, JSON)
+4. Vous recevez un email avec un lien de téléchargement sécurisé (valide 48 heures)
+
+Le délai de préparation dépend du volume de données (généralement 1 à 24 heures).
+
+### Export via API
+
+L'API REST de Hasfy permet d'exporter les données par programmation. Consultez la [documentation API](/api) pour les endpoints disponibles.
+
+## Rétention des données
+
+### Politique de rétention active
+
+Tant que votre abonnement est actif, toutes vos données sont conservées selon les durées indiquées dans le tableau de stockage ci-dessus. Les métriques de monitoring anciennes sont automatiquement archivées puis supprimées selon votre plan.
+
+### Après résiliation
+
+En cas de résiliation de l'abonnement :
+
+| Étape | Délai | Action |
+|-------|-------|--------|
+| Résiliation | J | Accès en lecture seule pendant 30 jours |
+| J+30 | Fin de l'accès | Plus de connexion possible |
+| J+60 | Suppression des données | Suppression définitive et irréversible |
+| Notification | J, J+15, J+25 | Rappels par email pour exporter vos données |
+
+> **Important** : Exportez vos données avant la fin du délai de grâce de 30 jours. Après suppression, les données ne sont pas récupérables.
+
+## Conformité RGPD
+
+Hasfy est conforme au **Règlement Général sur la Protection des Données (RGPD)** :
+
+### Droits des utilisateurs
+
+| Droit | Comment l'exercer |
+|-------|-------------------|
+| **Droit d'accès** | Paramètres &gt; Données &gt; Export complet |
+| **Droit de rectification** | Modification directe dans l'interface |
+| **Droit à l'effacement** | Paramètres &gt; Mon compte &gt; Supprimer mon compte |
+| **Droit à la portabilité** | Export complet en format ouvert (CSV, JSON) |
+| **Droit d'opposition** | Contact support@hasfy.fr |
+| **Droit de limitation** | Contact dpo@hasfy.fr |
+
+### Mesures techniques
+
+- **Minimisation des données** : Hasfy ne collecte que les données nécessaires au fonctionnement du service
+- **Pseudonymisation** : les métriques de monitoring sont associées à des identifiants techniques, non à des personnes
+- **Registre des traitements** : maintenu et disponible sur demande
+- **Analyse d'impact** (DPIA) : réalisée pour les traitements à risque
+- **DPO** : un Délégué à la Protection des Données est désigné et joignable à dpo@hasfy.fr
+
+### Sous-traitants
+
+| Sous-traitant | Usage | Localisation des données |
+|---------------|-------|-------------------------|
+| Supabase | Base de données, authentification, stockage | Europe |
+| Elastic | Monitoring et métriques | Europe |
+| Stripe | Paiements | Europe (avec transferts certifiés US) |
+| OVH | Hébergement | France |
+
+La liste complète des sous-traitants est disponible sur demande.
+
+## Suppression de données
+
+### Suppression de compte utilisateur
+
+La suppression d'un compte utilisateur entraîne :
+- Anonymisation de toutes les contributions (tickets, commentaires) : le nom est remplacé par « Utilisateur supprimé »
+- Suppression de toutes les données personnelles (profil, avatar)
+- Conservation des données d'activité anonymisées pour l'intégrité de l'historique
+
+### Suppression de l'organisation
+
+La suppression d'une organisation (Owner uniquement) entraîne :
+- Suppression de **toutes** les données : équipements, tickets, métriques, fichiers, audit
+- Suppression sous 30 jours (période de grâce pour annulation)
+- Confirmation par saisie du nom de l'organisation et code envoyé par email

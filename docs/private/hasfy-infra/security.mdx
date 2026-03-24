@@ -1,0 +1,788 @@
+# Sécurité - Elasticsearch sur GCP
+
+## 🔒 Vue d'ensemble de la sécurité
+
+Cette infrastructure implémente une défense en profondeur avec plusieurs couches de sécurité :
+
+1. **Réseau** : VPC isolé, firewall, Cloud NAT
+2. **Authentification** : TLS mutuel, tokens, RBAC
+3. **Chiffrement** : TLS/SSL, encryption at rest
+4. **Accès** : IAM GCP, Kubernetes RBAC, Elasticsearch Security
+5. **Audit** : Logging, monitoring, alertes
+
+---
+
+## 🛡️ Sécurité réseau
+
+### Architecture réseau
+
+```
+Internet
+   │
+   ├─→ Cloud Load Balancer (HTTPS only)
+   │      │
+   │      └─→ GKE Ingress
+   │             │
+   │             └─→ Services Kubernetes (ClusterIP)
+   │                    │
+   │                    └─→ Pods (réseau privé)
+   │
+   └─→ Cloud NAT ←─ Pods (egress seulement)
+```
+
+### VPC et Subnets
+
+**Configuration actuelle** :
+
+```hcl
+# VPC privé
+resource "google_compute_network" "vpc" {
+  name                    = "elastic-vpc"
+  auto_create_subnetworks = false
+}
+
+# Subnet GKE
+resource "google_compute_subnetwork" "subnet" {
+  name          = "elastic-subnet"
+  ip_cidr_range = "10.0.0.0/24"      # Pods et nodes
+  region        = "europe-west9"
+  
+  secondary_ip_range {
+    range_name    = "pods"
+    ip_cidr_range = "10.1.0.0/16"    # 65k pods
+  }
+  
+  secondary_ip_range {
+    range_name    = "services"
+    ip_cidr_range = "10.2.0.0/16"    # Services K8s
+  }
+}
+```
+
+### Firewall Rules
+
+**Règles essentielles** :
+
+```bash
+# 1. Deny all par défaut
+gcloud compute firewall-rules create deny-all-ingress \
+  --network=elastic-vpc \
+  --action=DENY \
+  --rules=all \
+  --source-ranges=0.0.0.0/0 \
+  --priority=65534 \
+  --direction=INGRESS
+
+# 2. Allow HTTPS depuis internet (Load Balancer)
+gcloud compute firewall-rules create allow-https-lb \
+  --network=elastic-vpc \
+  --action=ALLOW \
+  --rules=tcp:443 \
+  --source-ranges=130.211.0.0/22,35.191.0.0/16 \
+  --target-tags=gke-elastic-prod \
+  --priority=1000 \
+  --direction=INGRESS
+
+# 3. Allow communication interne GKE
+gcloud compute firewall-rules create allow-gke-internal \
+  --network=elastic-vpc \
+  --action=ALLOW \
+  --rules=tcp:1-65535,udp:1-65535,icmp \
+  --source-ranges=10.0.0.0/8 \
+  --priority=1000
+
+# 4. Allow health checks GCP
+gcloud compute firewall-rules create allow-health-checks \
+  --network=elastic-vpc \
+  --action=ALLOW \
+  --rules=tcp \
+  --source-ranges=35.191.0.0/16,130.211.0.0/22 \
+  --target-tags=gke-elastic-prod \
+  --priority=1000
+```
+
+### Cloud NAT (Egress sécurisé)
+
+```bash
+# Créer Cloud Router
+gcloud compute routers create elastic-router \
+  --network=elastic-vpc \
+  --region=europe-west9
+
+# Créer Cloud NAT
+gcloud compute routers nats create elastic-nat \
+  --router=elastic-router \
+  --region=europe-west9 \
+  --auto-allocate-nat-external-ips \
+  --nat-all-subnet-ip-ranges \
+  --enable-logging
+```
+
+**Avantages** :
+- Pods sans IP publique
+- Egress via IPs statiques
+- Logs de connexion sortantes
+
+### IP Whitelisting
+
+**Restreindre l'accès par IP** :
+
+```yaml
+# Ingress avec source IP filtering
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kibana-ingress
+  annotations:
+    kubernetes.io/ingress.class: "gce"
+    # Whitelist IPs bureau + VPN
+    ingress.gcp.kubernetes.io/pre-shared-cert: "kibana-cert"
+    cloud.google.com/load-balancer-type: "External"
+spec:
+  rules:
+  - host: kibana.hasfy.fr
+    http:
+      paths:
+      - path: /*
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: kibana-kb-http
+            port:
+              number: 5601
+```
+
+**Ou via Cloud Armor** (plus avancé) :
+
+```bash
+# Créer security policy
+gcloud compute security-policies create kibana-policy \
+  --description="Restrict Kibana access"
+
+# Ajouter règle whitelist
+gcloud compute security-policies rules create 1000 \
+  --security-policy=kibana-policy \
+  --src-ip-ranges="YOUR_OFFICE_IP/32,YOUR_VPN_IP/32" \
+  --action=allow
+
+# Deny all autres
+gcloud compute security-policies rules create 2147483647 \
+  --security-policy=kibana-policy \
+  --action=deny-403
+
+# Attacher au backend service
+gcloud compute backend-services update BACKEND_NAME \
+  --security-policy=kibana-policy \
+  --global
+```
+
+---
+
+## 🔐 Authentification et autorisation
+
+### TLS/SSL
+
+**Certificats automatiques (Let's Encrypt)** :
+
+```yaml
+# cert-manager ClusterIssuer
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: security@hasfy.fr
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+    - http01:
+        ingress:
+          class: gce
+```
+
+**Certificats personnalisés** :
+
+```bash
+# Créer certificat
+openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+  -keyout tls.key -out tls.crt \
+  -subj "/CN=elastic.hasfy.fr/O=Hasfy"
+
+# Créer secret Kubernetes
+kubectl -n elastic create secret tls elastic-tls \
+  --cert=tls.crt \
+  --key=tls.key
+
+# Référencer dans Ingress
+spec:
+  tls:
+  - secretName: elastic-tls
+    hosts:
+    - elastic.hasfy.fr
+```
+
+### Elasticsearch Security
+
+**1. Utilisateurs et rôles**
+
+```bash
+# Créer utilisateur admin lecture seule
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_security/user/admin_ro \
+  -H "Content-Type: application/json" \
+  -d '{
+    "password": "StrongPassword123!",
+    "roles": ["kibana_admin", "monitoring_user"],
+    "full_name": "Admin Read-Only",
+    "email": "admin@hasfy.fr"
+  }'
+
+# Créer utilisateur application
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_security/user/app_ingest \
+  -H "Content-Type: application/json" \
+  -d '{
+    "password": "AppPassword456!",
+    "roles": ["ingest_only"],
+    "full_name": "Application Ingest"
+  }'
+
+# Créer rôle custom
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_security/role/ingest_only \
+  -H "Content-Type: application/json" \
+  -d '{
+    "indices": [
+      {
+        "names": ["logs-*", "metrics-*"],
+        "privileges": ["create_index", "write", "auto_configure"]
+      }
+    ]
+  }'
+```
+
+**2. API Keys (recommandé pour applications)**
+
+```bash
+# Créer API key avec durée limitée
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_security/api_key \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "app-logs-ingestion",
+    "expiration": "30d",
+    "role_descriptors": {
+      "logs-writer": {
+        "indices": [
+          {
+            "names": ["logs-*"],
+            "privileges": ["write", "create_index"]
+          }
+        ]
+      }
+    }
+  }'
+
+# Réponse : {"id": "...", "api_key": "..."}
+# Utiliser : curl -H "Authorization: ApiKey BASE64(id:api_key)" ...
+```
+
+**3. Rotation des mots de passe**
+
+```bash
+#!/bin/bash
+# rotate-password.sh
+
+# Générer nouveau mot de passe fort
+NEW_PASSWORD=$(openssl rand -base64 32)
+
+# Changer le mot de passe elastic
+curl -k -X POST -u "elastic:$OLD_PASSWORD" \
+  https://elastic.hasfy.fr/_security/user/elastic/_password \
+  -H "Content-Type: application/json" \
+  -d "{\"password\": \"$NEW_PASSWORD\"}"
+
+# Mettre à jour le secret Kubernetes
+kubectl -n elastic create secret generic elasticsearch-es-elastic-user \
+  --from-literal=elastic=$NEW_PASSWORD \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+# Redémarrer Kibana
+kubectl -n elastic rollout restart deployment kibana-kb
+
+# Sauvegarder (chiffré)
+echo $NEW_PASSWORD | gpg --encrypt --recipient security@hasfy.fr > password.gpg
+```
+
+**Politique de rotation** :
+- Utilisateur `elastic` : tous les 90 jours
+- API keys : renouvellement tous les 30 jours
+- Service tokens : tous les 180 jours
+
+### Kubernetes RBAC
+
+**ServiceAccount pour Elasticsearch** :
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: elasticsearch-sa
+  namespace: elastic
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: elasticsearch-role
+  namespace: elastic
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "endpoints"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["secrets"]
+  verbs: ["get"]
+  resourceNames: ["elasticsearch-es-elastic-user"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: elasticsearch-rolebinding
+  namespace: elastic
+subjects:
+- kind: ServiceAccount
+  name: elasticsearch-sa
+  namespace: elastic
+roleRef:
+  kind: Role
+  name: elasticsearch-role
+  apiGroup: rbac.authorization.k8s.io
+```
+
+**Appliquer** :
+```bash
+kubectl apply -f rbac.yaml
+
+# Vérifier
+kubectl -n elastic auth can-i list pods --as=system:serviceaccount:elastic:elasticsearch-sa
+```
+
+### GCP IAM
+
+**Service Account GKE minimal** :
+
+```hcl
+resource "google_service_account" "gke_sa" {
+  account_id   = "gke-elastic-sa"
+  display_name = "GKE Elasticsearch Service Account"
+}
+
+# Permissions minimales (least privilege)
+resource "google_project_iam_member" "gke_sa_roles" {
+  for_each = toset([
+    "roles/logging.logWriter",           # Écrire logs Cloud Logging
+    "roles/monitoring.metricWriter",     # Écrire métriques Cloud Monitoring
+    "roles/storage.objectViewer",        # Lire snapshots GCS (read-only)
+  ])
+  
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.gke_sa.email}"
+}
+```
+
+**Workload Identity (recommandé)** :
+
+```bash
+# Lier ServiceAccount K8s à SA GCP
+gcloud iam service-accounts add-iam-policy-binding \
+  gke-elastic-sa@YOUR_PROJECT.iam.gserviceaccount.com \
+  --role=roles/iam.workloadIdentityUser \
+  --member="serviceAccount:YOUR_PROJECT.svc.id.goog[elastic/elasticsearch-sa]"
+
+# Annoter le ServiceAccount K8s
+kubectl -n elastic annotate serviceaccount elasticsearch-sa \
+  iam.gke.io/gcp-service-account=gke-elastic-sa@YOUR_PROJECT.iam.gserviceaccount.com
+```
+
+---
+
+## 🔒 Chiffrement
+
+### Encryption at rest
+
+**GKE persistent disks** :
+- **Par défaut** : Chiffrement automatique avec clés gérées par Google
+- **CMEK** (Customer-Managed Encryption Keys) : Optionnel
+
+**Activer CMEK** :
+
+```bash
+# Créer Cloud KMS keyring
+gcloud kms keyrings create elastic-keyring \
+  --location=europe-west9
+
+# Créer clé de chiffrement
+gcloud kms keys create elastic-disk-key \
+  --keyring=elastic-keyring \
+  --location=europe-west9 \
+  --purpose=encryption
+
+# Donner permission au service account GKE
+gcloud kms keys add-iam-policy-binding elastic-disk-key \
+  --keyring=elastic-keyring \
+  --location=europe-west9 \
+  --member="serviceAccount:service-PROJECT_NUMBER@compute-system.iam.gserviceaccount.com" \
+  --role=roles/cloudkms.cryptoKeyEncrypterDecrypter
+
+# Utiliser dans StorageClass
+kubectl apply -f - <<EOF
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: encrypted-ssd
+provisioner: pd.csi.storage.gke.io
+parameters:
+  type: pd-ssd
+  disk-encryption-kms-key: projects/YOUR_PROJECT/locations/europe-west9/keyRings/elastic-keyring/cryptoKeys/elastic-disk-key
+EOF
+```
+
+### Encryption in transit
+
+**TLS interne Elasticsearch** :
+
+ECK configure automatiquement :
+- TLS entre nodes Elasticsearch
+- TLS pour connexions client → Elasticsearch
+- Certificats auto-signés par ECK (renouvelés automatiquement)
+
+**Vérifier** :
+```bash
+# Voir les secrets TLS
+kubectl -n elastic get secret | grep tls
+
+# elasticsearch-es-http-certs-public
+# elasticsearch-es-transport-certificates
+```
+
+**Forcer TLS pour toutes connexions** :
+
+```yaml
+# Elasticsearch config
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+spec:
+  version: 8.17.1
+  http:
+    tls:
+      certificate:
+        secretName: elasticsearch-tls  # Certificat custom
+  transport:
+    tls:
+      certificate:
+        secretName: elasticsearch-transport-tls
+```
+
+---
+
+## 📋 Audit et conformité
+
+### Elasticsearch Audit Logging
+
+**Activer** :
+
+```yaml
+apiVersion: elasticsearch.k8s.elastic.co/v1
+kind: Elasticsearch
+metadata:
+  name: elasticsearch
+spec:
+  nodeSets:
+  - config:
+      # Audit logging
+      xpack.security.audit.enabled: true
+      xpack.security.audit.logfile.events.include: [
+        "access_denied",
+        "authentication_failed",
+        "authentication_success",
+        "connection_denied",
+        "tampered_request"
+      ]
+      xpack.security.audit.logfile.events.emit_request_body: true
+```
+
+**Visualiser les logs d'audit** :
+
+```bash
+# Récupérer les logs
+kubectl -n elastic exec elasticsearch-es-default-0 -- \
+  cat /usr/share/elasticsearch/logs/elasticsearch_audit.json | tail -20
+
+# Ou dans Kibana : Index Pattern "elasticsearch-audit-*"
+```
+
+### GCP Cloud Audit Logs
+
+**Activer pour toutes les ressources** :
+
+```bash
+# Admin activity logs (toujours activés)
+# Data access logs (activer manuellement)
+
+gcloud projects set-iam-policy YOUR_PROJECT_ID policy.yaml
+```
+
+**policy.yaml** :
+```yaml
+auditConfigs:
+- auditLogConfigs:
+  - logType: ADMIN_READ
+  - logType: DATA_READ
+  - logType: DATA_WRITE
+  service: allServices
+```
+
+**Consulter les logs** :
+
+```bash
+# Logs d'accès GKE
+gcloud logging read "resource.type=k8s_cluster AND protoPayload.serviceName=container.googleapis.com" \
+  --limit=50 \
+  --format=json
+
+# Logs modifications IAM
+gcloud logging read "protoPayload.serviceName=iam.googleapis.com" \
+  --limit=50 \
+  --format=json
+```
+
+### Alertes de sécurité
+
+**Cloud Monitoring alerts** :
+
+```bash
+# Alerte : Authentification Elasticsearch échouée
+gcloud monitoring policies create --notification-channels=CHANNEL_ID \
+  --display-name="Elastic Auth Failures" \
+  --condition-display-name="Auth failures > 10 in 5min" \
+  --condition-threshold-value=10 \
+  --condition-threshold-duration=300s \
+  --condition-filter='resource.type="k8s_container" AND jsonPayload.event.action="authentication_failed"'
+
+# Alerte : Modification IAM non autorisée
+gcloud monitoring policies create --notification-channels=CHANNEL_ID \
+  --display-name="IAM Changes" \
+  --condition-display-name="IAM policy change" \
+  --condition-filter='protoPayload.serviceName="iam.googleapis.com" AND protoPayload.methodName:"SetIamPolicy"'
+```
+
+---
+
+## 🛡️ Hardening
+
+### Elasticsearch
+
+```yaml
+# Désactiver scripts dynamiques (si non utilisés)
+script.allowed_types: none
+
+# Limiter l'accès API
+http.host: "_site_"
+http.port: 9200
+
+# Désactiver accès système
+indices.breaker.total.use_real_memory: false
+
+# Limiter heap
+-Xms8g
+-Xmx8g
+```
+
+### Kubernetes Network Policies
+
+```yaml
+# Isoler le namespace elastic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: deny-all
+  namespace: elastic
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+---
+# Autoriser uniquement Kibana → Elasticsearch
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-kibana-to-es
+  namespace: elastic
+spec:
+  podSelector:
+    matchLabels:
+      common.k8s.elastic.co/type: elasticsearch
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          common.k8s.elastic.co/type: kibana
+    ports:
+    - protocol: TCP
+      port: 9200
+---
+# Autoriser Elasticsearch inter-node
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-es-transport
+  namespace: elastic
+spec:
+  podSelector:
+    matchLabels:
+      common.k8s.elastic.co/type: elasticsearch
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          common.k8s.elastic.co/type: elasticsearch
+    ports:
+    - protocol: TCP
+      port: 9300
+---
+# Autoriser egress DNS + internet (snapshots)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-egress
+  namespace: elastic
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: UDP
+      port: 53
+  - to:
+    - podSelector: {}
+  - to:
+    - ipBlock:
+        cidr: 0.0.0.0/0
+        except:
+        - 169.254.169.254/32  # Bloquer metadata server
+```
+
+**Appliquer** :
+```bash
+kubectl apply -f network-policies.yaml
+
+# Tester
+kubectl -n elastic run test --rm -it --image=busybox -- wget -O- http://elasticsearch-es-http:9200
+# Devrait être bloqué si pas labelé kibana
+```
+
+### Pod Security Standards
+
+```yaml
+# Appliquer baseline security
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: elastic
+  labels:
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/warn: restricted
+```
+
+---
+
+## 📊 Checklist de sécurité
+
+### Avant déploiement production
+
+- [ ] Certificats TLS Let's Encrypt configurés
+- [ ] Firewall rules restreintes (IP whitelisting)
+- [ ] Cloud NAT activé (pas d'IP publique pods)
+- [ ] Utilisateur `elastic` mot de passe changé
+- [ ] API keys créées pour applications
+- [ ] RBAC Kubernetes configuré
+- [ ] Service Account GCP minimal
+- [ ] Audit logging activé
+- [ ] Cloud Monitoring alerts configurées
+- [ ] Network Policies appliquées
+- [ ] Backups chiffrés (GCS)
+- [ ] Politique de rotation mots de passe définie
+
+### Maintenance mensuelle
+
+- [ ] Vérifier logs d'audit
+- [ ] Réviser permissions IAM
+- [ ] Renouveler API keys
+- [ ] Tester procédure restore backup
+- [ ] Mettre à jour certificats (si custom)
+- [ ] Scanner vulnérabilités images Docker
+
+---
+
+## 🚨 Incident response
+
+### Compromission suspectée
+
+1. **Isoler** :
+   ```bash
+   # Bloquer ingress
+   kubectl -n elastic scale deployment kibana-kb --replicas=0
+   kubectl -n elastic scale deployment fleet-server --replicas=0
+   
+   # Appliquer network policy deny-all
+   kubectl apply -f network-policy-lockdown.yaml
+   ```
+
+2. **Investiguer** :
+   ```bash
+   # Logs d'audit Elasticsearch
+   kubectl -n elastic exec elasticsearch-es-default-0 -- \
+     cat /usr/share/elasticsearch/logs/elasticsearch_audit.json > audit.json
+   
+   # Logs GCP
+   gcloud logging read "resource.type=k8s_container AND resource.labels.namespace_name=elastic" \
+     --format=json > gcp-logs.json
+   ```
+
+3. **Contenir** :
+   ```bash
+   # Révoquer tous les API keys
+   curl -k -X DELETE -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_security/api_key?owner=true
+   
+   # Changer mot de passe elastic
+   ./rotate-password.sh
+   ```
+
+4. **Récupérer** :
+   ```bash
+   # Restaurer depuis snapshot propre
+   curl -k -X POST -u "elastic:$PASSWORD" \
+     https://elastic.hasfy.fr/_snapshot/gcs-repo/CLEAN_SNAPSHOT/_restore
+   ```
+
+---
+
+**Mise à jour** : Décembre 2025  
+**Contact sécurité** : security@hasfy.fr  
+**Prochaine étape** : [PRI.md](PRI.md)

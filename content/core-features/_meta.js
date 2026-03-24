@@ -1,9 +1,9 @@
 const meta = {
-  'equipments': 'Equipments',
+  'equipments': 'Équipements',
   'assistance': 'Assistance',
+  'calendar': 'Calendrier',
+  'kpis': 'Indicateurs (KPIs)',
   'notifications': 'Notifications',
-  'kpis': 'KPIs',
-  'calendar': 'Calendar',
 }
 
 export default meta;

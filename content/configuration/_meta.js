@@ -1,7 +1,7 @@
 const meta = {
-  'account': 'Account Management',
   'onboarding': 'Onboarding',
-  'preferences': 'Preferences'
+  'account': 'Gestion du compte',
+  'preferences': 'Préférences'
 }
 
 export default meta;

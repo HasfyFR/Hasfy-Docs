@@ -1,0 +1,135 @@
+---
+title: Études de cas
+description: Découvrez comment des entreprises utilisent Hasfy pour gérer leur parc informatique — cas d'usage concrets et résultats mesurables.
+---
+
+# Études de cas
+
+Découvrez comment des entreprises de différents secteurs utilisent Hasfy pour optimiser la gestion de leur parc informatique. Ces études de cas illustrent des scénarios concrets avec les défis rencontrés, les solutions mises en place et les résultats obtenus.
+
+---
+
+## Cas 1 : MédiSanté — Groupe de cliniques (Santé)
+
+### Contexte
+
+**MédiSanté** est un groupe de 4 cliniques privées en Île-de-France employant 280 personnes. Leur parc informatique comprend 150 postes de travail, 12 serveurs, 35 imprimantes et de nombreux équipements réseau répartis sur 4 sites géographiques.
+
+**Équipe IT** : 1 responsable informatique et 2 techniciens.
+
+### Défis avant Hasfy
+
+- **Inventaire sur tableur** : un fichier Excel partagé servait d'inventaire, souvent obsolète et avec des erreurs de saisie
+- **Demandes par email** : les demandes d'intervention arrivaient par email, téléphone ou en personne, sans suivi centralisé. Des demandes étaient régulièrement perdues ou traitées en double
+- **Pas de supervision** : les pannes de serveur étaient détectées quand les utilisateurs signalaient un dysfonctionnement, parfois plusieurs heures après le début du problème
+- **Conformité santé** : le secteur médical impose des exigences strictes en matière de traçabilité et de disponibilité des systèmes
+- **Déplacements fréquents** : les techniciens passaient beaucoup de temps en déplacement entre les 4 sites sans visibilité sur les priorités
+
+### Solution mise en place
+
+1. **Migration de l'inventaire** : import CSV de l'ensemble du parc depuis le tableur existant dans Hasfy
+2. **Déploiement de l'agent** : installation de l'agent Hasfy sur les 150 postes et 12 serveurs via GPO (Group Policy Object)
+3. **Ticketing centralisé** : formation des 280 employés à la création de tickets via l'interface Employee simplifiée
+4. **Alertes monitoring** : configuration d'alertes critiques sur les serveurs (espace disque &lt; 15 %, CPU &gt; 90 % pendant 5 min, agent hors ligne)
+5. **Calendrier de maintenance** : planification de fenêtres de maintenance mensuelles récurrentes pour chaque site
+
+### Résultats après 6 mois
+
+| Indicateur | Avant Hasfy | Après Hasfy | Évolution |
+|------------|-------------|-------------|-----------|
+| Temps de détection d'une panne serveur | 2-4 heures | &lt; 5 minutes | -97 % |
+| Tickets perdus / non traités | ~15/mois | 0 | -100 % |
+| Temps moyen de résolution | Non mesuré | 4,2 heures | Mesurable |
+| Taux de respect SLA | Non mesuré | 91 % | Mesurable |
+| Temps passé à gérer l'inventaire | 8 h/mois | 1 h/mois | -87 % |
+| Déplacements inutiles (diagnostic à distance) | ~20/mois | 5/mois | -75 % |
+
+> *« Hasfy nous a permis de passer d'une gestion réactive à une gestion proactive de notre parc. Les alertes de monitoring ont détecté un serveur de dossiers patients en surcharge une nuit — nous avons pu intervenir avant l'ouverture de la clinique. Avant, nous l'aurions découvert avec les plaintes des médecins le lendemain matin. »*
+> — Responsable informatique, MédiSanté
+
+---
+
+## Cas 2 : TechServ Solutions — Prestataire MSP (Services IT)
+
+### Contexte
+
+**TechServ Solutions** est un prestataire de services informatiques managés (MSP) basé à Lyon, qui gère le parc de **12 clients PME** représentant au total 450 équipements. L'équipe comprend 6 techniciens et 1 directeur technique.
+
+### Défis avant Hasfy
+
+- **Outils fragmentés** : chaque client avait son propre système (certains sur des outils gratuits, d'autres sur des tableurs, d'autres sans rien)
+- **Pas de visibilité multi-clients** : impossible de voir l'état global de tous les parcs en un coup d'œil
+- **Reporting chronophage** : la production de rapports mensuels pour chaque client nécessitait des heures de compilation manuelle
+- **Difficultés de facturation** : le temps passé sur chaque client n'était pas précisément suivi, rendant la facturation forfaitaire peu rentable
+- **Turnover techniciens** : quand un technicien quittait l'équipe, sa connaissance des parcs clients partait avec lui
+
+### Solution mise en place
+
+1. **1 organisation par client** : création d'une organisation Hasfy dédiée pour chacun des 12 clients, avec séparation stricte des données
+2. **Rôles différenciés** : les clients accèdent à leur espace en tant qu'Employee (créer des tickets, voir leurs équipements), les techniciens en tant que Technician
+3. **Agents déployés systématiquement** : installation de l'agent sur l'ensemble des 450 machines supervisées
+4. **Rapports automatiques** : configuration de rapports hebdomadaires envoyés automatiquement à chaque client
+5. **Suivi du temps** : utilisation du ticketing pour tracer le temps passé sur chaque intervention
+
+### Résultats après 1 an
+
+| Indicateur | Avant Hasfy | Après Hasfy | Évolution |
+|------------|-------------|-------------|-----------|
+| Temps de production du reporting | 16 h/mois | 0 (automatisé) | -100 % |
+| Satisfaction client (NPS) | 32 | 68 | +113 % |
+| Temps de résolution moyen | Non suivi | 3,1 heures | Mesurable |
+| Interventions préventives (vs réactives) | 10 % | 45 % | +350 % |
+| Churn client | 2 clients/an | 0 | -100 % |
+| Onboarding nouveau technicien | 2 semaines | 3 jours | -80 % |
+
+> *« En tant que MSP, la visibilité multi-clients est critique. Avec Hasfy, je peux voir en un coup d'œil quels parcs ont des alertes, quels tickets sont en retard et où concentrer mes ressources. Les rapports automatiques ont transformé notre relation client — ils reçoivent un résumé professionnel chaque semaine sans que nous n'ayons rien à faire. »*
+> — Directeur technique, TechServ Solutions
+
+---
+
+## Cas 3 : Atelier Dubois — PME industrielle (Industrie)
+
+### Contexte
+
+**Atelier Dubois** est une PME industrielle de 45 employés spécialisée dans l'usinage de précision, basée en Normandie. Le parc informatique est modeste : 30 postes de travail, 2 serveurs, 8 imprimantes et 5 machines-outils à commande numérique connectées au réseau.
+
+**Équipe IT** : aucune — la gestion IT est assurée par le responsable administratif avec l'appui ponctuel d'un prestataire local.
+
+### Défis avant Hasfy
+
+- **Aucun outil de gestion** : tout le parc était « dans la tête » du responsable administratif et sur quelques post-it
+- **Dépendance au prestataire** : chaque problème nécessitait un appel au prestataire, sans historique des interventions passées
+- **Arrêts de production** : une panne sur un poste connecté à une machine-outil CNC arrêtait la production, avec un coût estimé à 500 €/heure
+- **Budget limité** : pas de budget pour un outil ITSM traditionnel à plusieurs dizaines de milliers d'euros par an
+- **Pas de compétences IT** : le responsable administratif n'avait aucune formation IT
+
+### Solution mise en place
+
+1. **Plan Starter** : souscription au plan Starter à 5 €/utilisateur/mois pour 8 utilisateurs (les responsables d'atelier + direction + responsable admin)
+2. **Inventaire complet** : création de fiches pour les 45 équipements avec tags par atelier et par criticité
+3. **Agents sur les postes critiques** : installation de l'agent sur les 5 postes connectés aux machines-outils et les 2 serveurs
+4. **Alertes critiques** : configuration d'alertes immédiates (email + in-app) pour toute déconnexion d'agent sur les postes de production
+5. **Marketplace** : utilisation de la marketplace pour trouver un technicien certifié pour la migration d'un serveur vieillissant
+
+### Résultats après 4 mois
+
+| Indicateur | Avant Hasfy | Après Hasfy | Évolution |
+|------------|-------------|-------------|-----------|
+| Temps d'arrêt production lié à l'IT | ~6 h/mois | &lt; 1 h/mois | -83 % |
+| Coût des arrêts de production | ~3 000 €/mois | ~500 €/mois | -83 % |
+| Coût de l'outil | 0 (mais pertes élevées) | 40 €/mois | ROI en 2 semaines |
+| Connaissance du parc | Nulle (post-it) | Complète et à jour | Majeure |
+| Autonomie vs prestataire | Dépendance totale | 70 % des demandes en interne | +70 % |
+
+> *« Je ne suis pas informaticien, et c'est justement pour ça que Hasfy me convient. L'interface est claire, je vois tout de suite si un poste de production a un problème, et je peux créer un ticket pour notre prestataire en 30 secondes au lieu de passer 20 minutes au téléphone à expliquer la situation. Pour 40 € par mois, c'est l'investissement le plus rentable qu'on ait fait cette année. »*
+> — Responsable administratif, Atelier Dubois
+
+---
+
+## Commencer avec Hasfy
+
+Ces cas d'usage vous inspirent ? Démarrez votre essai gratuit dès maintenant :
+
+- **[Créer un compte gratuitement](https://app.hasfy.fr)** — 14 jours d'essai sans carte bancaire
+- **[Demander une démo personnalisée](/contactus)** — nous vous accompagnons dans la découverte
+- **[Consulter les tarifs](/pricing)** — des plans adaptés à toutes les tailles d'organisation

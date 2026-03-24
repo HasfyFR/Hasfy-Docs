@@ -1,4 +1,4 @@
-import '@/app/globals.css'
+import './globals.css'
 import { Footer, Layout, Navbar } from 'nextra-theme-docs'
 import { Banner, Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
@@ -6,6 +6,9 @@ import Image from 'next/image'
 import 'nextra-theme-docs/style.css'
 import { League_Spartan } from "next/font/google";
 import Link from 'next/link'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { SupabaseAuthProvider } from '@/components/providers/auth-provider'
+import { Toaster } from '@/components/ui/toaster'
 
 const leagueSpartan = League_Spartan({
   variable: '--font-logo',
@@ -14,7 +17,7 @@ const leagueSpartan = League_Spartan({
  
 export const metadata = {
   title: 'Hasfy Docs',
-  description: 'Official documentation for Hasfy.',
+  description: 'Documentation officielle de Hasfy.',
 }
  
 const navbar = (
@@ -32,11 +35,8 @@ const footer = <Footer>{new Date().getFullYear()} © Hasfy.</Footer>
 export default async function RootLayout({ children }) {
   return (
     <html
-      // Not required, but good for SEO
-      lang="en"
-      // Required to be set
+      lang="fr"
       dir="ltr"
-      // Suggested by `next-themes` package https://github.com/pacocoursey/next-themes#with-app
       suppressHydrationWarning
     >
       <Head color={{
@@ -47,15 +47,19 @@ export default async function RootLayout({ children }) {
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
       <body>
-        <Layout
-          navbar={navbar}
-          pageMap={await getPageMap()}
-          docsRepositoryBase="https://github.com/shuding/nextra/tree/main/docs"
-          footer={footer}
-          // ... Your additional layout options
-        >
-          {children}
-        </Layout>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <SupabaseAuthProvider>
+            <Layout
+              navbar={navbar}
+              pageMap={await getPageMap()}
+              docsRepositoryBase="https://github.com/HasfyFR/Hasfy-Docs/tree/main"
+              footer={footer}
+            >
+              {children}
+            </Layout>
+            <Toaster />
+          </SupabaseAuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

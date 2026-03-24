@@ -1,0 +1,167 @@
+---
+title: Bonnes pratiques de sécurité
+description: Recommandations et bonnes pratiques pour sécuriser votre utilisation de Hasfy — mots de passe, sessions, clés API et contrôle d'accès.
+---
+
+# Bonnes pratiques de sécurité
+
+Ce guide regroupe les recommandations de sécurité pour protéger votre organisation et vos données sur Hasfy. Suivre ces bonnes pratiques réduit significativement les risques d'accès non autorisé et de compromission.
+
+## Gestion des mots de passe
+
+### Exigences minimales
+
+Hasfy impose les critères suivants pour tous les mots de passe :
+
+- Minimum **8 caractères**
+- Au moins **1 lettre majuscule**
+- Au moins **1 lettre minuscule**
+- Au moins **1 chiffre**
+
+### Recommandations avancées
+
+| Pratique | Recommandation |
+|----------|---------------|
+| Longueur | 12 caractères ou plus |
+| Complexité | Incluez des caractères spéciaux (!@#$%^&*) |
+| Unicité | N'utilisez jamais le même mot de passe que sur d'autres services |
+| Gestionnaire | Utilisez un gestionnaire de mots de passe (1Password, Bitwarden, etc.) |
+| Changement | Modifiez votre mot de passe immédiatement en cas de suspicion de compromission |
+| Partage | Ne partagez jamais votre mot de passe, même avec un collègue ou l'équipe Hasfy |
+
+### Phrases de passe
+
+Une technique efficace consiste à utiliser une **phrase de passe** : une suite de mots aléatoires facile à retenir mais difficile à deviner. Par exemple : `cheval-batterie-correct-agrafeuse` est plus sécurisé et plus mémorable que `P@ssw0rd123!`.
+
+## Authentification multi-facteurs
+
+L'activation de la MFA est la mesure de sécurité la plus impactante que vous puissiez prendre. Consultez le guide complet sur la page [Authentification multi-facteurs](/settings-security/mfas).
+
+**Priorité d'activation :**
+
+1. **Immédiat** : comptes Owner et Admin
+2. **Sous 7 jours** : comptes Technician
+3. **Recommandé** : comptes Employee
+
+## Gestion des sessions
+
+### Sessions actives
+
+- Vérifiez régulièrement vos **sessions actives** dans **Mon compte &gt; Sécurité &gt; Sessions**
+- Révoquez toute session que vous ne reconnaissez pas
+- Après utilisation sur un poste partagé, **déconnectez-vous** systématiquement
+
+### Expiration des sessions
+
+Les sessions Hasfy expirent automatiquement :
+
+| Paramètre | Durée par défaut | Configurable (Enterprise) |
+|-----------|------------------|--------------------------|
+| Session active | 24 heures d'inactivité | ✅ (1h - 30 jours) |
+| Session « Se souvenir de moi » | 30 jours | ✅ (7 - 90 jours) |
+| Token de réinitialisation | 1 heure | ❌ |
+| Lien magique | 5 minutes | ❌ |
+
+> **Recommandation Enterprise** : Réduisez la durée de session à **8 heures** pour les environnements à haute sécurité.
+
+### Verrouillage après échecs
+
+Après **5 tentatives de connexion échouées** consécutives, le compte est temporairement verrouillé pendant **15 minutes**. Ce mécanisme protège contre les attaques par force brute.
+
+## Sécurité du navigateur
+
+### Recommandations
+
+- Utilisez un **navigateur à jour** : Chrome, Firefox, Safari ou Edge dans sa dernière version
+- **HTTPS** : vérifiez que l'URL affiche bien `https://app.hasfy.fr` avec le cadenas vert
+- **Extensions** : limitez les extensions de navigateur, certaines peuvent intercepter vos données
+- **Mode privé** : utilisez le mode navigation privée sur les postes partagés
+- **Autocomplétion** : si vous n'utilisez pas de gestionnaire de mots de passe, désactivez l'enregistrement automatique des mots de passe dans le navigateur
+
+### Détection de phishing
+
+Hasfy ne vous demandera jamais :
+- Votre mot de passe par email ou téléphone
+- De cliquer sur un lien pour « vérifier » votre compte (sauf lors d'actions que vous venez d'initier)
+- D'installer un logiciel en dehors du processus officiel d'installation de l'agent
+
+Si vous recevez un email suspect prétendant provenir de Hasfy, transférez-le à **security@hasfy.fr**.
+
+## Gestion des clés API
+
+### Création et utilisation
+
+Si vous utilisez l'API Hasfy (voir [Documentation API](/api)), appliquez ces principes :
+
+| Pratique | Détail |
+|----------|--------|
+| **Principe du moindre privilège** | Créez des clés avec uniquement les permissions nécessaires |
+| **Rotation régulière** | Régénérez vos clés API tous les 90 jours |
+| **Séparation** | Utilisez des clés différentes pour chaque application/intégration |
+| **Stockage sécurisé** | Ne stockez jamais les clés en dur dans le code source |
+| **Variables d'environnement** | Utilisez des variables d'environnement ou un coffre-fort de secrets |
+| **Révocation immédiate** | Révoquez une clé dès qu'elle n'est plus nécessaire ou si elle est compromise |
+
+### Surveillance
+
+- Consultez les **logs d'utilisation** de vos clés API dans **Paramètres &gt; API &gt; Activité**
+- Configurez des **alertes** en cas d'utilisation anormale (volume de requêtes inhabituel, IP inconnue)
+
+## Contrôle d'accès
+
+### Principe du moindre privilège
+
+Attribuez à chaque utilisateur le rôle le **minimum nécessaire** pour accomplir ses tâches :
+
+- Un utilisateur qui crée uniquement des tickets → **Employee**
+- Un technicien qui gère équipements et tickets → **Technician**
+- Un responsable IT qui configure l'organisation → **Admin**
+- Le responsable de la facturation et de l'organisation → **Owner**
+
+### Revue régulière des accès
+
+Effectuez une **revue des accès** au minimum tous les trimestres :
+
+1. Accédez à **Paramètres &gt; Utilisateurs**
+2. Identifiez les comptes **inactifs** (dernière connexion &gt; 90 jours)
+3. Vérifiez que les **rôles** correspondent toujours aux fonctions actuelles
+4. **Désactivez** les comptes des personnes ayant quitté l'organisation
+5. **Ajustez** les rôles si les responsabilités ont changé
+
+### Checklist de départ d'un collaborateur
+
+Lorsqu'un collaborateur quitte votre organisation :
+
+- [ ] Désactiver son compte Hasfy immédiatement
+- [ ] Révoquer toutes ses sessions actives
+- [ ] Réassigner ses tickets en cours
+- [ ] Réassigner ses équipements
+- [ ] Révoquer les clés API qu'il a créées
+- [ ] Vérifier le journal d'audit pour les dernières actions
+- [ ] Mettre à jour les contacts d'urgence si applicable
+
+## Sécurité de l'agent
+
+L'agent Hasfy installé sur vos machines communique en HTTPS avec les serveurs Hasfy :
+
+- **Communication chiffrée** : TLS 1.3 pour tous les échanges
+- **Authentification mutuelle** : l'agent s'identifie avec une clé d'enrôlement unique
+- **Mises à jour automatiques** : l'agent se met à jour pour corriger les vulnérabilités
+- **Permissions minimales** : l'agent n'a accès qu'aux métriques système, pas aux fichiers utilisateur
+
+### Clé d'enrôlement
+
+- La clé d'enrôlement est à **usage unique** par machine
+- Ne partagez pas les clés d'enrôlement par des canaux non sécurisés
+- En cas de compromission suspectée, **régénérez** la clé depuis la console Hasfy
+
+## Signalement d'incidents
+
+Si vous suspectez un incident de sécurité :
+
+1. **Changez immédiatement** votre mot de passe
+2. **Révoquez** toutes les sessions actives
+3. Contactez **security@hasfy.fr** avec les détails de l'incident
+4. Si applicable, prévenez l'Owner de votre organisation
+
+Hasfy s'engage à traiter tout signalement de sécurité sous **24 heures ouvrées** et à communiquer les mesures prises.

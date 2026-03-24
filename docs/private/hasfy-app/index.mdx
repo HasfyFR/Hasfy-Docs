@@ -1,0 +1,118 @@
+---
+title: Hasfy-App — Vue d'ensemble technique
+description: Architecture, stack technique et organisation du codebase de l'application principale Hasfy.
+---
+
+# Hasfy-App — Vue d'ensemble technique
+
+## Présentation
+
+Hasfy-App est l'application principale du SaaS Hasfy. C'est une plateforme de gestion IT (ITSM/RMM) qui combine le suivi des équipements, le monitoring temps réel via agents, un système de ticketing et un dashboard analytique.
+
+**URL Production :** `https://app.hasfy.fr`
+**URL Preprod :** `https://test.hasfy.fr`
+**URL Dev :** `https://dev.hasfy.fr`
+**Repo :** `github.com/HasfyFR/Hasfy-App`
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| **Framework** | Next.js 15 (App Router, Server Components) |
+| **UI** | React, Tailwind CSS, shadcn/ui |
+| **State Management** | TanStack Query (React Query) |
+| **Tables** | TanStack Table |
+| **Base de données** | Supabase (PostgreSQL + Auth + Storage) |
+| **Monitoring** | Elasticsearch 8.17.0 + Elastic Fleet |
+| **Email** | Resend |
+| **Paiement** | Stripe |
+| **Déploiement** | AWS Amplify |
+| **CI/CD** | GitHub Actions |
+| **Tests** | Playwright (E2E), Vitest (unit) |
+| **Desktop Installer** | Tauri 2.0 (Rust + React) |
+
+## Architecture du codebase
+
+```
+hasfy-app/
+├── app/                      # Routes Next.js (App Router)
+│   ├── app/                  # Shell principal (layout, settings, billing)
+│   │   ├── (user)/           # Route group pages utilisateur
+│   │   └── (admin)/          # Route group pages admin
+│   ├── auth/                 # Authentification (login, signup, callback)
+│   ├── onboarding/           # Flow d'onboarding multi-étapes
+│   └── api/                  # Routes API
+│       ├── private/          # APIs privées (Supabase session auth)
+│       └── v1/               # APIs publiques (API key auth)
+│
+├── components/               # Composants React (racine du repo)
+│   ├── ui/                   # Primitives shadcn/ui
+│   ├── equipments/           # Composants domaine équipements
+│   ├── dashboard/            # Composants dashboard
+│   ├── onboarding/           # Wizard d'onboarding
+│   ├── tickets/              # Composants ticketing
+│   ├── emails/               # Templates emails (Resend)
+│   └── ...                   # Autres domaines
+│
+├── hooks/                    # React hooks (TanStack Query)
+│   ├── auth/                 # useInviteUser, useUserManagement, useUsers
+│   ├── equipment/            # useEquipments, useEquipmentMetrics, useInstaller
+│   ├── ticket/               # useTickets, useTicketMessages, useTicketNotes
+│   ├── notification/         # use-create-notification
+│   ├── onboarding/           # useOnboarding
+│   ├── organization/         # useOrganization
+│   └── useDashboardStats.ts  # Stats dashboard
+│
+├── core/                     # Logique métier pure
+│   │                         # AUCUN HTTP, reçoit Supabase/client en paramètre
+│   ├── equipment/            # CRUD, métriques, installer tokens
+│   ├── tickets/              # Logique tickets
+│   └── ...
+│
+├── lib/                      # Wrappers services externes
+│   ├── supabase.ts           # Client Supabase
+│   ├── elasticsearch.ts      # Client Elasticsearch
+│   ├── stripe.ts             # Client Stripe
+│   └── resend.ts             # Client Resend
+│
+├── e2e/                      # Tests E2E Playwright
+├── docs/                     # Documentation interne
+└── .github/                  # Workflows CI/CD
+```
+
+## Principes architecturaux
+
+### Séparation des responsabilités
+
+- **`/core`** contient la logique métier pure. Pas de `fetch`, pas de HTTP. Reçoit les instances Supabase ou Elasticsearch en paramètre. Réutilisable depuis les routes API et les hooks.
+- **`/hooks`** utilise TanStack Query pour le cache et les états async. Chaque hook appelle soit directement Supabase (via RLS), soit les routes API privées.
+- **`/components`** sont organisés par domaine métier, pas par type technique.
+
+### Pattern API
+
+Deux catégories d'API distinctes :
+1. **Private API** (`/api/private/`) — Authentification par session Supabase. Utilisée par le frontend.
+2. **Public API v1** (`/api/v1/`) — Authentification par API key. Utilisée par les services externes (installer, intégrations).
+
+### Gestion d'état
+
+**Pas de Redux, Zustand ou autre store global.** TanStack Query gère tout le state serveur avec cache, invalidation et optimistic updates. Le state UI local utilise `useState`/`useReducer` React standard.
+
+## Environnements
+
+| Environnement | URL | Branches | Trigger |
+|--------------|-----|----------|---------|
+| **Dev** | `dev.hasfy.fr` | `dev`, `feat/*`, `fix/*` | Push auto |
+| **Preprod** | `test.hasfy.fr` | `main` | Push auto |
+| **Production** | `app.hasfy.fr` | `production` | Push auto |
+
+## Services externes
+
+| Service | Usage | Dashboard |
+|---------|-------|-----------|
+| **Supabase** | BDD, Auth, Storage | `supabase.com/dashboard` |
+| **AWS Amplify** | Hosting & déploiement | `console.aws.amazon.com` |
+| **Stripe** | Abonnements & paiements | `dashboard.stripe.com` |
+| **Elasticsearch** | Métriques agents, monitoring | `kibana.hasfy.fr` |
+| **Resend** | Emails transactionnels | `resend.com` |
+| **Discord** | Notifications CI/CD | Webhooks par environnement |

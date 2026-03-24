@@ -1,0 +1,191 @@
+---
+title: Gestion des utilisateurs
+description: Invitez des utilisateurs, attribuez des rôles et gérez les permissions d'accès dans votre organisation Hasfy.
+---
+
+# Gestion des utilisateurs
+
+La gestion des utilisateurs permet de contrôler qui a accès à votre espace Hasfy, avec quel niveau de permission, et de gérer le cycle de vie des comptes au sein de votre organisation.
+
+## Vue d'ensemble
+
+Accédez à la gestion des utilisateurs depuis **Paramètres &gt; Utilisateurs**. La page affiche la liste de tous les membres de votre organisation :
+
+| Colonne | Description |
+|---------|-------------|
+| **Utilisateur** | Nom, prénom et avatar |
+| **Email** | Adresse email du compte |
+| **Rôle** | Owner, Admin, Technician ou Employee |
+| **Statut** | Actif, Invité (en attente), Désactivé |
+| **Dernière activité** | Date de dernière connexion |
+| **Ajouté le** | Date d'ajout à l'organisation |
+
+## Système de rôles
+
+Hasfy propose quatre rôles hiérarchiques avec des permissions croissantes :
+
+### Employee (Employé / Client)
+
+Le rôle par défaut pour les utilisateurs finaux qui interagissent avec le service IT :
+
+| Permission | Accès |
+|------------|-------|
+| Créer des tickets | ✅ (formulaire simplifié) |
+| Voir ses propres tickets | ✅ |
+| Commenter ses tickets | ✅ |
+| Voir les équipements qui lui sont assignés | ✅ |
+| Voir tous les équipements | ❌ |
+| Gérer les équipements | ❌ |
+| Voir les KPIs | ❌ |
+| Accéder au calendrier | ❌ |
+| Gérer les utilisateurs | ❌ |
+| Accéder aux paramètres | ❌ |
+
+### Technician (Technicien)
+
+Le rôle pour les membres de l'équipe IT qui interviennent sur les incidents :
+
+| Permission | Accès |
+|------------|-------|
+| Toutes les permissions Employee | ✅ |
+| Voir et gérer tous les tickets | ✅ |
+| Assigner des tickets | ✅ |
+| Voir et gérer tous les équipements | ✅ |
+| Installer et gérer les agents | ✅ |
+| Accéder au calendrier complet | ✅ |
+| Créer des événements | ✅ |
+| Voir les KPIs | ✅ |
+| Accéder à la marketplace | ✅ |
+| Gérer les utilisateurs | ❌ |
+| Modifier les paramètres de l'organisation | ❌ |
+| Gérer la facturation | ❌ |
+
+### Admin (Administrateur)
+
+Le rôle pour les responsables IT qui gèrent l'organisation :
+
+| Permission | Accès |
+|------------|-------|
+| Toutes les permissions Technician | ✅ |
+| Inviter et gérer les utilisateurs | ✅ |
+| Modifier les rôles (sauf Owner) | ✅ |
+| Désactiver des comptes | ✅ |
+| Configurer les paramètres de l'organisation | ✅ |
+| Gérer les intégrations | ✅ |
+| Configurer les alertes et SLA | ✅ |
+| Exporter les données | ✅ |
+| Gérer la facturation | ❌ |
+| Supprimer l'organisation | ❌ |
+
+### Owner (Propriétaire)
+
+Le rôle suprême, automatiquement attribué au créateur de l'organisation :
+
+| Permission | Accès |
+|------------|-------|
+| Toutes les permissions Admin | ✅ |
+| Gérer la facturation et l'abonnement | ✅ |
+| Transférer la propriété | ✅ |
+| Supprimer l'organisation | ✅ |
+| Promouvoir un membre en Admin | ✅ |
+| Révoquer un Admin | ✅ |
+
+> **Note** : Il ne peut y avoir qu'un seul Owner par organisation. Pour transférer la propriété, accédez à **Paramètres &gt; Organisation &gt; Transférer la propriété**.
+
+## Inviter des utilisateurs
+
+### Invitation par email
+
+1. Accédez à **Paramètres &gt; Utilisateurs**
+2. Cliquez sur **« + Inviter un utilisateur »**
+3. Saisissez l'**adresse email** de la personne à inviter
+4. Sélectionnez le **rôle** à attribuer (Employee, Technician, Admin)
+5. Ajoutez un **message personnalisé** *(optionnel)* qui sera inclus dans l'email d'invitation
+6. Cliquez sur **« Envoyer l'invitation »**
+
+L'invité reçoit un email contenant un lien pour :
+- **Créer un compte** Hasfy s'il n'en possède pas
+- **Rejoindre l'organisation** s'il a déjà un compte Hasfy
+
+### Invitation en masse
+
+Pour inviter plusieurs personnes simultanément :
+
+1. Cliquez sur **« Inviter en masse »**
+2. Saisissez les adresses email (une par ligne ou séparées par des virgules)
+3. Sélectionnez le **rôle commun** pour tous les invités
+4. Cliquez sur **« Envoyer les invitations »**
+
+### Statut des invitations
+
+Suivez l'état de vos invitations dans l'onglet **« Invitations en attente »** :
+
+| Statut | Description |
+|--------|-------------|
+| **En attente** | L'invitation a été envoyée mais pas encore acceptée |
+| **Acceptée** | L'utilisateur a rejoint l'organisation |
+| **Expirée** | L'invitation n'a pas été acceptée dans les 7 jours |
+| **Annulée** | L'invitation a été révoquée par un administrateur |
+
+Vous pouvez **renvoyer** une invitation expirée ou **annuler** une invitation en attente.
+
+## Modifier le rôle d'un utilisateur
+
+1. Dans la liste des utilisateurs, cliquez sur le nom de l'utilisateur
+2. Dans le panneau de détails, cliquez sur le **rôle actuel**
+3. Sélectionnez le **nouveau rôle**
+4. Confirmez le changement
+
+> **Restrictions** : Seuls les Admins et Owners peuvent modifier les rôles. Un Admin ne peut pas promouvoir un utilisateur en Owner. Seul le Owner peut promouvoir un utilisateur en Admin.
+
+## Désactiver un compte
+
+Désactiver un compte empêche l'utilisateur de se connecter à Hasfy tout en conservant ses données :
+
+1. Accédez au profil de l'utilisateur
+2. Cliquez sur **« Désactiver le compte »**
+3. Confirmez l'action
+
+L'utilisateur désactivé :
+- Ne peut plus se connecter
+- Ses tickets et assignations sont conservés
+- Ses données historiques restent intactes
+- Le compte peut être **réactivé** à tout moment
+
+> **Recommandation** : Préférez la désactivation à la suppression pour conserver l'historique. Désactivez les comptes des collaborateurs qui quittent l'organisation plutôt que de les supprimer.
+
+## Supprimer un utilisateur
+
+La suppression est définitive et retire complètement l'utilisateur de l'organisation :
+
+1. Accédez au profil de l'utilisateur
+2. Cliquez sur **« Retirer de l'organisation »**
+3. Choisissez comment traiter les éléments assignés :
+   - **Réassigner** : transférer les tickets et équipements à un autre utilisateur
+   - **Désassigner** : retirer les assignations sans les transférer
+4. Saisissez **« CONFIRMER »** pour valider
+
+> **Attention** : L'utilisateur conserve son compte Hasfy personnel mais perd l'accès à votre organisation et à toutes ses données.
+
+## Gestion des sièges
+
+Le nombre d'utilisateurs de votre organisation est lié à votre plan d'abonnement :
+
+| Plan | Utilisateurs inclus | Utilisateur supplémentaire |
+|------|--------------------|-----------------------------|
+| **Starter** | 5 | 5 €/mois par utilisateur |
+| **Pro** | 15 | Inclus dans le tarif |
+| **Enterprise** | Illimité | Sur devis |
+
+Lorsque vous atteignez la limite de votre plan, un message vous invite à **mettre à niveau** votre abonnement ou à **acheter des sièges supplémentaires** depuis **Paramètres &gt; Facturation**.
+
+## Audit et traçabilité
+
+Toutes les actions liées à la gestion des utilisateurs sont enregistrées dans le **journal d'audit** :
+
+- Invitations envoyées, acceptées, refusées
+- Changements de rôle
+- Désactivations et réactivations de comptes
+- Suppressions d'utilisateurs
+
+Le journal d'audit est accessible depuis **Paramètres &gt; Audit** (Owner et Admin uniquement).

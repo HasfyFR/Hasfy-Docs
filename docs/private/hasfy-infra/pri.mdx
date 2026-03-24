@@ -1,0 +1,649 @@
+# Plan de Reprise Informatique (PRI) - Elasticsearch sur GCP
+
+## 📋 Définitions
+
+**PRI (Plan de Reprise Informatique)** : Procédures techniques pour restaurer les systèmes IT après une panne ou incident.
+
+**Objectifs** :
+- **RTO (Recovery Time Objective)** : 2 heures maximum
+- **RPO (Recovery Point Objective)** : 15 minutes maximum
+- **Disponibilité cible** : 99.95% (GKE SLA)
+
+---
+
+## 🎯 Scénarios de reprise
+
+### Scénario 1 : Perte d'un pod Elasticsearch
+
+**Probabilité** : Élevée (mise à jour, crash, eviction)  
+**Impact** : Faible (haute disponibilité)  
+**RTO** : 5 minutes  
+**RPO** : 0 (données répliquées)
+
+**Détection** :
+```bash
+# Monitoring GCP
+gcloud monitoring policies create \
+  --display-name="Elasticsearch Pod Down" \
+  --condition-threshold-value=1 \
+  --condition-filter='resource.type="k8s_pod" AND resource.labels.pod_name=~"elasticsearch-.*" AND metric.type="kubernetes.io/container/restart_count"'
+```
+
+**Procédure de reprise** :
+```bash
+# 1. Vérifier l'état
+kubectl -n elastic get pods
+
+# 2. Consulter les logs du pod crashé
+kubectl -n elastic logs elasticsearch-es-default-0 --previous
+
+# 3. Vérifier le cluster health
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cluster/health?pretty
+
+# 4. Kubernetes recrée automatiquement le pod
+# Si bloqué :
+kubectl -n elastic delete pod elasticsearch-es-default-0
+
+# 5. Attendre le rejoin du cluster (2-3 minutes)
+watch kubectl -n elastic get pods
+
+# 6. Vérifier les shards
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/shards?v
+```
+
+**Validation** :
+- ✅ Cluster status = green
+- ✅ 3 pods Running
+- ✅ Tous les shards assigned
+
+---
+
+### Scénario 2 : Perte du cluster GKE complet
+
+**Probabilité** : Faible (défaillance GCP)  
+**Impact** : Critique  
+**RTO** : 1 heure  
+**RPO** : 15 minutes (dernier snapshot)
+
+**Détection** :
+```bash
+# Alerte si cluster inaccessible
+gcloud container clusters describe elastic-prod --region=europe-west9
+# Error: Cluster not found ou status != RUNNING
+```
+
+**Procédure de reprise** :
+
+#### Phase 1 : Vérification (5 minutes)
+```bash
+# 1. Vérifier l'état GKE
+gcloud container clusters list --filter="name=elastic-prod"
+
+# 2. Vérifier les quotas GCP
+gcloud compute project-info describe --project=YOUR_PROJECT_ID
+
+# 3. Vérifier les incidents GCP
+# https://status.cloud.google.com/
+```
+
+#### Phase 2 : Recréation infrastructure (20 minutes)
+```bash
+# 1. Aller dans le dossier Terraform
+cd providers/gcp/terraform
+
+# 2. Vérifier l'état Terraform
+terraform show
+
+# 3. Si état corrompu, récupérer depuis GCS backup
+gsutil cp gs://terraform-state-BUCKET/default.tfstate terraform.tfstate
+
+# 4. Recréer le cluster
+terraform apply -target=google_container_cluster.primary
+
+# 5. Obtenir credentials
+gcloud container clusters get-credentials elastic-prod \
+  --region=europe-west9 \
+  --project=YOUR_PROJECT_ID
+```
+
+#### Phase 3 : Redéploiement Kubernetes (15 minutes)
+```bash
+cd ../kubernetes
+
+# 1. Installer ECK Operator
+kubectl create namespace elastic-system
+kubectl apply -f 01-eck-operator/
+
+# Attendre operator ready
+kubectl -n elastic-system wait --for=condition=Ready pod -l control-plane=elastic-operator --timeout=300s
+
+# 2. Créer namespace
+kubectl create namespace elastic
+
+# 3. Restaurer secrets (depuis backup sécurisé)
+kubectl -n elastic create secret generic elasticsearch-es-elastic-user \
+  --from-literal=elastic=$(cat /secure/backup/.elastic-password.txt)
+
+# 4. Déployer Elasticsearch
+kubectl apply -f 02-elasticsearch/elasticsearch.yaml
+
+# 5. Attendre cluster ready (5-7 minutes)
+kubectl -n elastic wait --for=jsonpath='{.status.health}'=green elasticsearch/elasticsearch --timeout=600s
+```
+
+#### Phase 4 : Restauration des données (20 minutes)
+```bash
+# 1. Vérifier l'accès GCS
+gsutil ls gs://elastic-backups-YOUR_PROJECT/snapshots/
+
+# 2. Port-forward Elasticsearch
+kubectl -n elastic port-forward svc/elasticsearch-es-http 9200:9200 &
+
+# 3. Enregistrer le repository
+PASSWORD=$(cat /secure/backup/.elastic-password.txt)
+
+curl -k -X PUT -u "elastic:$PASSWORD" \
+  https://localhost:9200/_snapshot/gcs-repo \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "gcs",
+    "settings": {
+      "bucket": "elastic-backups-YOUR_PROJECT",
+      "base_path": "snapshots"
+    }
+  }'
+
+# 4. Lister les snapshots disponibles
+curl -k -u "elastic:$PASSWORD" https://localhost:9200/_snapshot/gcs-repo/_all?pretty
+
+# 5. Identifier le dernier snapshot
+LAST_SNAPSHOT=$(curl -sk -u "elastic:$PASSWORD" \
+  https://localhost:9200/_snapshot/gcs-repo/_all | \
+  jq -r '.snapshots | sort_by(.start_time_in_millis) | last | .snapshot')
+
+echo "Dernier snapshot : $LAST_SNAPSHOT"
+
+# 6. Restaurer
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://localhost:9200/_snapshot/gcs-repo/$LAST_SNAPSHOT/_restore \
+  -H "Content-Type: application/json" \
+  -d '{
+    "indices": "*",
+    "ignore_unavailable": true,
+    "include_global_state": true
+  }'
+
+# 7. Surveiller la restauration
+watch "curl -sk -u 'elastic:$PASSWORD' https://localhost:9200/_cat/recovery?v | grep -E 'index|done'"
+
+# Arrêter port-forward
+pkill -f "port-forward.*9200"
+```
+
+#### Phase 5 : Redéploiement services (10 minutes)
+```bash
+# 1. Kibana
+kubectl apply -f 03-kibana/kibana.yaml
+
+# 2. Ingress (réserver IPs statiques si perdues)
+# Vérifier les IPs
+gcloud compute addresses list --global
+
+# Si absentes, recréer
+gcloud compute addresses create elastic-ip kibana-ip fleet-ip ingest-ip --global
+
+# Appliquer ingress
+kubectl apply -f 04-ingress/
+
+# 3. Fleet Server
+kubectl apply -f 05-fleet/fleet-server.yaml
+
+# 4. Attendre tous les services ready
+kubectl -n elastic wait --for=condition=Ready pod --all --timeout=600s
+```
+
+#### Phase 6 : Validation (5 minutes)
+```bash
+# 1. Vérifier cluster Elasticsearch
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cluster/health?pretty
+
+# 2. Vérifier les indices
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/indices?v
+
+# 3. Tester Kibana
+curl -I https://kibana.hasfy.fr
+
+# 4. Tester Fleet
+curl -k https://fleet.hasfy.fr/api/status
+
+# 5. Vérifier les données restaurées
+# Dans Kibana → Discover → Vérifier la continuité des logs
+```
+
+**Timeline totale** : 60 minutes (RTO respecté)
+
+---
+
+### Scénario 3 : Corruption de données Elasticsearch
+
+**Probabilité** : Faible  
+**Impact** : Modéré à critique  
+**RTO** : 30 minutes  
+**RPO** : 15 minutes (dernier snapshot)
+
+**Détection** :
+- Cluster status = red
+- Shards unassigned
+- Requêtes échouent
+
+**Procédure de reprise** :
+
+#### Restauration sélective d'indices
+```bash
+# 1. Identifier les indices corrompus
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/indices?v | grep red
+
+# 2. Fermer l'indice
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/logs-2025.12.09/_close
+
+# 3. Supprimer l'indice corrompu
+curl -k -X DELETE -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/logs-2025.12.09
+
+# 4. Restaurer uniquement cet indice
+LAST_SNAPSHOT=$(curl -sk -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_snapshot/gcs-repo/_all | \
+  jq -r '.snapshots | sort_by(.start_time_in_millis) | last | .snapshot')
+
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_snapshot/gcs-repo/$LAST_SNAPSHOT/_restore \
+  -H "Content-Type: application/json" \
+  -d '{
+    "indices": "logs-2025.12.09",
+    "ignore_unavailable": false
+  }'
+
+# 5. Surveiller
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_recovery?human&pretty
+
+# 6. Rouvrir l'indice
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/logs-2025.12.09/_open
+```
+
+---
+
+### Scénario 4 : Perte de la région GCP
+
+**Probabilité** : Très faible (disaster majeur)  
+**Impact** : Critique  
+**RTO** : 4 heures  
+**RPO** : 24 heures (dernier backup cross-region)
+
+**Procédure de reprise** :
+
+#### Phase 1 : Activation région secondaire (30 minutes)
+```bash
+# 1. Choisir nouvelle région
+NEW_REGION="europe-west1"  # Belgique au lieu de Paris
+
+# 2. Modifier terraform.tfvars
+cat > terraform.tfvars <<EOF
+region = "$NEW_REGION"
+zone = "${NEW_REGION}-b"
+cluster_name = "elastic-prod-dr"
+EOF
+
+# 3. Déployer dans nouvelle région
+terraform init
+terraform apply
+```
+
+#### Phase 2 : Restauration depuis backup cross-region (90 minutes)
+```bash
+# 1. Copier snapshots depuis backup cross-region
+# (si configuré avec gsutil rsync vers bucket secondaire)
+gsutil -m rsync -r \
+  gs://elastic-backups-YOUR_PROJECT-eu/ \
+  gs://elastic-backups-YOUR_PROJECT-dr/
+
+# 2. Suivre procédure Scénario 2 (restauration complète)
+```
+
+**Configuration préventive backup cross-region** :
+
+```bash
+# Créer bucket dans région différente
+gsutil mb -l europe-west1 gs://elastic-backups-YOUR_PROJECT-dr
+
+# Créer cron job pour sync quotidien
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: backup-sync-dr
+  namespace: elastic
+spec:
+  schedule: "0 3 * * *"  # 3h du matin
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: backup-sa
+          containers:
+          - name: gsutil
+            image: google/cloud-sdk:alpine
+            command:
+            - /bin/sh
+            - -c
+            - |
+              gsutil -m rsync -r \
+                gs://elastic-backups-YOUR_PROJECT/snapshots/ \
+                gs://elastic-backups-YOUR_PROJECT-dr/snapshots/
+          restartPolicy: OnFailure
+```
+
+---
+
+## 🔄 Backups et snapshots
+
+### Configuration automatique
+
+**Snapshot quotidien** :
+
+```bash
+# Créer SLM policy (Snapshot Lifecycle Management)
+curl -k -X PUT -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_slm/policy/daily-snapshots \
+  -H "Content-Type: application/json" \
+  -d '{
+    "schedule": "0 30 1 * * ?",
+    "name": "<daily-snap-{now/d}>",
+    "repository": "gcs-repo",
+    "config": {
+      "indices": ["*"],
+      "ignore_unavailable": false,
+      "include_global_state": true,
+      "metadata": {
+        "taken_by": "slm",
+        "taken_because": "daily backup"
+      }
+    },
+    "retention": {
+      "expire_after": "30d",
+      "min_count": 7,
+      "max_count": 30
+    }
+  }'
+
+# Exécuter immédiatement (test)
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_slm/policy/daily-snapshots/_execute
+
+# Vérifier l'exécution
+curl -k -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_slm/policy/daily-snapshots?human
+```
+
+**Snapshot avant maintenance** :
+
+```bash
+#!/bin/bash
+# pre-maintenance-backup.sh
+
+echo "Création snapshot pré-maintenance..."
+
+SNAPSHOT_NAME="pre-maintenance-$(date +%Y%m%d-%H%M%S)"
+
+curl -k -X PUT -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_snapshot/gcs-repo/$SNAPSHOT_NAME?wait_for_completion=true \
+  -H "Content-Type: application/json" \
+  -d '{
+    "indices": "*",
+    "ignore_unavailable": false,
+    "include_global_state": true,
+    "metadata": {
+      "taken_by": "admin",
+      "taken_because": "pre-maintenance"
+    }
+  }'
+
+echo "Snapshot créé : $SNAPSHOT_NAME"
+```
+
+### Politique de rétention
+
+| Type | Fréquence | Rétention | Localisation |
+|------|-----------|-----------|--------------|
+| **Quotidien** | 1h30 du matin | 30 jours | GCS europe-west9 |
+| **Hebdomadaire** | Dimanche 2h | 12 semaines | GCS europe-west9 |
+| **Mensuel** | 1er du mois 3h | 12 mois | GCS europe-west1 (DR) |
+| **Pré-maintenance** | Manuel | 90 jours | GCS europe-west9 |
+
+**Automatiser les snapshots hebdo/mensuels** :
+
+```yaml
+# CronJob Kubernetes
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: weekly-snapshot
+  namespace: elastic
+spec:
+  schedule: "0 2 * * 0"  # Dimanche 2h
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: snapshot
+            image: curlimages/curl:latest
+            env:
+            - name: ELASTIC_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: elasticsearch-es-elastic-user
+                  key: elastic
+            command:
+            - /bin/sh
+            - -c
+            - |
+              curl -k -X PUT -u "elastic:$ELASTIC_PASSWORD" \
+                https://elasticsearch-es-http:9200/_snapshot/gcs-repo/weekly-snap-$(date +%Y%m%d)?wait_for_completion=false \
+                -H "Content-Type: application/json" \
+                -d '{"indices": "*", "include_global_state": true}'
+          restartPolicy: OnFailure
+```
+
+---
+
+## 🧪 Tests de reprise
+
+### Test mensuel (10 minutes)
+
+**Procédure** :
+```bash
+#!/bin/bash
+# test-recovery-monthly.sh
+
+echo "=== Test mensuel PRI $(date) ===" | tee -a test-pri.log
+
+# 1. Créer snapshot de test
+echo "[1/5] Création snapshot..." | tee -a test-pri.log
+SNAPSHOT_NAME="test-recovery-$(date +%Y%m%d-%H%M%S)"
+curl -sk -X PUT -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/_snapshot/gcs-repo/$SNAPSHOT_NAME?wait_for_completion=true" \
+  -H "Content-Type: application/json" \
+  -d '{"indices": "*"}' | jq .
+
+# 2. Créer index de test
+echo "[2/5] Création index de test..." | tee -a test-pri.log
+curl -sk -X PUT -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/test-recovery" \
+  -H "Content-Type: application/json" \
+  -d '{"settings": {"number_of_shards": 1}}'
+
+# 3. Insérer données test
+echo "[3/5] Insertion données..." | tee -a test-pri.log
+for i in {1..100}; do
+  curl -sk -X POST -u "elastic:$PASSWORD" \
+    "https://elastic.hasfy.fr/test-recovery/_doc" \
+    -H "Content-Type: application/json" \
+    -d "{\"message\": \"test $i\", \"timestamp\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > /dev/null
+done
+
+# 4. Supprimer l'index
+echo "[4/5] Suppression index..." | tee -a test-pri.log
+curl -sk -X DELETE -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/test-recovery"
+
+# 5. Restaurer depuis snapshot
+echo "[5/5] Restauration..." | tee -a test-pri.log
+curl -sk -X POST -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/_snapshot/gcs-repo/$SNAPSHOT_NAME/_restore" \
+  -H "Content-Type: application/json" \
+  -d '{"indices": "test-recovery"}'
+
+sleep 10
+
+# 6. Vérifier les données
+COUNT=$(curl -sk -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/test-recovery/_count" | jq .count)
+
+if [ "$COUNT" -eq 100 ]; then
+  echo "✅ Test réussi : $COUNT documents restaurés" | tee -a test-pri.log
+else
+  echo "❌ Test échoué : $COUNT documents (attendu 100)" | tee -a test-pri.log
+  exit 1
+fi
+
+# 7. Nettoyer
+curl -sk -X DELETE -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/test-recovery"
+curl -sk -X DELETE -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/_snapshot/gcs-repo/$SNAPSHOT_NAME"
+
+echo "=== Test terminé ===" | tee -a test-pri.log
+```
+
+**Automatiser le test** :
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: monthly-pri-test
+  namespace: elastic
+spec:
+  schedule: "0 4 1 * *"  # 1er du mois à 4h
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: test
+            image: curlimages/curl:latest
+            volumeMounts:
+            - name: test-script
+              mountPath: /scripts
+            command: ["/bin/sh", "/scripts/test-recovery-monthly.sh"]
+          volumes:
+          - name: test-script
+            configMap:
+              name: test-recovery-script
+          restartPolicy: OnFailure
+```
+
+---
+
+## 📞 Contacts et escalade
+
+### Équipe technique
+
+| Rôle | Nom | Téléphone | Email | Niveau |
+|------|-----|-----------|-------|--------|
+| **Admin Système** | John Doe | +33 6 XX XX XX XX | john@hasfy.fr | L1 |
+| **Architecte Cloud** | Jane Smith | +33 6 YY YY YY YY | jane@hasfy.fr | L2 |
+| **CTO** | Bob Martin | +33 6 ZZ ZZ ZZ ZZ | bob@hasfy.fr | L3 |
+
+### Support externe
+
+- **Google Cloud Support** : [cloud.google.com/support](https://cloud.google.com/support)  
+  Plan : Premium (SLA 1h, 24/7)
+
+- **Elastic Support** : [support.elastic.co](https://support.elastic.co)  
+  Licence : Gold (SLA 4h, business hours)
+
+### Procédure d'escalade
+
+1. **L1 (0-30 min)** : Admin système tente reprise selon runbook
+2. **L2 (30-60 min)** : Escalade architecte cloud si échec
+3. **L3 (60-90 min)** : Escalade CTO + support externe
+4. **L4 (90+ min)** : Activation PRA (Plan Reprise Activité)
+
+---
+
+## 📊 Métriques et reporting
+
+### KPIs à suivre
+
+```bash
+# Disponibilité mensuelle
+# (Total minutes uptime / Total minutes) * 100
+# Cible : 99.95% = 21.6 minutes downtime/mois max
+
+# RTO moyen
+# Temps entre détection incident et service restored
+# Cible : < 2 heures
+
+# RPO effectif
+# Âge du dernier snapshot au moment de l'incident
+# Cible : < 15 minutes
+
+# Taux de succès tests PRI
+# (Tests réussis / Total tests) * 100
+# Cible : 100%
+```
+
+### Dashboard de monitoring
+
+**Créer dans Cloud Monitoring** :
+
+```bash
+# Widget 1 : Cluster health
+# Métrique : custom.googleapis.com/elasticsearch/cluster_status
+# Type : Gauge (0=red, 1=yellow, 2=green)
+
+# Widget 2 : Dernier snapshot
+# Métrique : custom.googleapis.com/elasticsearch/last_snapshot_age_minutes
+# Alerte : > 90 minutes
+
+# Widget 3 : Disponibilité
+# Métrique : uptime_check/check_passed
+# Période : 30 jours
+
+# Widget 4 : RTO incidents
+# Métrique : custom.googleapis.com/incidents/rto_minutes
+# Graphique : Time series
+```
+
+---
+
+## 📝 Checklist post-incident
+
+Après chaque incident :
+
+- [ ] Documenter l'incident (date, heure, durée, cause)
+- [ ] Calculer RTO et RPO effectifs
+- [ ] Identifier root cause
+- [ ] Mettre à jour le runbook si nécessaire
+- [ ] Améliorer monitoring/alerting
+- [ ] Faire débriefing avec équipe
+- [ ] Rapport aux parties prenantes
+- [ ] Planifier actions préventives
+
+---
+
+**Mise à jour** : Décembre 2025  
+**Prochaine révision** : Tous les 3 mois  
+**Prochaine étape** : [PRA.md](PRA.md)

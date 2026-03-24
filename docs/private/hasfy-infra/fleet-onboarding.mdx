@@ -1,0 +1,1439 @@
+# Hasfy Fleet Server - Workflow d'Onboarding
+
+> **Documentation complète** pour l'implémentation du workflow d'onboarding Fleet Server dans une application Next.js TypeScript
+
+---
+
+## 📋 Table des matières
+
+1. [Vue d'ensemble](#vue-densemble)
+2. [Architecture Fleet Server](#architecture-fleet-server)
+3. [Workflow d'onboarding complet](#workflow-donboarding-complet)
+4. [Implémentation Next.js](#implémentation-nextjs)
+5. [Gestion des index Elasticsearch](#gestion-des-index-elasticsearch)
+6. [Rotation des données (ILM)](#rotation-des-données-ilm)
+7. [Exemples d'appels API](#exemples-dappels-api)
+8. [Sécurité et bonnes pratiques](#sécurité-et-bonnes-pratiques)
+
+---
+
+## 🎯 Vue d'ensemble
+
+### Objectif
+Créer un workflow automatisé pour permettre aux clients SaaS Hasfy de :
+1. S'inscrire sur la plateforme
+2. Obtenir automatiquement :
+   - Un utilisateur Elasticsearch dédié
+   - Une Fleet Policy personnalisée
+   - Un enrollment token
+   - Des API keys pour accès aux données
+3. Télécharger et installer l'agent sur leurs équipements
+4. Visualiser leurs métriques en temps réel
+
+### Flux utilisateur
+```
+Client Registration → Fleet Setup → Token Generation → Agent Download → Agent Install → Data Visualization
+```
+
+---
+
+## 🏗️ Architecture Fleet Server
+
+### Composants Elasticsearch/Fleet
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        Elasticsearch Cluster                     │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Master 1   │  │   Master 2   │  │   Master 3   │          │
+│  └──────────────┘  └──────────────┘  └──────────────┘          │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │              Data Nodes (avec ILM)               │           │
+│  │    Hot → Warm → Cold → Delete                    │           │
+│  └──────────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────────┐
+│                         Fleet Server                             │
+│  ┌──────────────────────────────────────────────────┐           │
+│  │  Policy Management │ Agent Enrollment │ API Keys │           │
+│  └──────────────────────────────────────────────────┘           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↕
+┌─────────────────────────────────────────────────────────────────┐
+│                      Elastic Agents (Clients)                    │
+│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐        │
+│  │ Client A │  │ Client B │  │ Client C │  │ Client N │        │
+│  │ Agent 1  │  │ Agent 1  │  │ Agent 1  │  │ Agent 1  │        │
+│  │ Agent 2  │  │ Agent 2  │  │ Agent 2  │  │ Agent 2  │        │
+│  └──────────┘  └──────────┘  └──────────┘  └──────────┘        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Isolation des données
+Chaque client a :
+- **Index pattern dédié** : `metrics-hasfy-{client_id}-*`
+- **User Elasticsearch** : `hasfy_client_{client_id}`
+- **Fleet Policy** : `hasfy-policy-{client_id}`
+- **API Key output** : Pour envoi des métriques
+- **API Key read** : Pour lecture des dashboards
+
+---
+
+## 🔄 Workflow d'onboarding complet
+
+### Étape 1 : Création du client (Supabase)
+
+Lors de l'inscription d'un client :
+
+```typescript
+// app/api/auth/register/route.ts
+import { createClient } from '@supabase/supabase-js'
+import { NextResponse } from 'next/server'
+
+export async function POST(request: Request) {
+  const { email, name, company_name, plan } = await request.json()
+  
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  // 1. Créer le client dans Supabase
+  const { data: client, error } = await supabase
+    .from('hasfy_clients')
+    .insert({
+      email,
+      name,
+      company_name,
+      plan,
+      max_agents: plan === 'free' ? 10 : plan === 'starter' ? 50 : 200
+    })
+    .select()
+    .single()
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 400 })
+  }
+
+  // 2. Déclencher la création Fleet Server
+  await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/fleet/setup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ client_id: client.id })
+  })
+
+  return NextResponse.json({ 
+    client_id: client.id,
+    api_key: client.api_key 
+  })
+}
+```
+
+### Étape 2 : Configuration Fleet Server (automatique)
+
+```typescript
+// app/api/fleet/setup/route.ts
+import { NextResponse } from 'next/server'
+import { createElasticsearchClient } from '@/lib/elasticsearch'
+
+interface FleetSetupRequest {
+  client_id: string
+}
+
+export async function POST(request: Request) {
+  const { client_id }: FleetSetupRequest = await request.json()
+  
+  const esClient = createElasticsearchClient()
+  
+  try {
+    // 1. Créer un rôle Elasticsearch pour le client
+    const roleName = `hasfy_client_${client_id}_role`
+    await esClient.security.putRole({
+      name: roleName,
+      body: {
+        cluster: ['monitor'],
+        indices: [
+          {
+            names: [`metrics-hasfy-${client_id}-*`, `logs-hasfy-${client_id}-*`],
+            privileges: ['write', 'create_index', 'auto_configure'],
+            field_security: {
+              grant: ['*']
+            }
+          },
+          {
+            names: [`.fleet-agents-*`, `.fleet-actions-*`],
+            privileges: ['read']
+          }
+        ],
+        applications: [
+          {
+            application: 'fleet',
+            privileges: ['agent:write'],
+            resources: ['*']
+          }
+        ]
+      }
+    })
+
+    // 2. Créer un utilisateur Elasticsearch pour le client
+    const username = `hasfy_client_${client_id}`
+    const password = generateSecurePassword()
+    
+    await esClient.security.putUser({
+      username,
+      body: {
+        password,
+        roles: [roleName],
+        full_name: `Hasfy Client ${client_id}`,
+        metadata: {
+          client_id,
+          created_at: new Date().toISOString()
+        }
+      }
+    })
+
+    // 3. Créer une API Key pour l'output Fleet (agents → Elasticsearch)
+    const { id: apiKeyId, api_key } = await esClient.security.createApiKey({
+      body: {
+        name: `hasfy_client_${client_id}_output`,
+        role_descriptors: {
+          [roleName]: {
+            cluster: ['monitor'],
+            indices: [
+              {
+                names: [`metrics-hasfy-${client_id}-*`, `logs-hasfy-${client_id}-*`],
+                privileges: ['write', 'create_index', 'auto_configure']
+              }
+            ]
+          }
+        },
+        metadata: {
+          client_id,
+          type: 'output',
+          created_at: new Date().toISOString()
+        }
+      }
+    })
+
+    const outputApiKey = `${apiKeyId}:${api_key}`
+
+    // 4. Créer une API Key pour la lecture (Next.js → Elasticsearch)
+    const { id: readApiKeyId, api_key: readApiKey } = await esClient.security.createApiKey({
+      body: {
+        name: `hasfy_client_${client_id}_read`,
+        role_descriptors: {
+          reader: {
+            cluster: ['monitor'],
+            indices: [
+              {
+                names: [`metrics-hasfy-${client_id}-*`, `logs-hasfy-${client_id}-*`],
+                privileges: ['read', 'view_index_metadata']
+              }
+            ]
+          }
+        },
+        metadata: {
+          client_id,
+          type: 'read',
+          created_at: new Date().toISOString()
+        }
+      }
+    })
+
+    const readOnlyApiKey = `${readApiKeyId}:${readApiKey}`
+
+    // 5. Créer une Fleet Policy pour le client
+    const policyId = `hasfy-policy-${client_id}`
+    const policyResponse = await fetch(`${process.env.KIBANA_URL}/api/fleet/agent_policies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'kbn-xsrf': 'true',
+        'Authorization': `ApiKey ${process.env.KIBANA_API_KEY}`
+      },
+      body: JSON.stringify({
+        id: policyId,
+        name: `Hasfy Policy - Client ${client_id}`,
+        description: `Automated policy for Hasfy client ${client_id}`,
+        namespace: `hasfy-${client_id}`,
+        monitoring_enabled: ['logs', 'metrics'],
+        data_output_id: 'fleet-default-output',
+        fleet_server_host_id: 'fleet-default-fleet-server'
+      })
+    })
+
+    const policy = await policyResponse.json()
+
+    // 6. Ajouter l'intégration System au policy
+    await fetch(`${process.env.KIBANA_URL}/api/fleet/package_policies`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'kbn-xsrf': 'true',
+        'Authorization': `ApiKey ${process.env.KIBANA_API_KEY}`
+      },
+      body: JSON.stringify({
+        policy_id: policyId,
+        package: {
+          name: 'system',
+          version: '1.54.0'
+        },
+        name: `system-${client_id}`,
+        description: 'System metrics and logs',
+        namespace: `hasfy-${client_id}`,
+        inputs: [
+          {
+            type: 'system/metrics',
+            enabled: true,
+            streams: [
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.cpu' },
+                vars: { period: { value: '10s', type: 'text' } }
+              },
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.memory' },
+                vars: { period: { value: '10s', type: 'text' } }
+              },
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.diskio' },
+                vars: { period: { value: '10s', type: 'text' } }
+              },
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.filesystem' },
+                vars: { period: { value: '1m', type: 'text' } }
+              },
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.network' },
+                vars: { period: { value: '10s', type: 'text' } }
+              },
+              {
+                enabled: true,
+                data_stream: { type: 'metrics', dataset: 'system.uptime' },
+                vars: { period: { value: '10s', type: 'text' } }
+              }
+            ]
+          },
+          {
+            type: 'logfile',
+            enabled: true,
+            streams: [
+              {
+                enabled: true,
+                data_stream: { type: 'logs', dataset: 'system.syslog' },
+                vars: {
+                  paths: {
+                    value: ['/var/log/syslog', '/var/log/messages'],
+                    type: 'text'
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      })
+    })
+
+    // 7. Configurer l'output avec l'API Key
+    await fetch(`${process.env.KIBANA_URL}/api/fleet/outputs/${policy.item.data_output_id}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'kbn-xsrf': 'true',
+        'Authorization': `ApiKey ${process.env.KIBANA_API_KEY}`
+      },
+      body: JSON.stringify({
+        name: `hasfy-output-${client_id}`,
+        type: 'elasticsearch',
+        hosts: [process.env.ELASTICSEARCH_URL],
+        api_key: outputApiKey,
+        config_yaml: `
+pipeline: hasfy-client-${client_id}
+index: "metrics-hasfy-${client_id}-%{+yyyy.MM.dd}"
+`
+      })
+    })
+
+    // 8. Créer un enrollment token
+    const enrollmentResponse = await fetch(`${process.env.KIBANA_URL}/api/fleet/enrollment_api_keys`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'kbn-xsrf': 'true',
+        'Authorization': `ApiKey ${process.env.KIBANA_API_KEY}`
+      },
+      body: JSON.stringify({
+        policy_id: policyId,
+        name: `Hasfy Enrollment - Client ${client_id}`,
+        expiration: null // Pas d'expiration
+      })
+    })
+
+    const enrollmentData = await enrollmentResponse.json()
+    const enrollmentToken = enrollmentData.item.api_key
+
+    // 9. Stocker tout dans Supabase
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
+
+    // Mettre à jour le client avec les credentials
+    await supabase
+      .from('hasfy_clients')
+      .update({
+        metadata: {
+          elasticsearch_username: username,
+          elasticsearch_role: roleName,
+          output_api_key_id: apiKeyId,
+          read_api_key_id: readApiKeyId
+        }
+      })
+      .eq('id', client_id)
+
+    // Stocker le token d'enrollment
+    await supabase
+      .from('enrollment_tokens')
+      .insert({
+        client_id,
+        token: enrollmentToken,
+        name: `Default enrollment token`,
+        policy_id: policyId,
+        fleet_url: process.env.FLEET_SERVER_URL!,
+        is_active: true,
+        expires_at: null
+      })
+
+    // 10. Stocker les API keys dans une table sécurisée
+    await supabase
+      .from('elasticsearch_credentials')
+      .insert({
+        client_id,
+        output_api_key: outputApiKey, // Encrypté côté DB
+        read_api_key: readOnlyApiKey,  // Encrypté côté DB
+        created_at: new Date().toISOString()
+      })
+
+    return NextResponse.json({
+      success: true,
+      client_id,
+      policy_id: policyId,
+      enrollment_token: enrollmentToken,
+      message: 'Fleet setup completed successfully'
+    })
+
+  } catch (error: any) {
+    console.error('Fleet setup error:', error)
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    )
+  }
+}
+
+// Fonction helper pour générer un mot de passe sécurisé
+function generateSecurePassword(length: number = 32): string {
+  const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*'
+  let password = ''
+  const crypto = require('crypto')
+  
+  for (let i = 0; i < length; i++) {
+    const randomIndex = crypto.randomInt(0, charset.length)
+    password += charset[randomIndex]
+  }
+  
+  return password
+}
+```
+
+### Étape 3 : Table Supabase pour les credentials Elasticsearch
+
+```sql
+-- supabase/migrations/20251209_elasticsearch_credentials.sql
+
+CREATE TABLE IF NOT EXISTS public.elasticsearch_credentials (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    client_id UUID NOT NULL REFERENCES public.hasfy_clients(id) ON DELETE CASCADE,
+    
+    -- Credentials (à encrypter avec pgcrypto)
+    output_api_key TEXT NOT NULL, -- Pour agents → Elasticsearch
+    read_api_key TEXT NOT NULL,   -- Pour Next.js → Elasticsearch
+    
+    -- Metadata
+    output_api_key_id VARCHAR(255),
+    read_api_key_id VARCHAR(255),
+    
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    revoked_at TIMESTAMPTZ,
+    
+    UNIQUE(client_id)
+);
+
+CREATE INDEX idx_elasticsearch_credentials_client ON public.elasticsearch_credentials(client_id);
+
+COMMENT ON TABLE public.elasticsearch_credentials IS 'Credentials Elasticsearch pour accès agents et API';
+
+-- Trigger pour updated_at
+CREATE TRIGGER update_elasticsearch_credentials_updated_at 
+    BEFORE UPDATE ON public.elasticsearch_credentials
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS
+ALTER TABLE public.elasticsearch_credentials ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clients can view their credentials" ON public.elasticsearch_credentials
+    FOR SELECT USING (client_id::text = auth.uid()::text);
+```
+
+### Étape 4 : Table Equipment (pour lier agents aux équipements)
+
+```sql
+-- supabase/migrations/20251209_equipment.sql
+
+CREATE TABLE IF NOT EXISTS public.equipment (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    client_id UUID NOT NULL REFERENCES public.hasfy_clients(id) ON DELETE CASCADE,
+    
+    -- Informations équipement
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    equipment_type VARCHAR(50) CHECK (equipment_type IN ('server', 'desktop', 'laptop', 'container', 'vm', 'other')),
+    
+    -- Lien avec l'agent
+    agent_id UUID REFERENCES public.elastic_agents(id) ON DELETE SET NULL,
+    
+    -- Metadata
+    location VARCHAR(255),
+    tags TEXT[],
+    metadata JSONB DEFAULT '{}',
+    
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    deleted_at TIMESTAMPTZ
+);
+
+CREATE INDEX idx_equipment_client ON public.equipment(client_id);
+CREATE INDEX idx_equipment_agent ON public.equipment(agent_id);
+CREATE INDEX idx_equipment_active ON public.equipment(is_active) WHERE deleted_at IS NULL;
+
+COMMENT ON TABLE public.equipment IS 'Équipements clients (serveurs, PC, etc.)';
+
+-- Trigger
+CREATE TRIGGER update_equipment_updated_at 
+    BEFORE UPDATE ON public.equipment
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS
+ALTER TABLE public.equipment ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Clients can manage their equipment" ON public.equipment
+    FOR ALL USING (client_id::text = auth.uid()::text);
+```
+
+---
+
+## 🔌 Implémentation Next.js
+
+### Structure du projet
+
+```
+app/
+├── api/
+│   ├── auth/
+│   │   └── register/
+│   │       └── route.ts
+│   ├── fleet/
+│   │   ├── setup/
+│   │   │   └── route.ts
+│   │   ├── token/
+│   │   │   └── route.ts
+│   │   └── agents/
+│   │       └── route.ts
+│   ├── equipment/
+│   │   ├── create/
+│   │   │   └── route.ts
+│   │   └── link-agent/
+│   │       └── route.ts
+│   └── metrics/
+│       ├── cpu/
+│       │   └── route.ts
+│       ├── uptime/
+│       │   └── route.ts
+│       ├── commands/
+│       │   └── route.ts
+│       └── devices/
+│           └── route.ts
+├── dashboard/
+│   └── page.tsx
+└── onboarding/
+    ├── download/
+    │   └── page.tsx
+    └── link-agent/
+        └── page.tsx
+
+lib/
+├── elasticsearch.ts
+├── supabase.ts
+└── fleet.ts
+```
+
+### Client Elasticsearch
+
+```typescript
+// lib/elasticsearch.ts
+import { Client } from '@elastic/elasticsearch'
+
+export function createElasticsearchClient(apiKey?: string) {
+  return new Client({
+    node: process.env.ELASTICSEARCH_URL!,
+    auth: apiKey 
+      ? { apiKey }
+      : {
+          username: process.env.ELASTICSEARCH_USERNAME!,
+          password: process.env.ELASTICSEARCH_PASSWORD!
+        }
+  })
+}
+
+export function createClientElasticsearchClient(clientApiKey: string) {
+  return new Client({
+    node: process.env.ELASTICSEARCH_URL!,
+    auth: { apiKey: clientApiKey }
+  })
+}
+```
+
+### Page de téléchargement de l'agent
+
+```typescript
+// app/onboarding/download/page.tsx
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
+
+export default function DownloadAgentPage() {
+  const user = useUser()
+  const supabase = useSupabaseClient()
+  
+  const [enrollmentToken, setEnrollmentToken] = useState<string>('')
+  const [fleetUrl, setFleetUrl] = useState<string>('')
+  const [equipmentId, setEquipmentId] = useState<string>('')
+  const [selectedOS, setSelectedOS] = useState<'windows' | 'linux' | 'macos'>('windows')
+
+  useEffect(() => {
+    async function fetchEnrollmentToken() {
+      const { data } = await supabase
+        .from('enrollment_tokens')
+        .select('token, fleet_url')
+        .eq('client_id', user?.id)
+        .eq('is_active', true)
+        .single()
+
+      if (data) {
+        setEnrollmentToken(data.token)
+        setFleetUrl(data.fleet_url)
+      }
+    }
+
+    fetchEnrollmentToken()
+  }, [user, supabase])
+
+  const getInstallCommand = () => {
+    const tags = `equipment_id:${equipmentId},user_id:${user?.id}`
+    
+    const commands = {
+      windows: `$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -Uri https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-windows-x86_64.zip -OutFile elastic-agent-8.17.2-windows-x86_64.zip 
+Expand-Archive .\\elastic-agent-8.17.2-windows-x86_64.zip -DestinationPath .
+cd elastic-agent-8.17.2-windows-x86_64
+.\\elastic-agent.exe install --url=${fleetUrl}:443 --enrollment-token=${enrollmentToken} --tag "${tags}"`,
+      
+      linux: `curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-linux-x86_64.tar.gz
+tar xzvf elastic-agent-8.17.2-linux-x86_64.tar.gz
+cd elastic-agent-8.17.2-linux-x86_64
+sudo ./elastic-agent install --url=${fleetUrl}:443 --enrollment-token=${enrollmentToken} --tag "${tags}"`,
+      
+      macos: `curl -L -O https://artifacts.elastic.co/downloads/beats/elastic-agent/elastic-agent-8.17.2-darwin-x86_64.tar.gz
+tar xzvf elastic-agent-8.17.2-darwin-x86_64.tar.gz
+cd elastic-agent-8.17.2-darwin-x86_64
+sudo ./elastic-agent install --url=${fleetUrl}:443 --enrollment-token=${enrollmentToken} --tag "${tags}"`
+    }
+
+    return commands[selectedOS]
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Install Hasfy Agent</h1>
+      
+      <p className="text-gray-600 mb-8">
+        Follow the simple steps below to install the Hasfy monitoring agent on your equipment. 
+        The agent securely collects performance and health metrics to help you monitor your system.
+      </p>
+
+      {/* Tabs */}
+      <div className="flex gap-4 mb-6 border-b">
+        <button
+          className={`px-4 py-2 ${selectedOS === 'windows' ? 'border-b-2 border-blue-500' : ''}`}
+          onClick={() => setSelectedOS('windows')}
+        >
+          Windows
+        </button>
+        <button
+          className={`px-4 py-2 ${selectedOS === 'linux' ? 'border-b-2 border-blue-500' : ''}`}
+          onClick={() => setSelectedOS('linux')}
+        >
+          Linux
+        </button>
+        <button
+          className={`px-4 py-2 ${selectedOS === 'macos' ? 'border-b-2 border-blue-500' : ''}`}
+          onClick={() => setSelectedOS('macos')}
+        >
+          macOS
+        </button>
+      </div>
+
+      {/* Installation steps */}
+      <div className="bg-gray-50 p-6 rounded-lg mb-6">
+        <h2 className="text-xl font-semibold mb-4">
+          {selectedOS === 'windows' && '1. Download the MSI Installer'}
+          {selectedOS === 'linux' && '1. Download the Linux Package'}
+          {selectedOS === 'macos' && '1. Download the macOS Package'}
+        </h2>
+        
+        <button className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700">
+          Download for {selectedOS.charAt(0).toUpperCase() + selectedOS.slice(1)}
+        </button>
+      </div>
+
+      <div className="bg-gray-50 p-6 rounded-lg mb-6">
+        <h2 className="text-xl font-semibold mb-4">
+          2. Run the Installation Command
+        </h2>
+        
+        <pre className="bg-gray-900 text-white p-4 rounded overflow-x-auto">
+          <code>{getInstallCommand()}</code>
+        </pre>
+        
+        <button 
+          className="mt-4 bg-gray-200 px-4 py-2 rounded hover:bg-gray-300"
+          onClick={() => navigator.clipboard.writeText(getInstallCommand())}
+        >
+          Copy Full Command
+        </button>
+      </div>
+
+      <div className="bg-gray-50 p-6 rounded-lg">
+        <h2 className="text-xl font-semibold mb-4">
+          3. Link Agent to Equipment
+        </h2>
+        
+        <p className="mb-4">
+          After installing the agent, click the button below to automatically link it to this equipment
+        </p>
+        
+        <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700">
+          Link Agent to Equipment
+        </button>
+      </div>
+    </div>
+  )
+}
+```
+
+---
+
+## 📊 Gestion des index Elasticsearch
+
+### Pattern d'index par client
+
+Chaque client a ses propres index pour une isolation complète :
+
+```
+metrics-hasfy-{client_id}-{date}
+logs-hasfy-{client_id}-{date}
+```
+
+### Template d'index
+
+```typescript
+// Créer un index template pour tous les clients
+const indexTemplate = {
+  index_patterns: ['metrics-hasfy-*', 'logs-hasfy-*'],
+  template: {
+    settings: {
+      number_of_shards: 2,
+      number_of_replicas: 1,
+      'index.lifecycle.name': 'hasfy-ilm-policy',
+      'index.lifecycle.rollover_alias': 'metrics-hasfy'
+    },
+    mappings: {
+      properties: {
+        '@timestamp': { type: 'date' },
+        client_id: { type: 'keyword' },
+        equipment_id: { type: 'keyword' },
+        agent_id: { type: 'keyword' },
+        host: {
+          properties: {
+            name: { type: 'keyword' },
+            hostname: { type: 'keyword' },
+            ip: { type: 'ip' }
+          }
+        },
+        system: {
+          properties: {
+            cpu: {
+              properties: {
+                total: {
+                  properties: {
+                    pct: { type: 'scaled_float', scaling_factor: 1000 }
+                  }
+                }
+              }
+            },
+            memory: {
+              properties: {
+                used: {
+                  properties: {
+                    pct: { type: 'scaled_float', scaling_factor: 1000 }
+                  }
+                }
+              }
+            },
+            filesystem: {
+              properties: {
+                used: {
+                  properties: {
+                    pct: { type: 'scaled_float', scaling_factor: 1000 }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+---
+
+## ⏰ Rotation des données (ILM)
+
+### Politique ILM recommandée
+
+```typescript
+// app/api/fleet/setup/ilm/route.ts
+export async function POST() {
+  const esClient = createElasticsearchClient()
+
+  const ilmPolicy = {
+    policy: {
+      phases: {
+        hot: {
+          min_age: '0ms',
+          actions: {
+            rollover: {
+              max_primary_shard_size: '50gb',
+              max_age: '1d'
+            },
+            set_priority: {
+              priority: 100
+            }
+          }
+        },
+        warm: {
+          min_age: '7d',
+          actions: {
+            set_priority: {
+              priority: 50
+            },
+            shrink: {
+              number_of_shards: 1
+            },
+            forcemerge: {
+              max_num_segments: 1
+            }
+          }
+        },
+        cold: {
+          min_age: '30d',
+          actions: {
+            set_priority: {
+              priority: 0
+            },
+            freeze: {}
+          }
+        },
+        delete: {
+          min_age: '90d',
+          actions: {
+            delete: {}
+          }
+        }
+      }
+    }
+  }
+
+  await esClient.ilm.putLifecycle({
+    policy: 'hasfy-ilm-policy',
+    body: ilmPolicy
+  })
+
+  return NextResponse.json({ success: true })
+}
+```
+
+### Résumé des phases ILM
+
+| Phase | Durée | Actions | Usage |
+|-------|-------|---------|-------|
+| **Hot** | 0-7 jours | Écriture active, rollover quotidien | Données récentes, requêtes fréquentes |
+| **Warm** | 7-30 jours | Shrink (1 shard), forcemerge | Données moins consultées |
+| **Cold** | 30-90 jours | Freeze (read-only) | Données archivées |
+| **Delete** | > 90 jours | Suppression | Conformité RGPD |
+
+---
+
+## 📈 Exemples d'appels API
+
+### 1. Graph CPU/RAM/DISK (7 derniers jours)
+
+```typescript
+// app/api/metrics/cpu/route.ts
+import { NextResponse } from 'next/server'
+import { createClientElasticsearchClient } from '@/lib/elasticsearch'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('client_id')
+  const equipmentId = searchParams.get('equipment_id')
+  
+  // Récupérer l'API key du client depuis Supabase
+  const { data: credentials } = await supabase
+    .from('elasticsearch_credentials')
+    .select('read_api_key')
+    .eq('client_id', clientId)
+    .single()
+
+  const esClient = createClientElasticsearchClient(credentials.read_api_key)
+
+  const response = await esClient.search({
+    index: `metrics-hasfy-${clientId}-*`,
+    body: {
+      size: 0,
+      query: {
+        bool: {
+          must: [
+            {
+              range: {
+                '@timestamp': {
+                  gte: 'now-7d',
+                  lte: 'now'
+                }
+              }
+            },
+            ...(equipmentId ? [{ term: { 'equipment_id': equipmentId } }] : [])
+          ]
+        }
+      },
+      aggs: {
+        cpu_over_time: {
+          date_histogram: {
+            field: '@timestamp',
+            calendar_interval: '1h'
+          },
+          aggs: {
+            avg_cpu: {
+              avg: {
+                field: 'system.cpu.total.pct'
+              }
+            }
+          }
+        },
+        memory_over_time: {
+          date_histogram: {
+            field: '@timestamp',
+            calendar_interval: '1h'
+          },
+          aggs: {
+            avg_memory: {
+              avg: {
+                field: 'system.memory.used.pct'
+              }
+            }
+          }
+        },
+        disk_over_time: {
+          date_histogram: {
+            field: '@timestamp',
+            calendar_interval: '1h'
+          },
+          aggs: {
+            avg_disk: {
+              avg: {
+                field: 'system.filesystem.used.pct'
+              }
+            }
+          }
+        }
+      }
+    }
+  })
+
+  const cpuData = response.aggregations.cpu_over_time.buckets.map((bucket: any) => ({
+    timestamp: bucket.key_as_string,
+    value: bucket.avg_cpu.value * 100 // Convertir en pourcentage
+  }))
+
+  const memoryData = response.aggregations.memory_over_time.buckets.map((bucket: any) => ({
+    timestamp: bucket.key_as_string,
+    value: bucket.avg_memory.value * 100
+  }))
+
+  const diskData = response.aggregations.disk_over_time.buckets.map((bucket: any) => ({
+    timestamp: bucket.key_as_string,
+    value: bucket.avg_disk.value * 100
+  }))
+
+  return NextResponse.json({
+    cpu: cpuData,
+    memory: memoryData,
+    disk: diskData
+  })
+}
+```
+
+### 2. Graph Uptime (30 days / 7 days / 24h / 1h)
+
+```typescript
+// app/api/metrics/uptime/route.ts
+import { NextResponse } from 'next/server'
+import { createClientElasticsearchClient } from '@/lib/elasticsearch'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('client_id')
+  const period = searchParams.get('period') || '7d' // 1h, 24h, 7d, 30d
+  
+  const intervalMap = {
+    '1h': '1m',
+    '24h': '5m',
+    '7d': '1h',
+    '30d': '6h'
+  }
+
+  const { data: credentials } = await supabase
+    .from('elasticsearch_credentials')
+    .select('read_api_key')
+    .eq('client_id', clientId)
+    .single()
+
+  const esClient = createClientElasticsearchClient(credentials.read_api_key)
+
+  const response = await esClient.search({
+    index: `metrics-hasfy-${clientId}-*`,
+    body: {
+      size: 0,
+      query: {
+        bool: {
+          must: [
+            {
+              range: {
+                '@timestamp': {
+                  gte: `now-${period}`,
+                  lte: 'now'
+                }
+              }
+            }
+          ]
+        }
+      },
+      aggs: {
+        uptime_over_time: {
+          date_histogram: {
+            field: '@timestamp',
+            fixed_interval: intervalMap[period as keyof typeof intervalMap]
+          },
+          aggs: {
+            uptime_seconds: {
+              max: {
+                field: 'system.uptime.duration.ms'
+              }
+            },
+            online_devices: {
+              cardinality: {
+                field: 'agent.id'
+              }
+            }
+          }
+        },
+        total_devices: {
+          cardinality: {
+            field: 'agent.id'
+          }
+        }
+      }
+    }
+  })
+
+  const uptimeData = response.aggregations.uptime_over_time.buckets.map((bucket: any) => ({
+    timestamp: bucket.key_as_string,
+    uptime_hours: (bucket.uptime_seconds.value / (1000 * 60 * 60)).toFixed(2),
+    online_devices: bucket.online_devices.value,
+    availability_pct: (bucket.online_devices.value / response.aggregations.total_devices.value * 100).toFixed(2)
+  }))
+
+  return NextResponse.json({
+    period,
+    data: uptimeData,
+    total_devices: response.aggregations.total_devices.value
+  })
+}
+```
+
+### 3. Liste des dernières commandes
+
+```typescript
+// app/api/metrics/commands/route.ts
+import { NextResponse } from 'next/server'
+import { createClientElasticsearchClient } from '@/lib/elasticsearch'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('client_id')
+  const equipmentId = searchParams.get('equipment_id')
+  const limit = parseInt(searchParams.get('limit') || '50')
+
+  const { data: credentials } = await supabase
+    .from('elasticsearch_credentials')
+    .select('read_api_key')
+    .eq('client_id', clientId)
+    .single()
+
+  const esClient = createClientElasticsearchClient(credentials.read_api_key)
+
+  // Note: Nécessite l'intégration "auditd" ou "osquery" pour capturer les commandes
+  const response = await esClient.search({
+    index: `logs-hasfy-${clientId}-*`,
+    body: {
+      size: limit,
+      query: {
+        bool: {
+          must: [
+            {
+              term: {
+                'event.category': 'process'
+              }
+            },
+            {
+              exists: {
+                field: 'process.command_line'
+              }
+            },
+            ...(equipmentId ? [{ term: { 'equipment_id': equipmentId } }] : [])
+          ]
+        }
+      },
+      sort: [
+        {
+          '@timestamp': {
+            order: 'desc'
+          }
+        }
+      ],
+      _source: [
+        '@timestamp',
+        'host.hostname',
+        'process.command_line',
+        'process.executable',
+        'process.pid',
+        'user.name',
+        'equipment_id'
+      ]
+    }
+  })
+
+  const commands = response.hits.hits.map((hit: any) => ({
+    timestamp: hit._source['@timestamp'],
+    hostname: hit._source.host.hostname,
+    command: hit._source.process.command_line,
+    executable: hit._source.process.executable,
+    pid: hit._source.process.pid,
+    user: hit._source.user?.name || 'unknown',
+    equipment_id: hit._source.equipment_id
+  }))
+
+  return NextResponse.json({
+    total: response.hits.total.value,
+    commands
+  })
+}
+```
+
+### 4. Camembert : Nombre d'équipements par client
+
+```typescript
+// app/api/metrics/devices/route.ts
+import { NextResponse } from 'next/server'
+import { createClientElasticsearchClient } from '@/lib/elasticsearch'
+
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url)
+  const clientId = searchParams.get('client_id')
+
+  const { data: credentials } = await supabase
+    .from('elasticsearch_credentials')
+    .select('read_api_key')
+    .eq('client_id', clientId)
+    .single()
+
+  const esClient = createClientElasticsearchClient(credentials.read_api_key)
+
+  const response = await esClient.search({
+    index: `metrics-hasfy-${clientId}-*`,
+    body: {
+      size: 0,
+      query: {
+        range: {
+          '@timestamp': {
+            gte: 'now-24h'
+          }
+        }
+      },
+      aggs: {
+        by_os: {
+          terms: {
+            field: 'host.os.name',
+            size: 10
+          },
+          aggs: {
+            unique_devices: {
+              cardinality: {
+                field: 'agent.id'
+              }
+            }
+          }
+        },
+        by_status: {
+          terms: {
+            field: 'agent.status',
+            size: 10
+          },
+          aggs: {
+            unique_devices: {
+              cardinality: {
+                field: 'agent.id'
+              }
+            }
+          }
+        },
+        by_equipment_type: {
+          terms: {
+            field: 'tags',
+            include: 'equipment_type:.*',
+            size: 10
+          },
+          aggs: {
+            unique_devices: {
+              cardinality: {
+                field: 'agent.id'
+              }
+            }
+          }
+        },
+        total_devices: {
+          cardinality: {
+            field: 'agent.id'
+          }
+        }
+      }
+    }
+  })
+
+  const devicesByOS = response.aggregations.by_os.buckets.map((bucket: any) => ({
+    os: bucket.key,
+    count: bucket.unique_devices.value
+  }))
+
+  const devicesByStatus = response.aggregations.by_status.buckets.map((bucket: any) => ({
+    status: bucket.key,
+    count: bucket.unique_devices.value
+  }))
+
+  const devicesByType = response.aggregations.by_equipment_type.buckets.map((bucket: any) => ({
+    type: bucket.key.replace('equipment_type:', ''),
+    count: bucket.unique_devices.value
+  }))
+
+  return NextResponse.json({
+    total: response.aggregations.total_devices.value,
+    by_os: devicesByOS,
+    by_status: devicesByStatus,
+    by_type: devicesByType
+  })
+}
+```
+
+---
+
+## 🔒 Sécurité et bonnes pratiques
+
+### 1. Chiffrement des API Keys
+
+```typescript
+// lib/encryption.ts
+import crypto from 'crypto'
+
+const ENCRYPTION_KEY = Buffer.from(process.env.ENCRYPTION_KEY!, 'hex') // 32 bytes
+const IV_LENGTH = 16
+
+export function encrypt(text: string): string {
+  const iv = crypto.randomBytes(IV_LENGTH)
+  const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, iv)
+  
+  let encrypted = cipher.update(text, 'utf8', 'hex')
+  encrypted += cipher.final('hex')
+  
+  return `${iv.toString('hex')}:${encrypted}`
+}
+
+export function decrypt(text: string): string {
+  const [ivHex, encryptedHex] = text.split(':')
+  const iv = Buffer.from(ivHex, 'hex')
+  const decipher = crypto.createDecipheriv('aes-256-cbc', ENCRYPTION_KEY, iv)
+  
+  let decrypted = decipher.update(encryptedHex, 'hex', 'utf8')
+  decrypted += decipher.final('utf8')
+  
+  return decrypted
+}
+```
+
+### 2. Rate Limiting
+
+```typescript
+// middleware.ts
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { Redis } from '@upstash/redis'
+
+const redis = new Redis({
+  url: process.env.UPSTASH_REDIS_URL!,
+  token: process.env.UPSTASH_REDIS_TOKEN!
+})
+
+export async function middleware(request: NextRequest) {
+  const ip = request.ip || 'unknown'
+  const key = `ratelimit:${ip}`
+  
+  const requests = await redis.incr(key)
+  
+  if (requests === 1) {
+    await redis.expire(key, 60) // 1 minute window
+  }
+  
+  if (requests > 100) { // Max 100 requests per minute
+    return NextResponse.json(
+      { error: 'Too many requests' },
+      { status: 429 }
+    )
+  }
+  
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: '/api/:path*'
+}
+```
+
+### 3. Validation des tokens
+
+```typescript
+// lib/fleet.ts
+export async function validateEnrollmentToken(token: string, clientId: string): Promise<boolean> {
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  )
+
+  const { data, error } = await supabase
+    .from('enrollment_tokens')
+    .select('*')
+    .eq('token', token)
+    .eq('client_id', clientId)
+    .eq('is_active', true)
+    .single()
+
+  if (error || !data) return false
+
+  // Vérifier l'expiration
+  if (data.expires_at && new Date(data.expires_at) < new Date()) {
+    await supabase
+      .from('enrollment_tokens')
+      .update({ is_active: false })
+      .eq('id', data.id)
+    return false
+  }
+
+  // Vérifier max_uses
+  if (data.max_uses && data.current_uses >= data.max_uses) {
+    await supabase
+      .from('enrollment_tokens')
+      .update({ is_active: false })
+      .eq('id', data.id)
+    return false
+  }
+
+  return true
+}
+```
+
+---
+
+## 📝 Checklist de déploiement
+
+- [ ] Créer les tables Supabase (`elasticsearch_credentials`, `equipment`)
+- [ ] Configurer les variables d'environnement :
+  - `ELASTICSEARCH_URL`
+  - `KIBANA_URL`
+  - `FLEET_SERVER_URL`
+  - `KIBANA_API_KEY`
+  - `ENCRYPTION_KEY`
+  - `SUPABASE_URL`
+  - `SUPABASE_SERVICE_ROLE_KEY`
+- [ ] Créer l'ILM policy `hasfy-ilm-policy`
+- [ ] Créer l'index template `metrics-hasfy-*`
+- [ ] Configurer Fleet Server outputs par défaut
+- [ ] Tester le workflow complet :
+  1. Inscription client
+  2. Setup Fleet automatique
+  3. Téléchargement agent
+  4. Installation agent
+  5. Visualisation métriques
+- [ ] Configurer les alertes Elasticsearch
+- [ ] Mettre en place le monitoring des agents
+- [ ] Documenter le processus de révocation des tokens
+- [ ] Implémenter la rotation des API keys
+
+---
+
+## 🎓 Ressources supplémentaires
+
+- [Elastic Fleet API Documentation](https://www.elastic.co/guide/en/fleet/current/fleet-apis.html)
+- [Elasticsearch Security API](https://www.elastic.co/guide/en/elasticsearch/reference/current/security-api.html)
+- [Index Lifecycle Management](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html)
+- [Supabase Row Level Security](https://supabase.com/docs/guides/auth/row-level-security)
+
+---
+
+**Créé par Hasfy Team** | Version 1.0.0 | Décembre 2025

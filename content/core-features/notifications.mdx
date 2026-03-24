@@ -1,0 +1,148 @@
+---
+title: Notifications
+description: Système de notifications Hasfy — alertes en temps réel, notifications email, préférences de notification et gestion des alertes critiques.
+---
+
+# Notifications
+
+Le système de notifications de Hasfy vous tient informé en temps réel de l'activité de votre parc informatique et des actions de votre équipe. Les notifications sont conçues pour être pertinentes et non intrusives, avec un contrôle granulaire sur ce que vous recevez.
+
+## Centre de notifications
+
+Le **centre de notifications** est accessible depuis l'icône 🔔 dans la barre de navigation. Un badge numérique indique le nombre de notifications non lues.
+
+### Interface du centre
+
+En cliquant sur l'icône, un panneau latéral s'ouvre avec :
+
+- **Liste chronologique** : toutes vos notifications, de la plus récente à la plus ancienne
+- **Filtres rapides** : Toutes, Non lues, Critiques
+- **Actions groupées** : « Tout marquer comme lu », « Effacer les notifications lues »
+
+Chaque notification affiche :
+- **Icône** : identifie visuellement le type (ticket, équipement, système, calendrier)
+- **Titre** : résumé de l'événement
+- **Détail** : informations complémentaires (nom de l'équipement, numéro de ticket, etc.)
+- **Horodatage** : date et heure de l'événement
+- **Lien** : clic pour accéder directement à l'élément concerné
+
+## Types de notifications
+
+### Notifications d'équipements
+
+| Événement | Criticité | Description |
+|-----------|-----------|-------------|
+| Agent déconnecté | 🔴 Critique | Un agent de supervision ne communique plus depuis plus de 5 minutes |
+| Agent reconnecté | 🟢 Info | Un agent précédemment déconnecté est de nouveau en ligne |
+| Seuil CPU dépassé | 🟠 Avertissement | L'utilisation CPU dépasse le seuil configuré (défaut : 90 %) |
+| Seuil RAM dépassé | 🟠 Avertissement | L'utilisation mémoire dépasse le seuil configuré (défaut : 90 %) |
+| Espace disque critique | 🔴 Critique | L'espace disque disponible passe sous le seuil configuré (défaut : 10 %) |
+| Équipement ajouté | ⚪ Info | Un nouvel équipement a été ajouté à l'inventaire |
+| Statut modifié | ⚪ Info | Le statut d'un équipement a changé (actif, maintenance, retiré) |
+
+### Notifications de tickets
+
+| Événement | Criticité | Description |
+|-----------|-----------|-------------|
+| Nouveau ticket assigné | 🔵 Normal | Un ticket vous a été assigné |
+| Nouveau commentaire | 🔵 Normal | Un message a été ajouté à un ticket que vous suivez |
+| Changement de statut | ⚪ Info | Un ticket que vous suivez a changé de statut |
+| Ticket urgent créé | 🔴 Critique | Un ticket avec priorité « Urgente » a été créé |
+| SLA en approche | 🟠 Avertissement | Le délai SLA d'un ticket est à 75 % de son échéance |
+| SLA dépassé | 🔴 Critique | Le délai SLA d'un ticket a été dépassé |
+| Mention (@) | 🔵 Normal | Vous avez été mentionné dans un commentaire de ticket |
+
+### Notifications de calendrier
+
+| Événement | Criticité | Description |
+|-----------|-----------|-------------|
+| Rappel d'événement | 🔵 Normal | Un événement du calendrier approche (selon le rappel configuré) |
+| Fenêtre de maintenance | ⚪ Info | Une fenêtre de maintenance est imminente |
+| Événement annulé | ⚪ Info | Un événement auquel vous participez a été annulé |
+| Conflit de planning | 🟠 Avertissement | Deux événements se chevauchent sur votre planning |
+
+### Notifications d'organisation
+
+| Événement | Criticité | Description |
+|-----------|-----------|-------------|
+| Nouveau membre | ⚪ Info | Un utilisateur a rejoint votre organisation |
+| Rôle modifié | ⚪ Info | Le rôle d'un membre a été changé |
+| Invitation acceptée | ⚪ Info | Une invitation que vous avez envoyée a été acceptée |
+
+### Notifications système
+
+| Événement | Criticité | Description |
+|-----------|-----------|-------------|
+| Maintenance planifiée | ⚪ Info | Une maintenance de la plateforme Hasfy est programmée |
+| Nouvelle fonctionnalité | ⚪ Info | Une mise à jour de Hasfy est disponible |
+| Limite du plan approchée | 🟠 Avertissement | Vous approchez de la limite d'équipements de votre plan |
+
+## Canaux de notification
+
+### In-app (dans l'application)
+
+Les notifications in-app sont le canal principal. Elles apparaissent dans le centre de notifications et sont toujours activées. Elles ne peuvent pas être complètement désactivées mais peuvent être filtrées par catégorie.
+
+### Email
+
+Les notifications email envoient un message à l'adresse email de votre compte pour les événements importants. Par défaut, seules les notifications **critiques** et **d'avertissement** sont envoyées par email.
+
+Configuration de la fréquence d'envoi :
+
+- **Temps réel** : un email par notification
+- **Résumé horaire** : un email récapitulatif par heure
+- **Résumé quotidien** : un email récapitulatif par jour
+- **Désactivé** : pas d'email (in-app uniquement)
+
+Pour configurer : **Paramètres &gt; Préférences &gt; Notifications &gt; Email**.
+
+## Configuration des préférences
+
+### Par catégorie
+
+Rendez-vous dans **Paramètres &gt; Préférences &gt; Notifications** pour configurer finement vos notifications :
+
+Pour chaque catégorie (Équipements, Tickets, Calendrier, Organisation, Système), configurez indépendamment :
+
+1. **In-app** : activé/désactivé par type d'événement
+2. **Email** : activé/désactivé par type d'événement
+3. **Criticité minimale** : ne recevoir que les notifications d'un niveau minimum (ex. « Avertissement et supérieur »)
+
+### Seuils d'alerte de monitoring
+
+Personnalisez les seuils qui déclenchent les alertes de monitoring :
+
+| Métrique | Seuil avertissement (défaut) | Seuil critique (défaut) |
+|----------|------|---------|
+| CPU | 80 % | 95 % |
+| RAM | 85 % | 95 % |
+| Disque | 80 % | 90 % |
+| Agent hors ligne | 5 min | 15 min |
+
+Pour modifier ces seuils : **Paramètres &gt; Alertes &gt; Monitoring**.
+
+### Heures silencieuses
+
+Activez les heures silencieuses pour ne recevoir que les notifications **critiques** pendant certaines plages horaires :
+
+1. **Paramètres &gt; Préférences &gt; Notifications &gt; Heures silencieuses**
+2. Définissez la plage (ex. 20 h - 8 h)
+3. Sélectionnez les jours concernés
+4. Les notifications non critiques seront mises en file et délivrées à la fin de la plage silencieuse
+
+## Gestion des notifications
+
+### Marquer comme lu/non lu
+
+- **Individuellement** : cliquez sur le bouton à droite de chaque notification
+- **En masse** : utilisez « Tout marquer comme lu » en haut du centre de notifications
+
+### Supprimer des notifications
+
+Les notifications sont automatiquement supprimées après **30 jours**. Vous pouvez les supprimer manuellement via le bouton « Effacer les notifications lues ».
+
+### Suivre/Ne plus suivre
+
+Pour les tickets, vous pouvez choisir de **suivre** ou **ne plus suivre** un ticket spécifique :
+- **Suivi automatique** : vous suivez automatiquement les tickets que vous créez ou auxquels vous êtes assigné
+- **Suivi manuel** : cliquez sur l'icône 🔔 sur un ticket pour le suivre ou ne plus le suivre

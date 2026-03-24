@@ -1,0 +1,754 @@
+# Guide de dépannage - Elasticsearch sur GCP
+
+## 🔍 Diagnostic rapide
+
+### Commandes essentielles
+
+```bash
+# État du cluster GKE
+gcloud container clusters describe elastic-prod --region=europe-west9
+
+# État des pods
+kubectl -n elastic get pods
+
+# État Elasticsearch
+kubectl -n elastic get elasticsearch
+
+# Logs d'un pod
+kubectl -n elastic logs POD_NAME -f
+
+# Événements récents
+kubectl -n elastic get events --sort-by='.lastTimestamp'
+```
+
+---
+
+## ⚠️ Problèmes courants
+
+### 1. Pods en état Pending
+
+#### Symptôme
+```
+NAME                         READY   STATUS    AGE
+elasticsearch-es-default-0   0/1     Pending   5m
+```
+
+#### Diagnostic
+```bash
+kubectl -n elastic describe pod elasticsearch-es-default-0
+```
+
+#### Causes possibles
+
+**A. Ressources insuffisantes**
+```
+Events:
+  Warning  FailedScheduling  Pod could not be scheduled: Insufficient cpu
+```
+
+**Solution** :
+```bash
+# Vérifier les quotas GCP
+gcloud compute project-info describe --project=YOUR_PROJECT
+
+# Augmenter les ressources dans elasticsearch.yaml
+kubectl -n elastic edit elasticsearch elasticsearch
+
+# Réduire les requests
+resources:
+  requests:
+    memory: "4Gi"  # au lieu de 8Gi
+    cpu: "2"       # au lieu de 4
+```
+
+**B. PVC non créé**
+```
+Events:
+  Warning  FailedMount  PersistentVolumeClaim is not bound
+```
+
+**Solution** :
+```bash
+# Vérifier les PVCs
+kubectl -n elastic get pvc
+
+# Vérifier les storage classes
+kubectl get storageclass
+
+# Supprimer et recréer le PVC
+kubectl -n elastic delete pvc elasticsearch-data-elasticsearch-es-default-0
+kubectl -n elastic delete pod elasticsearch-es-default-0
+```
+
+---
+
+### 2. Elasticsearch ne démarre pas
+
+#### Symptôme
+```bash
+kubectl -n elastic get elasticsearch
+
+# HEALTH: unknown ou red
+```
+
+#### Diagnostic
+```bash
+# Logs du premier node
+kubectl -n elastic logs elasticsearch-es-default-0
+
+# Vérifier les events
+kubectl -n elastic describe elasticsearch elasticsearch
+```
+
+#### Causes possibles
+
+**A. Memory issues (OOM)**
+```
+ERROR: bootstrap checks failed
+  max virtual memory areas vm.max_map_count [65530] is too low
+```
+
+**Solution** :
+ECK gère automatiquement `vm.max_map_count`, mais si problème persiste :
+
+```bash
+# Vérifier sur le node
+kubectl debug node/NODE_NAME -it --image=busybox -- sysctl vm.max_map_count
+
+# Devrait être >= 262144
+# Si GKE Autopilot, c'est géré automatiquement
+```
+
+**B. Certificats SSL invalides**
+```
+ERROR: [elasticsearch-es-default-0] not reachable. [certificate verify failed]
+```
+
+**Solution** :
+```bash
+# Vérifier le secret TLS
+kubectl -n elastic get secret elasticsearch-es-http-certs-internal -o yaml
+
+# Recréer les certificats
+kubectl -n elastic delete secret elasticsearch-es-http-certs-internal
+kubectl -n elastic delete pod elasticsearch-es-default-0
+```
+
+**C. Conflit de configuration**
+```
+ERROR: setting [xpack.security.enabled] already configured
+```
+
+**Solution** :
+```bash
+# Éditer elasticsearch.yaml
+kubectl -n elastic edit elasticsearch elasticsearch
+
+# Supprimer config en doublon dans spec.config
+```
+
+---
+
+### 3. Kibana ne peut pas se connecter à Elasticsearch
+
+#### Symptôme
+```bash
+kubectl -n elastic logs -l common.k8s.elastic.co/type=kibana
+
+# Error: Unable to retrieve version information from Elasticsearch
+```
+
+#### Diagnostic
+```bash
+# Vérifier la config Kibana
+kubectl -n elastic describe kibana kibana
+
+# Tester la connexion depuis Kibana pod
+kubectl -n elastic exec -it $(kubectl -n elastic get pod -l common.k8s.elastic.co/type=kibana -o jsonpath='{.items[0].metadata.name}') -- curl -k https://elasticsearch-es-http:9200
+```
+
+#### Solutions
+
+**A. Secret d'authentification manquant**
+```bash
+# Vérifier le secret
+kubectl -n elastic get secret elasticsearch-es-elastic-user
+
+# Si absent, recréer
+PASSWORD=$(openssl rand -base64 32)
+kubectl -n elastic create secret generic elasticsearch-es-elastic-user \
+  --from-literal=elastic=$PASSWORD
+```
+
+**B. Service Elasticsearch non accessible**
+```bash
+# Vérifier le service
+kubectl -n elastic get svc elasticsearch-es-http
+
+# Tester depuis un pod temporaire
+kubectl -n elastic run test --rm -it --image=curlimages/curl -- curl -k https://elasticsearch-es-http:9200
+```
+
+**C. Redémarrer Kibana**
+```bash
+kubectl -n elastic delete pod -l common.k8s.elastic.co/type=kibana
+```
+
+---
+
+### 4. Ingress ne fonctionne pas
+
+#### Symptôme
+```bash
+kubectl -n elastic get ingress
+
+# ADDRESS field is empty after 10+ minutes
+```
+
+#### Diagnostic
+```bash
+# Vérifier les events
+kubectl -n elastic describe ingress kibana-ingress
+
+# Vérifier le backend service
+kubectl -n elastic get svc kibana-kb-http
+```
+
+#### Solutions
+
+**A. Backend service unhealthy**
+```
+Error: All backend services are in UNHEALTHY state
+```
+
+```bash
+# Vérifier le health check
+kubectl -n elastic describe service kibana-kb-http
+
+# Vérifier que le port est correct
+kubectl -n elastic get service kibana-kb-http -o yaml | grep -A5 ports
+```
+
+**B. Certificat SSL non émis**
+```bash
+# Vérifier cert-manager
+kubectl -n cert-manager get pods
+
+# Vérifier le certificat
+kubectl -n elastic describe certificate kibana-tls
+
+# Logs cert-manager
+kubectl -n cert-manager logs -l app=cert-manager -f
+```
+
+**Si blocage Let's Encrypt** :
+```bash
+# Vérifier les challenges
+kubectl -n elastic get challenge
+
+# Supprimer et recréer le certificat
+kubectl -n elastic delete certificate kibana-tls
+kubectl -n elastic delete secret kibana-tls
+
+# Réappliquer l'ingress
+kubectl apply -f 04-ingress/kibana-ingress.yaml
+```
+
+**C. IP statique non créée**
+```bash
+# Vérifier les IPs
+gcloud compute addresses list --global
+
+# Créer si manquante
+gcloud compute addresses create kibana-ip --global --ip-version=IPV4
+
+# Mettre à jour l'ingress avec la nouvelle IP
+kubectl -n elastic annotate ingress kibana-ingress \
+  kubernetes.io/ingress.global-static-ip-name=kibana-ip --overwrite
+```
+
+---
+
+### 5. Fleet Server ne se connecte pas
+
+#### Symptôme
+```bash
+kubectl -n elastic logs -l app=fleet-server
+
+# Error: failed to communicate with Elasticsearch
+```
+
+#### Diagnostic
+```bash
+# Vérifier le service token
+kubectl -n elastic get secret fleet-server-token
+
+# Tester connexion ES
+kubectl -n elastic exec -it $(kubectl -n elastic get pod -l app=fleet-server -o jsonpath='{.items[0].metadata.name}') -- curl -k https://elasticsearch-es-http:9200
+```
+
+#### Solutions
+
+**A. Token invalide ou expiré**
+```bash
+# Régénérer le token
+PASSWORD=$(kubectl -n elastic get secret elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d)
+
+kubectl -n elastic port-forward svc/elasticsearch-es-http 9200:9200 &
+
+NEW_TOKEN=$(curl -k -X POST -u "elastic:$PASSWORD" \
+  https://localhost:9200/_security/service/elastic/fleet-server/credential/token/fleet-token-new \
+  -H "Content-Type: application/json" \
+  -d '{"metadata": {}}' | jq -r '.token.value')
+
+# Mettre à jour le secret
+kubectl -n elastic delete secret fleet-server-token
+kubectl -n elastic create secret generic fleet-server-token --from-literal=token=$NEW_TOKEN
+
+# Redémarrer Fleet Server
+kubectl -n elastic rollout restart deployment fleet-server
+```
+
+**B. Policy non configurée dans Kibana**
+
+1. Ouvrir Kibana : `https://kibana.hasfy.fr`
+2. Fleet → Settings
+3. Vérifier "Fleet Server Host" : `https://fleet.hasfy.fr`
+4. Vérifier "Elasticsearch Host" : `https://elastic.hasfy.fr`
+
+---
+
+### 6. Performance dégradée
+
+#### Symptôme
+```bash
+# Cluster status yellow ou red
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cluster/health?pretty
+```
+
+#### Diagnostic
+```bash
+# Vérifier les shards
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/shards?v
+
+# Vérifier les nodes
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/nodes?v
+
+# Heap usage
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/nodes?v&h=name,heap.percent,ram.percent,cpu
+```
+
+#### Solutions
+
+**A. Shards unassigned**
+```bash
+# Identifier les shards problématiques
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/shards?v | grep UNASSIGNED
+
+# Forcer l'allocation
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_cluster/reroute?retry_failed=true
+```
+
+**B. Heap memory élevé (>85%)**
+```bash
+# Augmenter la heap dans elasticsearch.yaml
+kubectl -n elastic edit elasticsearch elasticsearch
+
+# Modifier spec.nodeSets[0].config
+node.store.allow_mmap: false
+indices.memory.index_buffer_size: "30%"
+
+# Ou augmenter les ressources
+spec:
+  nodeSets:
+  - config:
+      node.memory_lock: true
+    podTemplate:
+      spec:
+        containers:
+        - name: elasticsearch
+          resources:
+            requests:
+              memory: "16Gi"  # doubler
+            limits:
+              memory: "16Gi"
+```
+
+**C. Disque plein (>85%)**
+```bash
+# Vérifier l'espace disque
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/allocation?v
+
+# Augmenter le PVC
+kubectl -n elastic edit pvc elasticsearch-data-elasticsearch-es-default-0
+
+# Modifier spec.resources.requests.storage
+spec:
+  resources:
+    requests:
+      storage: 200Gi  # doubler
+```
+
+---
+
+### 7. Problèmes de réseau
+
+#### Symptôme
+```
+Unable to connect to external URLs
+Error: Timeout connecting to https://...
+```
+
+#### Diagnostic
+```bash
+# Tester depuis un pod
+kubectl -n elastic run test --rm -it --image=curlimages/curl -- curl https://google.com
+
+# Vérifier Cloud NAT
+gcloud compute routers nats describe nat-router \
+  --router=elastic-router \
+  --region=europe-west9
+```
+
+#### Solutions
+
+**A. Cloud NAT manquant**
+```bash
+# Créer Cloud NAT
+gcloud compute routers nats create nat-router \
+  --router=elastic-router \
+  --region=europe-west9 \
+  --auto-allocate-nat-external-ips \
+  --nat-all-subnet-ip-ranges
+```
+
+**B. Firewall rules bloquent**
+```bash
+# Lister les règles
+gcloud compute firewall-rules list
+
+# Créer règle pour egress
+gcloud compute firewall-rules create allow-egress \
+  --direction=EGRESS \
+  --action=ALLOW \
+  --rules=all \
+  --destination-ranges=0.0.0.0/0
+```
+
+---
+
+### 8. Erreurs Terraform
+
+#### Symptôme
+```
+Error: Error creating Cluster: googleapi: Error 403: Quota exceeded
+```
+
+#### Solutions
+
+**A. Quotas dépassés**
+```bash
+# Vérifier les quotas
+gcloud compute project-info describe --project=YOUR_PROJECT | grep -A20 quotas
+
+# Demander augmentation : Console GCP → IAM → Quotas
+```
+
+**B. APIs non activées**
+```bash
+# Activer toutes les APIs
+gcloud services enable \
+  container.googleapis.com \
+  compute.googleapis.com \
+  storage-api.googleapis.com
+```
+
+**C. Permissions insuffisantes**
+```bash
+# Vérifier les permissions
+gcloud projects get-iam-policy YOUR_PROJECT_ID
+
+# Ajouter rôle manquant
+gcloud projects add-iam-policy-binding YOUR_PROJECT_ID \
+  --member="user:your-email@example.com" \
+  --role="roles/container.admin"
+```
+
+---
+
+## 🔧 Outils de diagnostic
+
+### Script de diagnostic complet
+
+```bash
+#!/bin/bash
+# diagnostic.sh
+
+echo "=== GKE Cluster ==="
+gcloud container clusters describe elastic-prod --region=europe-west9 --format="value(status)"
+
+echo ""
+echo "=== Pods status ==="
+kubectl -n elastic get pods
+
+echo ""
+echo "=== Elasticsearch health ==="
+PASSWORD=$(kubectl -n elastic get secret elasticsearch-es-elastic-user -o jsonpath='{.data.elastic}' | base64 -d)
+kubectl -n elastic port-forward svc/elasticsearch-es-http 9200:9200 >/dev/null 2>&1 &
+PF_PID=$!
+sleep 3
+curl -sk -u "elastic:$PASSWORD" https://localhost:9200/_cluster/health?pretty
+kill $PF_PID
+
+echo ""
+echo "=== PVCs ==="
+kubectl -n elastic get pvc
+
+echo ""
+echo "=== Services ==="
+kubectl -n elastic get svc
+
+echo ""
+echo "=== Ingress ==="
+kubectl -n elastic get ingress
+
+echo ""
+echo "=== Recent events (last 10) ==="
+kubectl -n elastic get events --sort-by='.lastTimestamp' | tail -10
+```
+
+Utilisation :
+```bash
+chmod +x diagnostic.sh
+./diagnostic.sh
+```
+
+---
+
+## 📊 Monitoring et alertes
+
+### Vérifier les métriques GCP
+
+```bash
+# CPU usage
+gcloud monitoring time-series list \
+  --filter='metric.type="kubernetes.io/container/cpu/core_usage_time"' \
+  --format=json
+
+# Memory usage
+gcloud monitoring time-series list \
+  --filter='metric.type="kubernetes.io/container/memory/used_bytes"' \
+  --format=json
+```
+
+### Logs centralisés
+
+```bash
+# Logs Elasticsearch
+gcloud logging read "resource.type=k8s_container AND resource.labels.namespace_name=elastic AND resource.labels.container_name=elasticsearch" \
+  --limit=50 \
+  --format=json
+
+# Logs Kibana
+gcloud logging read "resource.type=k8s_container AND resource.labels.namespace_name=elastic AND resource.labels.container_name=kibana" \
+  --limit=50 \
+  --format=json
+```
+
+---
+
+## 🚨 Procédures d'urgence
+
+### Cluster complètement down
+
+```bash
+# 1. Vérifier l'état GKE
+gcloud container clusters describe elastic-prod --region=europe-west9
+
+# 2. Si cluster inaccessible, recréer depuis backup
+terraform apply
+
+# 3. Restaurer depuis snapshot
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_snapshot/gcs-repo/SNAPSHOT_NAME/_restore
+
+# 4. Vérifier la restauration
+curl -k -u "elastic:$PASSWORD" https://elastic.hasfy.fr/_cat/indices?v
+```
+
+### Rollback d'une version
+
+```bash
+# Voir l'historique
+kubectl -n elastic rollout history deployment kibana-kb
+
+# Rollback
+kubectl -n elastic rollout undo deployment kibana-kb --to-revision=2
+
+# Vérifier
+kubectl -n elastic rollout status deployment kibana-kb
+```
+
+### Suppression totale (DANGER)
+
+```bash
+# Supprimer toutes les ressources Kubernetes
+kubectl delete namespace elastic
+
+# Supprimer le cluster GKE
+terraform destroy
+
+# Supprimer les IPs statiques
+gcloud compute addresses delete elastic-ip kibana-ip fleet-ip ingest-ip --global --quiet
+
+# Supprimer les snapshots
+gsutil rm -r gs://elastic-backups-YOUR_PROJECT/snapshots/
+```
+
+---
+
+## 🔧 Problèmes Infrastructure LoadBalancer
+
+### Fleet Server en état DEGRADED après migration
+
+#### Symptôme
+```bash
+curl -k "https://34.155.81.172/api/status"
+# {"name":"fleet-server","status":"DEGRADED"}
+
+kubectl logs -n elastic-system -l agent.k8s.elastic.co/name=fleet-server
+# Error: connection to Elasticsearch failed (127.0.0.1:9200)
+```
+
+#### Cause
+Fleet Server pods n'ont pas reconnecté à Elasticsearch après migration vers LoadBalancers.
+
+#### Solution
+```bash
+# Forcer la reconnexion en recréant les pods
+kubectl delete pod -n elastic-system -l agent.k8s.elastic.co/name=fleet-server
+
+# Attendre que les nouveaux pods démarrent (30-60 secondes)
+kubectl get pods -n elastic-system -l agent.k8s.elastic.co/name=fleet-server -w
+
+# Vérifier le status
+curl -k "https://34.155.81.172/api/status"
+# {"name":"fleet-server","status":"HEALTHY"}
+```
+
+---
+
+### Monitoring affiche "Unable to find cluster UUID"
+
+#### Symptôme
+```
+Stack Monitoring UI affiche :
+"Unable to retrieve cluster UUID. Please check the selected time range."
+```
+
+#### Diagnostic
+```bash
+# Vérifier que les données existent
+PASS=$(kubectl get secret elasticsearch-es-elastic-user -n elastic-system \
+  -o go-template='{{.data.elastic | base64decode}}')
+
+curl -k -s -u "elastic:$PASS" \
+  "https://34.155.235.161/_cat/indices/.monitoring-*?v"
+
+# Si indices présents avec documents, les données existent
+```
+
+#### Cause
+Les données de monitoring existent mais la plage temporelle sélectionnée dans l'UI est incorrecte.
+
+#### Solution
+```
+1. Dans Kibana > Stack Monitoring
+2. Ajuster la plage temporelle en haut à droite
+3. Sélectionner "Last 7 days" ou "Last 30 days"
+4. Les données de monitoring devraient apparaître
+```
+
+---
+
+### Ingress backends UNHEALTHY (si applicable)
+
+#### Symptôme
+```bash
+kubectl get ingress -n elastic-system
+# Tous les backends montrent UNHEALTHY
+```
+
+#### Cause
+GCP Ingress ne supporte pas bien les certificats auto-signés d'ECK.
+
+#### Solution
+**Migration vers LoadBalancers** (recommandé) :
+
+```bash
+# 1. Créer LoadBalancers pour chaque service
+kubectl patch svc elasticsearch-es-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc fleet-server-agent-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc kibana-kb-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+# 2. Attendre assignation IPs externes (2-3 minutes)
+kubectl get svc -n elastic-system -w
+
+# 3. Configurer port 443 (voir kubernetes/*/service.yaml)
+
+# 4. Supprimer Ingress
+kubectl delete ingress -n elastic-system --all
+kubectl delete managedcertificate -n elastic-system --all
+
+# Économie : 81% sur coûts réseau (-91€/mois)
+```
+
+➡️ Voir [INFRASTRUCTURE.md](INFRASTRUCTURE.md) pour détails complets
+
+---
+
+## 📞 Support et ressources
+
+### Documentation officielle
+
+- **ECK** : [elastic.co/guide/en/cloud-on-k8s](https://www.elastic.co/guide/en/cloud-on-k8s/current/index.html)
+- **GKE** : [cloud.google.com/kubernetes-engine/docs](https://cloud.google.com/kubernetes-engine/docs)
+- **Terraform GCP** : [registry.terraform.io/providers/hashicorp/google](https://registry.terraform.io/providers/hashicorp/google/latest/docs)
+
+### Commandes de debug avancées
+
+```bash
+# Shell dans un pod
+kubectl -n elastic-system exec -it elasticsearch-es-default-0 -- /bin/bash
+
+# Voir les ressources utilisées
+kubectl -n elastic-system top pods
+
+# Voir les limites des nodes
+kubectl describe nodes
+
+# Analyser un crash
+kubectl -n elastic-system logs POD_NAME --previous
+
+# Vérifier LoadBalancers
+kubectl get svc -n elastic-system -l common.k8s.elastic.co/type
+```
+
+### Fichiers de log importants
+
+- **Elasticsearch** : `/usr/share/elasticsearch/logs/elasticsearch.log`
+- **Kibana** : stdout (via `kubectl logs`)
+- **Fleet** : stdout (via `kubectl logs`)
+- **Metricbeat** : stdout (via `kubectl logs`)
+
+---
+
+**Mise à jour** : 13 décembre 2025  
+**Contact** : support@hasfy.fr  
+**Prochaine étape** : [SECURITY.md](SECURITY.md)

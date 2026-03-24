@@ -1,0 +1,111 @@
+---
+title: Hasfy-Infra — Infrastructure
+description: Documentation technique de l'infrastructure Elasticsearch sur GCP GKE Autopilot.
+---
+
+# Hasfy-Infra — Infrastructure
+
+Infrastructure as Code pour **Elasticsearch + Fleet Server** sur **GCP GKE Autopilot**.
+SaaS Backend Monitoring avec architecture progressive en 4 phases.
+
+**Repo :** `github.com/HasfyFR/Hasfy-Infra`
+
+## Navigation
+
+### Infrastructure
+- [Architecture](/docs/private/hasfy-infra/architecture) — Vue d'ensemble de l'architecture Elasticsearch sur GCP
+- [Infrastructure](/docs/private/hasfy-infra/infrastructure) — Détails LoadBalancer L4, GKE Autopilot
+- [Quick Start](/docs/private/hasfy-infra/quick-start) — Démarrage rapide Phase 1
+
+### Opérations
+- [Scaling](/docs/private/hasfy-infra/scaling) — Guide de mise à l'échelle
+- [Migration](/docs/private/hasfy-infra/migration) — Migration entre phases (1→2→3)
+- [Troubleshooting](/docs/private/hasfy-infra/troubleshooting) — Dépannage et résolution
+
+### Sécurité et Coûts
+- [Security](/docs/private/hasfy-infra/security) — Sécurité réseau, TLS, RBAC, IAM
+- [Costs](/docs/private/hasfy-infra/costs) — Analyse des coûts par phase
+- [Cost Optimization](/docs/private/hasfy-infra/cost-optimization) — Recommandations d'optimisation
+
+### Fleet et Plans de reprise
+- [Fleet Onboarding](/docs/private/hasfy-infra/fleet-onboarding) — Workflow d'onboarding Fleet
+- [React Components](/docs/private/hasfy-infra/react-components) — Composants d'installation agent
+- [PRA](/docs/private/hasfy-infra/pra) — Plan de Reprise d'Activité
+- [PRI](/docs/private/hasfy-infra/pri) — Plan de Reprise Informatique
+
+---
+
+## 🎯 État Actuel
+
+| Composant | Version | Phase | Status |
+|-----------|---------|-------|--------|
+| Elasticsearch | 8.16.1 | Phase 1 Alpha | ✅ GREEN |
+| Kibana | 8.16.1 | Phase 1 Alpha | ✅ Running |
+| Fleet Server | 8.16.1 | Phase 1 Alpha | ✅ Running |
+| SSL Certificates | Let's Encrypt | Production | ✅ Valid |
+
+---
+
+## 🌐 URLs de Production
+
+| Service | URL |
+|---------|-----|
+| Kibana | https://kibana.hasfy.fr |
+| Fleet Server | https://fleet.hasfy.fr |
+| Elasticsearch | https://elastic.hasfy.fr |
+
+---
+
+## 📁 Structure du Projet
+
+```
+providers/gcp/
+├── terraform/           # Infrastructure GKE Autopilot
+├── kubernetes/
+│   ├── 01-eck-operator/ # ECK CRDs
+│   ├── 02-elasticsearch/# Manifests ES par phase
+│   ├── 03-kibana/       # Manifests Kibana par phase
+│   ├── 04-fleet/        # Manifests Fleet par phase
+│   ├── 05-monitoring/   # Metricbeat Stack Monitoring
+│   └── 06-certificates/ # cert-manager + Let's Encrypt
+├── scripts/             # Scripts de déploiement
+└── docs/                # Documentation détaillée
+```
+
+---
+
+## ⚡ Démarrage Rapide
+
+```bash
+# 1. Cloner le repo
+git clone https://github.com/HasfyFR/Hasfy-Infra.git
+cd Hasfy-Infra/providers/gcp
+
+# 2. Infrastructure Terraform
+cd terraform
+terraform init && terraform apply
+
+# 3. Déployer Elastic Stack
+kubectl apply -f kubernetes/01-eck-operator/
+kubectl apply -f kubernetes/02-elasticsearch/elasticsearch-phase1.yaml
+kubectl apply -f kubernetes/03-kibana/kibana-phase1.yaml
+kubectl apply -f kubernetes/04-fleet/fleet-server-phase1.yaml
+
+# 4. Récupérer le mot de passe
+kubectl get secret elasticsearch-es-elastic-user -n elastic-system \
+  -o go-template='{{.data.elastic | base64decode}}'
+```
+
+---
+
+## 📊 Architecture 3 Phases
+
+| Phase | Environnement | Agents | Ingestion | Coût |
+|-------|---------------|--------|-----------|------|
+| **Phase 1** 🧪 | Alpha | ~50 | ~25GB/day | ~250€/mo |
+| **Phase 2** 🔬 | Beta | ~200 | ~100GB/day | ~450€/mo |
+| **Phase 3** 🏭 | Production | ~500+ | ~250GB/day | ~750€/mo |
+
+---
+
+© 2024 [Hasfy](https://hasfy.fr) • Version 8.16.1 • Phase 1 Alpha

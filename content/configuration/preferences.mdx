@@ -1,0 +1,131 @@
+---
+title: Préférences de l'application
+description: Personnalisez votre expérience Hasfy — thème, langue, fuseau horaire, notifications et disposition du tableau de bord.
+---
+
+# Préférences de l'application
+
+Les préférences vous permettent de personnaliser l'interface Hasfy selon vos habitudes de travail. Accédez à cette section via **Paramètres &gt; Préférences**.
+
+## Thème d'apparence
+
+Hasfy propose trois modes d'affichage pour s'adapter à votre environnement de travail :
+
+| Mode | Description |
+|------|-------------|
+| **Clair** | Interface à fond blanc, idéale pour les environnements bien éclairés |
+| **Sombre** | Interface à fond foncé, réduit la fatigue oculaire en conditions de faible luminosité |
+| **Système** | S'adapte automatiquement au thème de votre système d'exploitation |
+
+Pour changer de thème :
+1. Accédez à **Préférences &gt; Apparence**
+2. Sélectionnez le mode souhaité
+3. Le changement est appliqué instantanément
+
+> **Astuce** : Le mode **Système** est recommandé si vous travaillez à des horaires variés — Hasfy basculera automatiquement entre clair et sombre selon les paramètres de votre OS.
+
+## Langue
+
+L'interface Hasfy est actuellement disponible en **français**. La documentation et les éléments d'interface sont rédigés en français.
+
+Des langues supplémentaires sont prévues dans la feuille de route (anglais, espagnol, allemand). Vous serez notifié lorsque de nouvelles langues seront disponibles.
+
+## Fuseau horaire
+
+Le fuseau horaire détermine l'affichage des dates et heures dans toute l'application : horodatage des tickets, événements du calendrier, logs d'audit et notifications.
+
+1. Accédez à **Préférences &gt; Région**
+2. Sélectionnez votre **fuseau horaire** dans la liste déroulante (ex. Europe/Paris, America/Montreal)
+3. Choisissez le **format de date** préféré :
+   - `JJ/MM/AAAA` (format français — défaut)
+   - `MM/JJ/AAAA` (format américain)
+   - `AAAA-MM-JJ` (format ISO)
+4. Choisissez le **format d'heure** :
+   - 24 heures (défaut) : `14:30`
+   - 12 heures : `2:30 PM`
+
+> **Note** : Le fuseau horaire est propre à votre compte utilisateur. Chaque membre de l'organisation peut configurer le sien indépendamment, ce qui est particulièrement utile pour les équipes réparties sur plusieurs fuseaux.
+
+## Préférences de notification
+
+### Notifications dans l'application (In-app)
+
+Les notifications apparaissent sous forme de badge et de menu déroulant dans l'en-tête de l'application. Configurez quelles notifications vous souhaitez recevoir :
+
+| Catégorie | Exemples | Par défaut |
+|-----------|----------|------------|
+| **Tickets** | Nouveau ticket assigné, changement de statut, commentaire | Activé |
+| **Équipements** | Alerte de monitoring, changement de statut, agent déconnecté | Activé |
+| **Calendrier** | Rappel d'événement, événement modifié ou annulé | Activé |
+| **Organisation** | Nouveau membre, changement de rôle, invitation acceptée | Activé |
+| **Système** | Maintenance planifiée, mise à jour de fonctionnalités | Activé |
+
+### Notifications par email
+
+Pour chaque catégorie ci-dessus, vous pouvez activer ou désactiver séparément les notifications par email. Par défaut, seules les notifications **critiques** sont envoyées par email :
+
+- Alertes de monitoring critiques (équipement hors ligne, espace disque insuffisant)
+- Tickets avec priorité **Urgente**
+- Actions de sécurité (connexion suspecte, modification de mot de passe)
+
+### Fréquence des emails
+
+Choisissez la fréquence de réception des emails non critiques :
+
+- **Temps réel** : chaque notification génère un email immédiat
+- **Résumé horaire** : un récapitulatif toutes les heures
+- **Résumé quotidien** : un email récapitulatif chaque matin à l'heure de votre choix
+- **Désactivé** : aucun email (notifications in-app uniquement)
+
+### Heures silencieuses
+
+Définissez une plage horaire pendant laquelle seules les notifications critiques vous parviennent :
+
+1. Activez les **heures silencieuses**
+2. Définissez l'heure de **début** (ex. 20:00) et de **fin** (ex. 08:00)
+3. Sélectionnez les **jours** concernés (ex. tous les jours, jours ouvrés uniquement)
+
+## Disposition du tableau de bord
+
+Personnalisez l'agencement de votre tableau de bord principal :
+
+### Widgets disponibles
+
+| Widget | Description |
+|--------|-------------|
+| **Synthèse du parc** | Nombre d'équipements par statut (actif, en maintenance, retiré) |
+| **Santé globale** | Indicateur visuel de la santé du parc (vert, orange, rouge) |
+| **Tickets ouverts** | Nombre de tickets en cours par priorité |
+| **Métriques temps réel** | CPU, RAM et disque moyens des machines supervisées |
+| **Activité récente** | Dernières actions dans l'organisation |
+| **Calendrier** | Prochains événements et maintenances |
+| **Top alertes** | Alertes les plus fréquentes |
+
+### Personnalisation
+
+1. Depuis le tableau de bord, cliquez sur l'icône **⚙️ Personnaliser**
+2. **Glissez-déposez** les widgets pour réorganiser leur position
+3. **Redimensionnez** les widgets en tirant sur leurs bords
+4. **Masquez** les widgets dont vous n'avez pas besoin via le bouton ✕
+5. **Ajoutez** des widgets depuis le panneau « Widgets disponibles »
+6. Cliquez sur **« Enregistrer la disposition »**
+
+> **Note** : La disposition est sauvegardée par utilisateur. Chaque membre de l'équipe peut avoir sa propre organisation du tableau de bord.
+
+## Tutoriels et aide contextuelle
+
+Gérez l'affichage des aides intégrées à l'interface :
+
+- **Tutoriels de découverte** : tooltips guidés lors de la première utilisation de chaque module. Activés par défaut, désactivables ici
+- **Bulles d'aide** : icônes « ? » affichant des explications au survol. Activées par défaut
+- **Raccourcis clavier** : affichez la liste des raccourcis disponibles avec `Ctrl + /` (ou `Cmd + /` sur macOS)
+
+## Réinitialisation des préférences
+
+Pour rétablir toutes les préférences à leurs valeurs par défaut :
+
+1. Accédez à **Préférences &gt; Avancé**
+2. Cliquez sur **« Réinitialiser les préférences »**
+3. Confirmez la réinitialisation
+
+Cette action réinitialise uniquement les préférences d'affichage et de notification, pas les informations de votre profil ni les paramètres de l'organisation.

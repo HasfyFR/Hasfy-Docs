@@ -1,0 +1,159 @@
+---
+title: Architecture API — Hasfy-App
+description: Documentation complète de l'architecture API privée et publique de Hasfy-App.
+---
+
+# Architecture API
+
+## Vue d'ensemble
+
+L'API Hasfy suit une architecture RESTful avec deux catégories distinctes :
+
+1. **APIs privées** (`/api/private/`) — Accessibles uniquement aux utilisateurs authentifiés via session Supabase
+2. **APIs publiques v1** (`/api/v1/`) — Accessibles par des services externes via API key
+
+## Structure des répertoires
+
+```
+app/api/
+├── private/                # APIs privées — session Supabase
+│   ├── agent/              # Installation et connexion agent
+│   ├── api-keys/           # Gestion des clés API
+│   ├── audit-logs/         # Journal d'audit (list, export)
+│   ├── auth/               # Invite, deactivate, reactivate, delete user
+│   ├── equipment/          # CRUD équipements, métriques, install, tags, notes
+│   ├── fleet/              # Synchronisation Fleet, osquery-pack
+│   ├── featurebase/        # Token Featurebase
+│   ├── onboarding/         # Progression, profil, organisation
+│   ├── organizations/      # Provision, fleet
+│   ├── send/               # Emails (invitation, feedback, delete-account)
+│   ├── stripe/             # Checkout, portal, pricing, verify-session, change-plan
+│   ├── subscriptions/      # Ajustement des sièges
+│   └── tickets/            # CRUD tickets, summarize, solutions
+│
+├── v1/                     # API publique — API key auth
+│   └── installer/          # validate, register, health, credentials, uninstall
+│
+├── middleware.ts            # Middleware API privée
+├── middlewareV1.ts          # Middleware API publique (API key auth)
+└── utils.ts                # getApiPath() pour le frontend
+```
+
+## Authentification
+
+### APIs privées — Session Supabase
+
+Les routes privées vérifient la session Supabase via le cookie `sb-access-token`. Le middleware extrait l'utilisateur et l'attache à la requête.
+
+```typescript
+// Middleware privé simplifié
+const supabase = createServerClient(cookies());
+const { data: { user } } = await supabase.auth.getUser();
+if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+```
+
+### API publique v1 — API Keys
+
+Les routes publiques utilisent un header `x-api-key`. Le middleware vérifie la clé dans la table `api_keys`, confirme qu'elle est active et enregistre l'utilisation.
+
+```typescript
+// Middleware v1 simplifié
+const apiKey = request.headers.get('x-api-key');
+const { data } = await supabase.from('api_keys')
+  .select('*')
+  .eq('key', apiKey)
+  .eq('is_active', true)
+  .single();
+```
+
+## Endpoints détaillés
+
+### Private — Equipment
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/api/private/equipment` | Liste des équipements de l'organisation |
+| POST | `/api/private/equipment` | Créer un équipement |
+| PATCH | `/api/private/equipment/[id]` | Mettre à jour un équipement |
+| DELETE | `/api/private/equipment/[id]` | Supprimer un équipement |
+| GET | `/api/private/equipment/[id]/metrics` | Métriques Elasticsearch |
+| POST | `/api/private/equipment/installer/token` | Générer un token d'installation |
+| POST | `/api/private/equipment/tags` | Gérer les tags |
+| POST | `/api/private/equipment/notes` | Ajouter des notes |
+
+### Private — Tickets
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/api/private/tickets` | Liste des tickets |
+| POST | `/api/private/tickets` | Créer un ticket |
+| PATCH | `/api/private/tickets/[id]` | Mettre à jour un ticket |
+| POST | `/api/private/tickets/[id]/summarize` | Résumé IA du ticket |
+| POST | `/api/private/tickets/[id]/solutions` | Suggestions IA de résolution |
+
+### Private — Auth / Users
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| POST | `/api/private/auth/invite` | Inviter un utilisateur |
+| POST | `/api/private/auth/deactivate` | Désactiver un compte |
+| POST | `/api/private/auth/reactivate` | Réactiver un compte |
+| DELETE | `/api/private/auth/delete` | Supprimer un compte |
+
+### Private — Stripe
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| POST | `/api/private/stripe/checkout` | Créer une session checkout |
+| POST | `/api/private/stripe/portal` | Ouvrir le portail client |
+| GET | `/api/private/stripe/pricing` | Récupérer les plans |
+| POST | `/api/private/stripe/verify-session` | Vérifier une session |
+| POST | `/api/private/stripe/change-plan` | Changer de plan |
+
+### Private — Onboarding
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| GET | `/api/private/onboarding` | État d'avancement |
+| POST | `/api/private/onboarding/profile` | Compléter le profil |
+| POST | `/api/private/onboarding/organization` | Configurer l'organisation |
+| POST | `/api/private/onboarding/complete` | Finaliser l'onboarding |
+
+### Public v1 — Installer
+
+| Méthode | Route | Description |
+|---------|-------|-------------|
+| POST | `/v1/installer/validate` | Valider un token d'installation |
+| POST | `/v1/installer/credentials` | Échanger token contre credentials Fleet |
+| POST | `/v1/installer/register` | Enregistrer un agent installé |
+| GET | `/v1/installer/health` | Vérifier la santé de l'API |
+| POST | `/v1/installer/uninstall` | Notifier la désinstallation |
+
+## Intégration Frontend
+
+Le frontend utilise `getApiPath()` pour construire les URLs API :
+
+```typescript
+// lib/api/utils.ts
+export function getApiPath(path: string) {
+  return `/api/private/${path}`;
+}
+```
+
+Les hooks TanStack Query appellent les routes API via `fetch` :
+
+```typescript
+// hooks/equipment/useEquipments.ts
+const { data } = useQuery({
+  queryKey: ['equipments'],
+  queryFn: () => fetch(getApiPath('equipment')).then(r => r.json()),
+});
+```
+
+## Sécurité
+
+- **Rate limiting** : Configurable par route
+- **Validation** : Zod schemas aux frontières d'entrée
+- **CORS** : Restreint aux domaines Hasfy
+- **Audit** : Toutes les mutations sont loguées dans `audit_logs`
+- **RLS Supabase** : Double vérification — API middleware + Row Level Security

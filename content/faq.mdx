@@ -1,0 +1,125 @@
+---
+title: Foire aux questions (FAQ)
+description: Réponses aux questions les plus fréquentes sur Hasfy — compte, fonctionnalités, facturation, sécurité et technique.
+---
+
+# Foire aux questions (FAQ)
+
+Retrouvez ici les réponses aux questions les plus fréquemment posées sur Hasfy. Si votre question n'y figure pas, [contactez notre support](/contactus).
+
+## Compte & Inscription
+
+### Comment créer un compte Hasfy ?
+
+Rendez-vous sur **[app.hasfy.fr](https://app.hasfy.fr)** et cliquez sur « Créer un compte ». Vous pouvez vous inscrire avec un email et un mot de passe, ou utiliser un lien magique (magic link) envoyé par email. Un essai gratuit de 14 jours est inclus, sans carte bancaire requise. Consultez le [guide de démarrage rapide](/quickstart) pour les étapes détaillées.
+
+### Puis-je utiliser Hasfy sans carte bancaire ?
+
+Oui. L'essai gratuit de 14 jours ne nécessite aucune carte bancaire. Vous pouvez explorer toutes les fonctionnalités du plan Starter pendant cette période. Une carte bancaire est requise uniquement lors de la souscription à un plan payant.
+
+### Comment réinitialiser mon mot de passe ?
+
+Sur la page de connexion, cliquez sur « Mot de passe oublié ? », saisissez votre adresse email et suivez le lien de réinitialisation reçu par email. Le lien est valide pendant 1 heure. Consultez la page [Gestion du compte](/configuration/account) pour plus de détails.
+
+### Puis-je appartenir à plusieurs organisations ?
+
+Actuellement, un compte Hasfy est associé à **une seule organisation**. Si vous gérez plusieurs organisations, vous devrez créer des comptes séparés avec des adresses email différentes. Le support multi-organisation est prévu dans une future version.
+
+## Fonctionnalités
+
+### Qu'est-ce que l'agent Hasfy et est-il obligatoire ?
+
+L'agent Hasfy est un logiciel léger installé sur les machines de votre parc pour remonter les métriques de supervision (CPU, RAM, disque, réseau) en temps réel. Il n'est **pas obligatoire** — vous pouvez utiliser Hasfy comme un simple outil d'inventaire et de ticketing sans installer l'agent. L'agent apporte la dimension de supervision et de monitoring. Consultez le [guide d'installation](/quickstart#étape-4--installer-lagent-hasfy).
+
+### Sur quels systèmes d'exploitation l'agent fonctionne-t-il ?
+
+L'agent Hasfy est compatible avec :
+- **Windows** 10 et versions ultérieures
+- **macOS** 12 (Monterey) et versions ultérieures
+- **Linux** : distributions Debian/Ubuntu (.deb) et RHEL/Fedora (.rpm)
+
+### Combien d'équipements puis-je gérer ?
+
+Le nombre d'équipements dépend de votre plan :
+- **Starter** : jusqu'à 100 équipements
+- **Pro** : jusqu'à 500 équipements
+- **Enterprise** : illimité
+
+Consultez la page [Tarification](/pricing) pour le détail des plans.
+
+### Comment fonctionne le système de tickets ?
+
+Le système de tickets permet de créer, assigner et suivre les incidents et les demandes. Chaque ticket a un statut (Nouveau, En cours, En attente, Résolu, Fermé), une priorité et peut être assigné à un technicien. Des conversations, notes internes et pièces jointes sont intégrées. Consultez le guide [Assistance & Tickets](/core-features/assistance).
+
+### L'IA est-elle disponible sur tous les plans ?
+
+La catégorisation automatique de base est disponible sur tous les plans. Les fonctionnalités IA avancées (résolution assistée, maintenance prédictive, réponses automatiques) sont réservées aux plans **Pro** et **Enterprise**. Voir [Fonctionnalités IA](/advanced-features/ia).
+
+### Puis-je exporter mes données ?
+
+Oui. Hasfy permet l'export de toutes vos données (équipements, tickets, métriques, utilisateurs) en formats **CSV** et **PDF** depuis l'interface. Un export complet en archive ZIP est également disponible pour la portabilité des données (conformité RGPD). Voir [Données & Sauvegardes](/settings-security/databackup).
+
+## Facturation & Abonnement
+
+### Quels sont les moyens de paiement acceptés ?
+
+Hasfy accepte les cartes bancaires **Visa**, **Mastercard** et **American Express** via Stripe. Les paiements sont sécurisés avec l'authentification 3D Secure.
+
+### Puis-je changer de plan à tout moment ?
+
+Oui. Vous pouvez passer à un plan supérieur (upgrade) à tout moment — le changement est immédiat et facturé au prorata. Pour un plan inférieur (downgrade), le changement prend effet à la fin de la période de facturation en cours. Consultez [Intégration Stripe](/integrations/stripe).
+
+### Comment fonctionne la facturation par utilisateur ?
+
+Sur le plan Starter, le prix est de **5 € par utilisateur et par mois**. Lorsque vous ajoutez un utilisateur en cours de mois, le coût est calculé au prorata. Lorsqu'un utilisateur est retiré, un crédit est appliqué sur la prochaine facture.
+
+### Où trouver mes factures ?
+
+Toutes vos factures sont accessibles dans **Paramètres &gt; Facturation &gt; Historique des factures**. Vous pouvez les consulter en ligne et les télécharger au format PDF.
+
+### Que se passe-t-il si j'annule mon abonnement ?
+
+L'accès aux fonctionnalités est maintenu jusqu'à la fin de la période de facturation en cours. Après expiration, vous disposez de 30 jours en lecture seule pour exporter vos données. Les données sont supprimées 60 jours après la fin de l'abonnement. Voir la [politique de rétention](/settings-security/databackup).
+
+## Sécurité
+
+### Mes données sont-elles sécurisées ?
+
+Oui. Hasfy applique les mesures de sécurité suivantes :
+- Chiffrement **TLS 1.3** pour toutes les communications
+- Chiffrement **AES-256** des données au repos
+- Hébergement sur des **serveurs en France**
+- Sauvegardes automatiques quotidiennes
+- Authentification multi-facteurs (MFA) disponible
+
+Consultez les [bonnes pratiques de sécurité](/settings-security/goodpratices) pour les recommandations détaillées.
+
+### Hasfy est-il conforme au RGPD ?
+
+Oui. Hasfy est pleinement conforme au Règlement Général sur la Protection des Données (RGPD). Vous disposez de tous les droits prévus : accès, rectification, effacement, portabilité et opposition. Un DPO est désigné et joignable à dpo@hasfy.fr. Voir [Données & Sauvegardes](/settings-security/databackup).
+
+### Comment activer l'authentification à deux facteurs ?
+
+Accédez à **Paramètres &gt; Mon compte &gt; Sécurité &gt; 2FA** et suivez l'assistant de configuration. Vous pouvez utiliser une application d'authentification (Google Authenticator, Authy, etc.) ou la vérification par email. Consultez le guide [MFA](/settings-security/mfas).
+
+## Questions techniques
+
+### L'agent consomme-t-il beaucoup de ressources ?
+
+Non. L'agent Hasfy est conçu pour être léger :
+- **CPU** : &lt; 1 % d'utilisation en moyenne
+- **RAM** : environ 50-80 Mo
+- **Réseau** : quelques Ko par minute (envoi de métriques toutes les 60 secondes)
+- **Disque** : environ 100 Mo d'espace d'installation
+
+### L'agent fonctionne-t-il derrière un proxy ou un pare-feu ?
+
+L'agent communique en HTTPS (port 443) avec les serveurs Hasfy. Si votre réseau utilise un proxy, vous pouvez configurer l'agent pour l'utiliser lors de l'enrôlement. Assurez-vous que le domaine `*.hasfy.fr` est autorisé dans votre pare-feu.
+
+### Puis-je utiliser l'API pour automatiser des tâches ?
+
+Oui. L'API REST de Hasfy permet de lire et d'écrire des données par programmation : créer des équipements, ouvrir des tickets, récupérer des métriques, etc. Consultez la [documentation API](/api) pour les endpoints et les exemples.
+
+### Les données de monitoring sont-elles conservées combien de temps ?
+
+La durée de rétention des métriques dépend de votre plan : **90 jours** (Starter), **1 an** (Pro), **2 ans** (Enterprise). Au-delà, les données sont automatiquement archivées et supprimées.

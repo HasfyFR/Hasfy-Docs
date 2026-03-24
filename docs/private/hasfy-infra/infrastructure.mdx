@@ -1,0 +1,336 @@
+# Infrastructure LoadBalancer - Hasfy Elastic Stack
+
+## 📍 Architecture Actuelle (Production)
+
+L'infrastructure Elasticsearch est déployée sur **GKE Autopilot** avec une architecture **LoadBalancer** pure, optimisée pour les coûts et la simplicité.
+
+### ✅ Services exposés
+
+| Service | DNS | IP externe | Port | Type |
+|---------|-----|------------|------|------|
+| **Elasticsearch** | `elastic.hasfy.fr` | `34.155.235.161` | 443 | HTTPS (LoadBalancer) |
+| **Fleet Server** | `fleet.hasfy.fr` | `34.155.81.172` | 443 | HTTPS (LoadBalancer) |
+| **Kibana** | `kibana.hasfy.fr` | `34.163.3.153` | 443 | HTTPS (LoadBalancer) |
+
+**Caractéristiques** :
+- ✅ Port 443 standard (HTTPS sans spécification de port)
+- ✅ Certificats auto-signés (ECK managed)
+- ✅ LoadBalancer L4 (passthrough, pas de validation SSL côté GCP)
+- ✅ Architecture simplifiée et économique
+
+---
+
+## 🏗️ Diagramme d'Architecture
+
+```
+Internet
+   │
+   ├─→ elastic.hasfy.fr (34.155.235.161:443)
+   │   └─→ LoadBalancer (L4 passthrough)
+   │       └─→ elasticsearch-es-http-external Service
+   │           └─→ Elasticsearch Pods (3 nodes)
+   │               • Port 443 → 9200 mapping
+   │               • Self-signed certificates
+   │
+   ├─→ fleet.hasfy.fr (34.155.81.172:443)
+   │   └─→ LoadBalancer (L4 passthrough)
+   │       └─→ fleet-server-agent-http Service
+   │           └─→ Fleet Server Pods (2 replicas)
+   │               • Port 443 → 8220 mapping
+   │               • Self-signed certificates
+   │
+   └─→ kibana.hasfy.fr (34.163.3.153:443)
+       └─→ LoadBalancer (L4 passthrough)
+           └─→ kibana-kb-http Service
+               └─→ Kibana Pod (1 replica)
+                   • Port 443 → 5601 mapping
+                   • Self-signed certificates
+```
+
+---
+
+## 🔧 Configuration DNS Requise
+
+Ajoutez ces enregistrements DNS de type **A** dans votre zone `hasfy.fr` :
+
+```dns
+# Elasticsearch API
+elastic     A    34.155.235.161    3600
+
+# Fleet Server (agents enrollment)
+fleet       A    34.155.81.172     3600
+
+# Kibana UI
+kibana      A    34.163.3.153      3600
+```
+
+### Vérification DNS
+
+```bash
+# Vérifier les enregistrements DNS (après configuration)
+dig +short elastic.hasfy.fr
+dig +short fleet.hasfy.fr
+dig +short kibana.hasfy.fr
+```
+
+---
+
+## ✅ Tests de Connectivité
+
+### Elasticsearch
+
+```bash
+# Test cluster health (via DNS)
+curl -k -u "elastic:YOUR_PASSWORD" \
+  "https://elastic.hasfy.fr/_cluster/health?pretty"
+
+# Test via IP directement
+curl -k -u "elastic:YOUR_PASSWORD" \
+  "https://34.155.235.161/_cluster/health?pretty"
+
+# Résultat attendu: HTTP 200, cluster status GREEN
+```
+
+### Fleet Server
+
+```bash
+# Test status (via DNS)
+curl -k "https://fleet.hasfy.fr/api/status"
+
+# Test via IP directement
+curl -k "https://34.155.81.172/api/status"
+
+# Résultat attendu: {"name":"fleet-server","status":"HEALTHY"}
+```
+
+### Kibana
+
+```bash
+# Test HTTP (via DNS)
+curl -k -I "https://kibana.hasfy.fr"
+
+# Résultat attendu: HTTP 302 (redirect to login)
+
+# Accès web
+open https://kibana.hasfy.fr
+```
+
+---
+
+## 🚀 Commandes Utiles
+
+### Récupérer les IPs des LoadBalancers
+
+```bash
+# Elasticsearch LoadBalancer IP
+kubectl get svc elasticsearch-es-http-external -n elastic-system \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+# Fleet Server LoadBalancer IP
+kubectl get svc fleet-server-agent-http -n elastic-system \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+
+# Kibana LoadBalancer IP
+kubectl get svc kibana-kb-http -n elastic-system \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+```
+
+### Récupérer les Credentials
+
+```bash
+# Elasticsearch password
+kubectl get secret elasticsearch-es-elastic-user \
+  -n elastic-system \
+  -o go-template='{{.data.elastic | base64decode}}'
+
+# Fleet enrollment token (pour agents)
+kubectl get secret fleet-server-agent-http -n elastic-system \
+  -o go-template='{{.data.token | base64decode}}'
+```
+
+### Vérifier le Status des Services
+
+```bash
+# Status des LoadBalancers
+kubectl get svc -n elastic-system -l common.k8s.elastic.co/type
+
+# Status des Pods
+kubectl get pods -n elastic-system
+
+# Logs Fleet Server (si problème)
+kubectl logs -n elastic-system -l agent.k8s.elastic.co/name=fleet-server
+```
+
+---
+
+## 🔐 Sécurité
+
+### Certificats SSL
+
+Tous les services utilisent des **certificats auto-signés** générés automatiquement par l'opérateur ECK :
+
+- **Elasticsearch** : `elasticsearch-es-http-certs-public`
+- **Fleet Server** : `fleet-server-agent-http-certs-public`
+- **Kibana** : `kibana-kb-http-certs-public`
+
+### Authentification
+
+| Service | Méthode | Détails |
+|---------|---------|---------|
+| **Elasticsearch** | Basic Auth | User: `elastic`, Password: dans Secret |
+| **Fleet Server** | Token-based | Token d'enrollment pour agents |
+| **Kibana** | Session-based | Via Elasticsearch authentication |
+
+### Configuration `-k` (Insecure)
+
+Les commandes `curl` utilisent l'option `-k` car les certificats sont auto-signés. En production avec certificats valides (Let's Encrypt), cette option ne sera plus nécessaire.
+
+---
+
+## 💰 Analyse des Coûts
+
+### Architecture Précédente (Ingress)
+
+| Ressource | Quantité | Coût unitaire | Total |
+|-----------|----------|---------------|-------|
+| Ingress (HTTP(S) LB) | 4 | ~20€/mois | ~80€ |
+| IPs statiques globales | 4 | ~8€/mois | ~32€ |
+| **Total Ingress** | | | **~112€/mois** |
+
+**Problèmes** :
+- ❌ Backends UNHEALTHY (incompatibilité certificats auto-signés)
+- ❌ Configuration complexe (BackendConfig, ManagedCertificates)
+- ❌ Coût élevé (4 Ingress + 4 IPs statiques)
+
+### Architecture Actuelle (LoadBalancer)
+
+| Ressource | Quantité | Coût unitaire | Total |
+|-----------|----------|---------------|-------|
+| LoadBalancer (Network LB) | 3 | ~7€/mois | ~21€ |
+| **Total LoadBalancer** | | | **~21€/mois** |
+
+**Avantages** :
+- ✅ Compatible certificats auto-signés (L4 passthrough)
+- ✅ Configuration simple (une ligne Kubernetes)
+- ✅ Coût réduit (pas d'IPs statiques réservées)
+
+### 📊 Économie Réalisée
+
+- **Économie mensuelle** : ~91€/mois (81% de réduction)
+- **Économie annuelle** : ~1092€/an
+- **ROI** : Immédiat (migration sans coût)
+
+---
+
+## 🗑️ Nettoyage Effectué (13 décembre 2025)
+
+### Ressources Supprimées
+
+#### Ingress
+- ❌ `elasticsearch` (Ingress) - Backend UNHEALTHY
+- ❌ `fleet-server` (Ingress) - Backend UNHEALTHY
+- ❌ `ingest` (Ingress) - Backend UNHEALTHY, pas nécessaire
+- ❌ `kibana` (Ingress) - Remplacé par LoadBalancer
+
+#### Certificats Managés
+- ❌ `elasticsearch-cert` (ManagedCertificate)
+- ❌ `fleet-cert` (ManagedCertificate)
+- ❌ `ingest-cert` (ManagedCertificate)
+- ❌ `kibana-cert` (ManagedCertificate)
+
+#### IPs Statiques Globales
+- ❌ `elasticsearch-lb-ip` (34.49.209.111)
+- ❌ `fleet-lb-ip` (34.49.127.249)
+- ❌ `ingest-lb-ip` (34.160.216.54)
+- ❌ `kibana-lb-ip` (adresse non documentée)
+
+#### Configuration Ingress
+- ❌ `elasticsearch-backend` (BackendConfig)
+- ❌ `elastic-stack` (FrontendConfig)
+
+---
+
+## 📝 Variables d'Environnement
+
+```bash
+# Elasticsearch (port 443 standard HTTPS)
+export ELASTICSEARCH_URL=https://elastic.hasfy.fr
+export ELASTICSEARCH_HOST=34.155.235.161
+export ELASTICSEARCH_PORT=443
+
+# Fleet Server (port 443 standard HTTPS)
+export FLEET_SERVER_URL=https://fleet.hasfy.fr
+export FLEET_SERVER_HOST=34.155.81.172
+export FLEET_SERVER_PORT=443
+
+# Kibana (port 443 standard HTTPS)
+export KIBANA_URL=https://kibana.hasfy.fr
+export KIBANA_HOST=34.163.3.153
+export KIBANA_PORT=443
+
+# Credentials
+export ELASTICSEARCH_USERNAME=elastic
+export ELASTICSEARCH_PASSWORD=$(kubectl get secret elasticsearch-es-elastic-user \
+  -n elastic-system -o go-template='{{.data.elastic | base64decode}}')
+```
+
+---
+
+## 🔄 Migration Ingress → LoadBalancer
+
+### Pourquoi Migrer ?
+
+1. **Backends UNHEALTHY** : Les Ingress GCP ne supportent pas bien les certificats auto-signés
+2. **Coût élevé** : 4 Ingress (80€) + 4 IPs statiques (32€) = 112€/mois
+3. **Complexité** : BackendConfig, ManagedCertificates, health checks complexes
+
+### Processus de Migration
+
+```bash
+# 1. Créer LoadBalancers
+kubectl patch svc elasticsearch-es-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc fleet-server-agent-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+kubectl patch svc kibana-kb-http -n elastic-system \
+  -p '{"spec": {"type": "LoadBalancer"}}'
+
+# 2. Configurer port 443 (voir fichiers YAML dans kubernetes/)
+
+# 3. Attendre assignation IPs externes (2-3 minutes)
+kubectl get svc -n elastic-system -w
+
+# 4. Tester connectivité avec nouvelles IPs
+
+# 5. Supprimer Ingress et ressources associées
+kubectl delete ingress -n elastic-system --all
+kubectl delete managedcertificate -n elastic-system --all
+kubectl delete backendconfig -n elastic-system --all
+gcloud compute addresses delete [IP_NAMES] --global
+```
+
+---
+
+## 🏷️ Metadata
+
+- **Date de déploiement** : 13 décembre 2025
+- **Architecture** : LoadBalancer L4 pure
+- **Cluster GKE** : `elastic-cluster` (europe-west9)
+- **Versions** :
+  - Elasticsearch: 8.16.1
+  - Kibana: 8.16.1
+  - Fleet Server: 8.16.1
+  - ECK Operator: 3.2.0
+- **Status** : ✅ Production Ready
+
+---
+
+## 📚 Voir Aussi
+
+- [ARCHITECTURE.md](ARCHITECTURE.md) - Architecture complète Phase 1/2/3
+- [COSTS.md](COSTS.md) - Détail des coûts par phase
+- [SECURITY.md](SECURITY.md) - Configuration sécurité
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Résolution de problèmes
+- [DEPLOY.md](DEPLOY.md) - Guide de déploiement complet

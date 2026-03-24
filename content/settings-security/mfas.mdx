@@ -1,0 +1,130 @@
+---
+title: Authentification multi-facteurs (MFA)
+description: Renforcez la sécurité de votre compte Hasfy avec l'authentification à deux facteurs — application d'authentification, codes de récupération et bonnes pratiques.
+---
+
+# Authentification multi-facteurs (MFA)
+
+L'authentification multi-facteurs (MFA), aussi appelée authentification à deux facteurs (2FA), ajoute une **couche de sécurité supplémentaire** à votre compte Hasfy. En plus de votre mot de passe, vous devez fournir un second facteur d'identification pour vous connecter.
+
+## Pourquoi activer la MFA ?
+
+Un mot de passe seul est vulnérable : il peut être deviné, obtenu par phishing ou exposé lors d'une fuite de données. La MFA protège votre compte même si votre mot de passe est compromis, car l'attaquant aurait également besoin de votre second facteur.
+
+**Risques sans MFA :**
+- Accès non autorisé en cas de fuite de mot de passe
+- Vulnérabilité au phishing et à l'ingénierie sociale
+- Impact potentiel sur toute l'organisation si un compte administrateur est compromis
+
+> **Recommandation forte** : Hasfy recommande l'activation de la MFA pour **tous les comptes**, et en particulier pour les rôles **Owner** et **Admin**. Les plans Enterprise permettent de rendre la MFA obligatoire pour tous les membres.
+
+## Méthodes d'authentification supportées
+
+### Application d'authentification (TOTP)
+
+La méthode recommandée utilise une **application d'authentification** générant des codes temporaires (TOTP — Time-based One-Time Password) :
+
+**Applications compatibles :**
+- Google Authenticator (iOS, Android)
+- Microsoft Authenticator (iOS, Android)
+- Authy (iOS, Android, Desktop)
+- 1Password, Bitwarden et autres gestionnaires de mots de passe supportant TOTP
+
+**Comment ça fonctionne :**
+1. Vous scannez un QR code avec votre application d'authentification
+2. L'application génère un code à 6 chiffres qui change toutes les 30 secondes
+3. À chaque connexion, après votre mot de passe, vous saisissez le code affiché dans l'application
+
+### Vérification par email
+
+En alternative à l'application TOTP, vous pouvez recevoir un **code de vérification par email** :
+
+- Un code à 6 chiffres est envoyé à votre adresse email de compte
+- Le code est valide pendant 10 minutes
+- Méthode moins sécurisée que TOTP (dépend de la sécurité de votre email)
+
+> **Note** : La vérification par email est considérée comme un second facteur de moindre sécurité. Si votre boîte email est compromise, cette méthode ne protège plus votre compte. **Privilégiez l'application TOTP.**
+
+## Activer la MFA
+
+### Activation avec une application TOTP
+
+1. Accédez à **Paramètres &gt; Mon compte &gt; Sécurité &gt; Authentification à deux facteurs**
+2. Cliquez sur **« Activer la 2FA »**
+3. Saisissez votre **mot de passe** pour confirmer votre identité
+4. Choisissez la méthode **« Application d'authentification »**
+5. Un **QR code** s'affiche à l'écran
+6. Ouvrez votre application d'authentification et scannez le QR code
+   - *Ou* saisissez manuellement la **clé secrète** affichée sous le QR code
+7. L'application ajoute une entrée « Hasfy » et commence à générer des codes
+8. Saisissez le **code à 6 chiffres** actuellement affiché dans l'application pour vérifier la configuration
+9. La MFA est activée — **des codes de récupération sont générés**
+
+### Activation avec la vérification par email
+
+1. Suivez les étapes 1 à 4 ci-dessus
+2. Choisissez la méthode **« Vérification par email »**
+3. Un code de vérification est envoyé à votre adresse email
+4. Saisissez le code reçu
+5. La MFA par email est activée
+
+## Codes de récupération
+
+Lors de l'activation de la MFA, Hasfy génère **10 codes de récupération** à usage unique. Ces codes permettent de vous connecter si vous perdez l'accès à votre application d'authentification.
+
+### Gestion des codes
+
+- **Télécharger** : cliquez sur « Télécharger les codes » pour sauvegarder un fichier texte
+- **Copier** : copiez les codes dans un gestionnaire de mots de passe
+- **Imprimer** : imprimez les codes et rangez-les en lieu sûr
+
+> **Très important** : Conservez vos codes de récupération dans un **endroit sûr et séparé** de votre appareil principal. Si vous perdez à la fois votre application d'authentification et vos codes de récupération, vous risquez de perdre l'accès à votre compte.
+
+### Utiliser un code de récupération
+
+1. Sur la page de connexion, saisissez votre email et mot de passe
+2. À l'étape MFA, cliquez sur **« Utiliser un code de récupération »**
+3. Saisissez l'un de vos codes de récupération
+4. Vous êtes connecté — **le code utilisé est invalidé**
+
+### Régénérer les codes
+
+Si vous avez utilisé plusieurs codes ou si vous suspectez une compromission :
+
+1. Accédez à **Paramètres &gt; Mon compte &gt; Sécurité &gt; 2FA**
+2. Cliquez sur **« Régénérer les codes de récupération »**
+3. Confirmez avec votre mot de passe
+4. Les anciens codes sont invalidés et 10 nouveaux codes sont générés
+
+## Désactiver la MFA
+
+Pour désactiver l'authentification à deux facteurs :
+
+1. Accédez à **Paramètres &gt; Mon compte &gt; Sécurité &gt; 2FA**
+2. Cliquez sur **« Désactiver la 2FA »**
+3. Saisissez votre **mot de passe** et un **code TOTP** (ou un code de récupération)
+4. Confirmez la désactivation
+
+> **Attention** : Désactiver la MFA réduit significativement la sécurité de votre compte. Ne la désactivez que temporairement (ex. changement de téléphone) et réactivez-la dès que possible.
+
+## MFA obligatoire (Enterprise)
+
+Sur le plan Enterprise, l'Owner peut rendre la MFA obligatoire pour tous les membres de l'organisation :
+
+1. Accédez à **Paramètres &gt; Organisation &gt; Sécurité**
+2. Activez **« MFA obligatoire »**
+3. Définissez le **délai de grâce** : nombre de jours laissés aux utilisateurs pour activer la MFA
+4. Les utilisateurs sans MFA reçoivent une notification et sont redirigés vers la configuration à chaque connexion
+5. Après le délai de grâce, les comptes sans MFA ne peuvent plus se connecter
+
+## Bonnes pratiques
+
+| Pratique | Recommandation |
+|----------|---------------|
+| Activer la MFA pour tous les comptes | ✅ Fortement recommandé |
+| Utiliser une application TOTP plutôt que l'email | ✅ Plus sécurisé |
+| Sauvegarder les codes de récupération | ✅ Indispensable |
+| Utiliser un gestionnaire de mots de passe supportant TOTP | ✅ Pratique et sécurisé |
+| Désactiver la MFA | ❌ À éviter sauf nécessité |
+| Partager ses codes de récupération | ❌ Ne jamais faire |
+| Stocker les codes sur le même appareil que l'application | ❌ Risque de perte simultanée |

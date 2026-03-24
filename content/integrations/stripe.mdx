@@ -1,0 +1,189 @@
+---
+title: Intégration Stripe
+description: Gestion des abonnements, facturation, moyens de paiement et portail client Stripe dans Hasfy.
+---
+
+# Intégration Stripe
+
+Hasfy utilise **Stripe** comme prestataire de paiement pour gérer les abonnements, la facturation et les moyens de paiement de manière sécurisée. Cette page détaille les fonctionnalités de facturation accessibles depuis Hasfy.
+
+## Vue d'ensemble
+
+L'intégration Stripe est **native** dans Hasfy — elle est automatiquement active pour toutes les organisations disposant d'un abonnement payant. Aucune configuration supplémentaire n'est requise.
+
+### Fonctionnalités couvertes
+
+| Fonctionnalité | Description |
+|---------------|-------------|
+| Souscription | Choisir et souscrire un plan (Starter, Pro, Enterprise) |
+| Facturation récurrente | Prélèvement automatique mensuel ou annuel |
+| Moyens de paiement | Carte bancaire, SEPA (selon disponibilité) |
+| Factures | Émission et téléchargement des factures |
+| Portail client | Gestion autonome des informations de paiement |
+| Gestion des sièges | Ajout/suppression d'utilisateurs facturés |
+| Changement de plan | Upgrade ou downgrade en libre-service |
+
+## Souscrire un abonnement
+
+### Choix du plan
+
+1. Accédez à **Paramètres &gt; Facturation &gt; Abonnement**
+2. Consultez les plans disponibles :
+
+| Plan | Prix | Utilisateurs | Équipements | Métriques |
+|------|------|-------------|-------------|-----------|
+| **Starter** | 5 €/utilisateur/mois | Jusqu'à 20 | 100 | 90 jours |
+| **Pro** | Sur demande | Jusqu'à 50 | 500 | 1 an |
+| **Enterprise** | Sur devis | Illimité | Illimité | 2 ans |
+
+3. Cliquez sur **« Choisir ce plan »**
+4. Vous êtes redirigé vers le formulaire de paiement Stripe sécurisé
+
+### Cycle de facturation
+
+Lors de la souscription, choisissez votre cycle de facturation :
+
+- **Mensuel** : prélèvement chaque mois à la date de souscription
+- **Annuel** : prélèvement annuel avec **2 mois offerts** (soit 10 mois facturés pour 12 mois d'accès)
+
+> **Astuce** : L'abonnement annuel offre une économie significative. Si vous êtes satisfait après votre premier mois, passez à l'annuel depuis **Paramètres &gt; Facturation &gt; Cycle de facturation**.
+
+### Essai gratuit
+
+Hasfy propose un **essai gratuit de 14 jours** sur le plan Starter — aucune carte bancaire requise. À l'issue de la période d'essai, vous pouvez :
+
+- Souscrire un plan payant pour continuer
+- Laisser le compte expirer (vos données sont conservées 30 jours)
+
+## Moyens de paiement
+
+### Carte bancaire
+
+Le moyen de paiement principal est la carte bancaire :
+
+- **Visa**, **Mastercard**, **American Express** acceptées
+- Les paiements sont sécurisés via Stripe avec **authentification 3D Secure** lorsque requise par votre banque
+- Le numéro de carte n'est jamais stocké par Hasfy — il est géré exclusivement par Stripe
+
+### Ajouter ou modifier un moyen de paiement
+
+1. Accédez à **Paramètres &gt; Facturation &gt; Moyens de paiement**
+2. Cliquez sur **« Ajouter une carte »** ou **« Modifier »**
+3. Saisissez les informations de votre carte dans le formulaire sécurisé Stripe
+4. Le nouveau moyen de paiement remplace l'ancien pour les prochains prélèvements
+
+### Échec de paiement
+
+En cas d'échec de paiement (carte expirée, fonds insuffisants, rejet bancaire) :
+
+1. **Notification** : vous recevez un email vous alertant de l'échec
+2. **Tentative automatique** : Stripe retente le paiement automatiquement après 3, 5 et 7 jours
+3. **Mise à jour** : mettez à jour votre moyen de paiement pour éviter l'interruption
+4. **Suspension** : après 3 échecs consécutifs (environ 14 jours), l'accès aux fonctionnalités payantes est suspendu
+5. **Réactivation** : mettez à jour votre carte et le paiement est retentimédiatement
+
+> **Important** : Vos données ne sont jamais supprimées en cas de suspension. Seul l'accès aux fonctionnalités est restreint. Une fois le paiement régularisé, l'accès complet est restauré instantanément.
+
+## Factures
+
+### Consultation
+
+Toutes vos factures sont accessibles depuis **Paramètres &gt; Facturation &gt; Historique des factures** :
+
+| Information | Description |
+|-------------|-------------|
+| Numéro de facture | Identifiant unique de la facture |
+| Date | Date d'émission |
+| Montant | Montant TTC |
+| Statut | Payée, En attente, Impayée |
+| Actions | Télécharger (PDF), Voir dans Stripe |
+
+### Téléchargement
+
+Cliquez sur **« Télécharger »** à côté d'une facture pour obtenir le PDF. La facture inclut :
+
+- Les coordonnées de Hasfy et de votre organisation
+- Le détail du plan et du nombre de sièges
+- Le montant HT, la TVA et le montant TTC
+- Le moyen de paiement utilisé
+
+### Informations de facturation
+
+Pour modifier les informations figurant sur vos factures (nom de l'entreprise, adresse, numéro de TVA) :
+
+1. Accédez à **Paramètres &gt; Facturation &gt; Informations de facturation**
+2. Modifiez les champs souhaités :
+   - Raison sociale
+   - Adresse de facturation
+   - Numéro de TVA intracommunautaire
+   - Email de réception des factures
+3. Cliquez sur **« Enregistrer »**
+
+Les modifications s'appliquent aux factures futures. Les factures déjà émises ne sont pas modifiées.
+
+## Changement de plan
+
+### Upgrade (montée en gamme)
+
+Pour passer à un plan supérieur :
+
+1. Accédez à **Paramètres &gt; Facturation &gt; Abonnement**
+2. Cliquez sur **« Changer de plan »**
+3. Sélectionnez le plan souhaité
+4. Confirmez le changement
+
+L'upgrade est **immédiat** : vous bénéficiez instantanément des nouvelles fonctionnalités. Le montant est calculé au **prorata** de la période restante.
+
+### Downgrade (descente en gamme)
+
+Pour passer à un plan inférieur :
+
+1. Même procédure que l'upgrade
+2. Le downgrade prend effet à la **fin de la période de facturation en cours**
+3. Assurez-vous de respecter les limites du nouveau plan (nombre d'utilisateurs, d'équipements)
+
+> **Attention** : Si votre utilisation dépasse les limites du plan inférieur (ex. 30 utilisateurs pour un plan limité à 20), vous devez réduire l'utilisation avant que le downgrade ne prenne effet. Hasfy vous avertit des ajustements nécessaires.
+
+## Gestion des sièges
+
+### Facturation par siège
+
+Sur le plan Starter, le nombre d'utilisateurs impacte directement le coût :
+
+- **Prix de base** : 5 € par utilisateur et par mois
+- **Ajout d'utilisateur** : lorsque vous invitez un nouvel utilisateur, le coût est ajusté automatiquement au prorata
+- **Suppression d'utilisateur** : lorsqu'un utilisateur est retiré, le crédit est appliqué sur la prochaine facture
+
+### Voir l'utilisation actuelle
+
+Depuis **Paramètres &gt; Facturation &gt; Utilisation**, consultez :
+
+- Nombre actuel d'utilisateurs actifs
+- Limite du plan
+- Coût estimé pour la prochaine facture
+- Historique d'évolution du nombre de sièges
+
+## Portail client Stripe
+
+Pour une gestion avancée, accédez directement au **portail client Stripe** :
+
+1. Accédez à **Paramètres &gt; Facturation**
+2. Cliquez sur **« Gérer sur Stripe »**
+3. Le portail Stripe s'ouvre dans un nouvel onglet
+
+Depuis le portail Stripe, vous pouvez :
+- Mettre à jour vos moyens de paiement
+- Consulter et télécharger toutes vos factures
+- Gérer votre abonnement
+- Annuler votre abonnement
+
+## Annulation de l'abonnement
+
+Pour annuler votre abonnement Hasfy :
+
+1. Accédez à **Paramètres &gt; Facturation &gt; Abonnement**
+2. Cliquez sur **« Annuler l'abonnement »**
+3. Indiquez la raison de l'annulation *(optionnel mais apprécié)*
+4. Confirmez l'annulation
+
+L'annulation prend effet à la **fin de la période de facturation en cours**. Vous conservez l'accès à toutes les fonctionnalités jusqu'à cette date. Après l'expiration, consultez la [politique de rétention des données](/settings-security/databackup) pour connaître les délais de conservation.

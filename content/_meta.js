@@ -1,5 +1,5 @@
 const meta = {
-  'index': 'Welcome !',
+  'index': 'Bienvenue',
   'documentation': {
     title: 'Documentation',
     type: 'page',
@@ -7,10 +7,10 @@ const meta = {
   },
   'SeparatorGettingStarted': {
     type: 'separator',
-    title: 'Getting Started'
+    title: 'Prise en main'
   },
   'introduction': 'Introduction',
-  'quickstart': 'Quick Start',
+  'quickstart': 'Démarrage rapide',
   'configuration': {
     title: 'Configuration',
     theme: {
@@ -22,19 +22,19 @@ const meta = {
     title: 'Guides'
   },
   'core-features': {
-    title: 'Core Features',
+    title: 'Fonctionnalités principales',
     theme: {
       collapsed: true
     }
   },
   'advanced-features': {
-    title: 'Advanced Features',
+    title: 'Fonctionnalités avancées',
     theme: {
       collapsed: true
     }
   },
   'settings-security': {
-    title: 'Settings & Security',
+    title: 'Paramètres & Sécurité',
     theme: {
       collapsed: true
     }
@@ -44,22 +44,22 @@ const meta = {
     title: 'Ressources'
   },
   'integrations': {
-    title: 'Integrations',
+    title: 'Intégrations',
     theme: {
       collapsed: true
     }
   },
   'api': 'API',
-  'casestudies': 'Case Studies',
-  'glossary': 'Glossary',
+  'casestudies': 'Études de cas',
+  'glossary': 'Glossaire',
   'SeparatorMore': {
     type: 'separator',
-    title: 'More'
+    title: 'Plus'
   },
-  'contactus': 'Contact Us',
+  'contactus': 'Nous contacter',
   'faq': 'FAQ',
   'livesite': {
-    title: 'See Hasfy',
+    title: 'Voir Hasfy',
     href: 'https://hasfy.fr',
   },
   'roadmap': {
@@ -67,11 +67,11 @@ const meta = {
     href: 'https://dynamic-wrench-36e.notion.site/ROADMAP-HASFY-2025-1854c935aab18101974dd846e8effeac',
   },
   'pricing': {
-    title: 'Pricing',
+    title: 'Tarifs',
     type: 'page',
   },
   'aboutus': {
-    title: 'About Us',
+    title: 'À propos',
     type: 'page',
   },
 }

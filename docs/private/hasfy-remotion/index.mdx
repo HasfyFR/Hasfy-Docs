@@ -1,0 +1,141 @@
+---
+title: Hasfy-Remotion — Génération vidéo
+description: Documentation technique du projet Remotion pour la création de vidéos programmatiques Hasfy.
+---
+
+# Hasfy-Remotion — Génération vidéo
+
+## Présentation
+
+Hasfy-Remotion est un projet basé sur le framework **Remotion** qui permet de créer des vidéos programmatiques en React. Il est utilisé pour générer du contenu vidéo marketing, des démos produit et des animations pour la plateforme Hasfy.
+
+**Repo :** `github.com/HasfyFR/Hasfy-Remotion`
+**Framework :** Remotion (React)
+**Nom du projet :** `Hasfy-remotion`
+
+## Stack technique
+
+| Composant | Technologie |
+|-----------|-------------|
+| **Framework vidéo** | Remotion |
+| **UI** | React + TypeScript |
+| **Validation** | Zod (3.22.3) |
+| **Médias** | @remotion/media (Video, Audio, Img) |
+| **Animations** | Remotion interpolate, spring, easing |
+| **3D** | Three.js + React Three Fiber (optionnel) |
+| **Rendu** | H.264, WebM, GIF |
+
+## Concepts clés
+
+### Compositions
+
+Une **Composition** définit une vidéo renderable avec ses dimensions, FPS et durée :
+
+```tsx
+import { Composition } from 'remotion';
+import { MyVideo } from './MyVideo';
+
+export const RemotionRoot = () => {
+  return (
+    &lt;Composition
+      id="MyVideo"
+      component={MyVideo}
+      durationInFrames={300}
+      fps={30}
+      width={1920}
+      height={1080}
+    /&gt;
+  );
+};
+```
+
+### Assets
+
+Les assets (images, vidéos, audio, fonts) sont importés via `staticFile()` depuis le dossier `public/` :
+
+```tsx
+import { staticFile } from 'remotion';
+import { Video, Img, Audio } from '@remotion/media';
+
+// Fichier local
+&lt;Img src={staticFile("logo.png")} /&gt;
+
+// URL distante
+&lt;Video src="https://example.com/video.mp4" /&gt;
+```
+
+### Animations
+
+Remotion utilise `interpolate()` et `spring()` pour les animations basées sur les frames :
+
+```tsx
+import { useCurrentFrame, interpolate, spring, useVideoConfig } from 'remotion';
+
+const frame = useCurrentFrame();
+const { fps } = useVideoConfig();
+
+// Interpolation linéaire
+const opacity = interpolate(frame, [0, 30], [0, 1]);
+
+// Animation spring
+const scale = spring({ frame, fps, config: { damping: 200 } });
+```
+
+### Paramètres dynamiques
+
+Les vidéos sont paramétrables via des schemas Zod :
+
+```tsx
+import { z } from 'zod';
+
+const schema = z.object({
+  title: z.string(),
+  logoUrl: z.string().url(),
+  duration: z.number().min(1),
+});
+```
+
+## Commandes
+
+```bash
+# Installation
+npm install
+
+# Preview dans le navigateur
+npm run dev
+
+# Rendu vidéo
+npx remotion render
+
+# Rendu d'un still (image)
+npx remotion still
+```
+
+## Configuration de rendu
+
+| Paramètre | Valeur par défaut |
+|-----------|-------------------|
+| **Codec** | H.264 |
+| **Qualité JPEG** | 80 |
+| **Format image** | JPEG (vidéo), PNG (still) |
+| **Concurrence** | 4 (max 8) |
+| **Pixel Format** | yuv420p |
+| **Log Level** | info |
+| **Timeout** | 30 000 ms |
+
+## Fonctionnalités avancées
+
+- **Lottie** : Intégration d'animations Lottie
+- **Captions** : Transcription audio et sous-titres style TikTok
+- **Charts** : Visualisation de données animée
+- **Transitions** : Transitions entre scènes
+- **Maps** : Cartes Mapbox animées
+- **3D** : Contenu Three.js intégré
+
+## Cas d'usage pour Hasfy
+
+1. **Vidéos marketing** — Présentations animées des fonctionnalités
+2. **Démos produit** — Simulations interactives de l'interface
+3. **Onboarding** — Tutoriels vidéo pas-à-pas
+4. **Rapports** — Visualisations de données animées
+5. **Social media** — Contenus courts pour les réseaux sociaux

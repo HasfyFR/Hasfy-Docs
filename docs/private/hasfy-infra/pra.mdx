@@ -1,0 +1,711 @@
+# Plan de Reprise d'Activité (PRA) - Elasticsearch sur GCP
+
+## 📋 Définitions
+
+**PRA (Plan de Reprise d'Activité)** : Stratégie organisationnelle pour maintenir ou restaurer les activités métier critiques après une interruption majeure.
+
+**Différence PRI vs PRA** :
+- **PRI** : Procédures techniques (comment restaurer les systèmes IT)
+- **PRA** : Procédures métier (comment continuer l'activité business)
+
+**Objectifs** :
+- **MTPD (Maximum Tolerable Period of Disruption)** : 8 heures
+- **RTO (Recovery Time Objective)** : 4 heures
+- **RPO (Recovery Point Objective)** : 1 heure
+- **MBCO (Minimum Business Continuity Objective)** : 80% capacité
+
+---
+
+## 🎯 Analyse d'impact métier (BIA)
+
+### Services métier critiques
+
+| Service | Criticité | Impact si indisponible | RTO | RPO |
+|---------|-----------|------------------------|-----|-----|
+| **Ingestion logs** | Critique | Perte visibilité production | 1h | 5min |
+| **Recherche logs** | Critique | Blocage débuggage | 2h | 15min |
+| **Dashboard monitoring** | Haute | Pas d'alerting métier | 4h | 1h |
+| **Analyse métier (Kibana)** | Moyenne | Rapports décalés | 8h | 24h |
+| **Fleet management** | Moyenne | Pas de nouvel agent | 8h | 24h |
+
+### Dépendances métier
+
+```
+┌─────────────────────────────────────────────────┐
+│            Clients / Applications               │
+└───────────────┬─────────────────────────────────┘
+                │
+                ├─→ Ingestion logs (API)
+                │   ├─ Applications web (critiques)
+                │   ├─ Services backend (critiques)
+                │   └─ Infrastructure monitoring (critique)
+                │
+                ├─→ Consultation logs (Kibana)
+                │   ├─ Équipe DevOps (critique)
+                │   ├─ Support client (haute)
+                │   └─ Équipe métier (moyenne)
+                │
+                └─→ Gestion agents (Fleet)
+                    └─ Déploiement nouveaux serveurs (moyenne)
+```
+
+---
+
+## 🚨 Classification des incidents
+
+### Niveau 1 : Mineur
+**Caractéristiques** :
+- Dégradation performance (&lt;20%)
+- Pas d'impact utilisateur visible
+- Services essentiels fonctionnels
+
+**Exemples** :
+- 1 pod Elasticsearch en erreur (cluster reste green)
+- Latence +50ms
+- Warning logs
+
+**Actions** :
+- Monitoring renforcé
+- Investigation en horaires bureau
+- Pas d'escalade
+
+---
+
+### Niveau 2 : Modéré
+**Caractéristiques** :
+- Dégradation significative (20-50%)
+- Impact utilisateur limité
+- Services dégradés mais opérationnels
+
+**Exemples** :
+- Cluster Elasticsearch yellow
+- 50% des requêtes lentes
+- Kibana intermittent
+
+**Actions** :
+- Notification équipe technique (30 min)
+- Investigation prioritaire
+- Communication interne
+- Escalade L2 si pas résolu en 2h
+
+**RTO** : 4 heures  
+**RPO** : 1 heure
+
+---
+
+### Niveau 3 : Majeur
+**Caractéristiques** :
+- Service partiellement indisponible (>50%)
+- Impact métier significatif
+- Perte de données possible
+
+**Exemples** :
+- Cluster Elasticsearch red
+- Kibana inaccessible
+- Ingestion logs en échec
+- Perte d'un datacenter GCP
+
+**Actions** :
+- Activation cellule de crise immédiate
+- Notification parties prenantes (15 min)
+- Communication externe clients (1h)
+- Activation procédures PRI
+- Escalade L3 + support éditeurs
+
+**RTO** : 2 heures  
+**RPO** : 30 minutes
+
+---
+
+### Niveau 4 : Critique (Désastre)
+**Caractéristiques** :
+- Service totalement indisponible
+- Impact métier critique
+- Perte région complète
+- Compromission sécurité
+
+**Exemples** :
+- Destruction infrastructure GCP région
+- Cyberattaque ransomware
+- Corruption données généralisée
+- Panne électrique datacenter prolongée
+
+**Actions** :
+- **Activation PRA immédiate**
+- Cellule de crise H24
+- Communication officielle (CEO)
+- Activation site de secours
+- Support éditeurs mode urgence
+- Possibilité recours procédures légales
+
+**RTO** : 8 heures (MTPD)  
+**RPO** : 24 heures (backup cross-region)
+
+---
+
+## 🏢 Organisation de crise
+
+### Cellule de crise
+
+| Rôle | Responsable | Responsabilités |
+|------|-------------|-----------------|
+| **Chef de crise** | CTO | Décisions stratégiques, communication direction |
+| **Coordinateur technique** | Architecte Cloud | Coordination équipes IT, suivi RTO |
+| **Responsable communication** | CMO | Communication interne/externe, clients |
+| **Responsable métier** | COO | Évaluation impact business, priorisation |
+| **Juriste** | Legal counsel | Aspects contractuels, réglementaires (RGPD) |
+
+### Points de contact d'urgence
+
+**Numéros hotline** :
+- Cellule de crise : +33 6 XX XX XX XX (H24)
+- Support IT : +33 6 YY YY YY YY (H24)
+- Communication : +33 6 ZZ ZZ ZZ ZZ
+
+**Outils de communication** :
+- Primary : Slack channel `#incident-critical`
+- Backup 1 : Microsoft Teams `PRA Elastic`
+- Backup 2 : Conférence téléphonique +33 1 XX XX XX XX
+- Backup 3 : WhatsApp group "PRA Hasfy"
+
+### Réunions de crise
+
+**Fréquence** :
+- **Niveau 2** : Point toutes les 4h
+- **Niveau 3** : Point toutes les 2h
+- **Niveau 4** : Point toutes les heures
+
+**Participants** :
+- Cellule de crise complète
+- Équipes techniques actives
+- Représentants métier impactés
+
+**Format** :
+1. Situation actuelle (5 min)
+2. Actions en cours (10 min)
+3. Décisions requises (10 min)
+4. Communication (5 min)
+
+---
+
+## 🔄 Stratégies de continuité
+
+### Stratégie 1 : Mode dégradé (Incident Niveau 2)
+
+**Scénario** : Cluster yellow, performance réduite
+
+**Actions métier** :
+
+1. **Priorisation des flux** :
+   ```bash
+   # Désactiver ingestion non-critique
+   curl -k -X PUT -u "elastic:$PASSWORD" \
+     https://elastic.hasfy.fr/_cluster/settings \
+     -H "Content-Type: application/json" \
+     -d '{
+       "transient": {
+         "cluster.routing.allocation.enable": "primaries"
+       }
+     }'
+   
+   # Limiter les dashboards Kibana gourmands
+   # Désactiver les requêtes non-urgentes
+   ```
+
+2. **Communication utilisateurs** :
+   ```
+   Objet : Dégradation service Elasticsearch
+   
+   Chers utilisateurs,
+   
+   Nous rencontrons actuellement une dégradation de performance 
+   sur notre plateforme Elasticsearch (~30% plus lent).
+   
+   Services disponibles :
+   - ✅ Ingestion logs (prioritaire)
+   - ✅ Recherche logs (ralenti)
+   - ⚠️ Dashboards complexes (peut échouer)
+   
+   Actions en cours : Investigation + scaling
+   ETA résolution : 2 heures
+   
+   Prochaine mise à jour : dans 1h
+   ```
+
+3. **Alternatives temporaires** :
+   - Logs applicatifs locaux (fallback)
+   - Export CSV pour analyses urgentes
+   - Accès direct logs GCP Cloud Logging
+
+**Seuils de retour à la normale** :
+- Cluster status = green
+- Latence P95 &lt; 500ms
+- Tous les shards assigned
+
+---
+
+### Stratégie 2 : Basculement région (Incident Niveau 3-4)
+
+**Scénario** : Région GCP europe-west9 (Paris) indisponible
+
+#### Phase 1 : Activation site de secours (1 heure)
+
+**Prérequis** (configuration préventive) :
+
+```bash
+# 1. Infrastructure Terraform région DR
+cd providers/gcp/terraform-dr
+
+cat > terraform.tfvars <<EOF
+project_id = "YOUR_PROJECT_ID"
+region = "europe-west1"  # Belgique
+zone = "europe-west1-b"
+cluster_name = "elastic-dr"
+environment = "disaster-recovery"
+EOF
+
+# Déployer infrastructure DR (à faire AVANT incident)
+terraform apply
+
+# 2. Configuration réplication DNS
+# Zone DNS avec failover automatique
+gcloud dns record-sets create kibana.hasfy.fr. \
+  --zone=hasfy-zone \
+  --type=A \
+  --ttl=300 \
+  --routing-policy-type=GEO \
+  --routing-policy-data="europe-west9=IP_PRIMARY;europe-west1=IP_DR" \
+  --enable-health-checking
+```
+
+**Lors de l'incident** :
+
+```bash
+# 1. Vérifier disponibilité infrastructure DR
+gcloud container clusters describe elastic-dr --region=europe-west1
+
+# 2. Restaurer données depuis backup cross-region
+gsutil ls gs://elastic-backups-dr/snapshots/
+
+# 3. Déployer stack Elasticsearch sur cluster DR
+kubectl config use-context gke_YOUR_PROJECT_europe-west1_elastic-dr
+
+cd kubernetes
+kubectl apply -f 01-eck-operator/
+kubectl apply -f 02-elasticsearch/
+# ... suite déploiement (voir PRI.md Scénario 2)
+
+# 4. Restaurer dernier snapshot
+LAST_SNAPSHOT=$(gsutil cat gs://elastic-backups-dr/snapshots/latest.txt)
+curl -k -X POST -u "elastic:$PASSWORD" \
+  https://elastic-dr.hasfy.fr/_snapshot/gcs-repo-dr/$LAST_SNAPSHOT/_restore
+
+# 5. Basculer DNS
+gcloud dns record-sets update kibana.hasfy.fr. \
+  --zone=hasfy-zone \
+  --type=A \
+  --rrdatas=IP_DR \
+  --ttl=60
+```
+
+#### Phase 2 : Communication (15 minutes)
+
+**Template email clients** :
+
+```
+Objet : [URGENT] Incident majeur Elasticsearch - Basculement datacenter
+
+Chers clients,
+
+Suite à une indisponibilité de notre datacenter principal (Paris), 
+nous avons activé notre Plan de Reprise d'Activité.
+
+État actuel :
+- ⏸️ Service principal indisponible (Paris)
+- 🔄 Basculement vers site de secours (Belgique) en cours
+- ⏱️ ETA rétablissement service : 1 heure
+
+Impact :
+- Ingestion logs : suspendue (bufferisée localement)
+- Consultation : indisponible temporairement
+- Perte données : < 1 heure (dernier backup)
+
+Actions requises de votre part :
+- Vérifier buffer local logs applications (eviter perte)
+- Reporter analyses non-urgentes après rétablissement
+- Contacter support si blocage critique : support@hasfy.fr
+
+Mises à jour régulières toutes les 30 minutes sur status.hasfy.fr
+
+Merci de votre compréhension.
+
+L'équipe Hasfy
+```
+
+**Status page** :
+
+```markdown
+# Status Elasticsearch - Incident majeur
+
+⚠️ **Incident en cours**
+
+**Début** : 2025-12-09 14:35 UTC  
+**Statut** : Basculement datacenter en cours  
+**Impact** : Service indisponible  
+
+## Timeline
+
+**14:35** - Détection panne région Paris (europe-west9)  
+**14:40** - Activation cellule de crise  
+**14:45** - Démarrage procédure PRA  
+**15:00** - Infrastructure DR opérationnelle  
+**15:15** - Restauration données en cours (70%)  
+**15:30** (prévision) - Service opérationnel  
+
+## Services
+
+- ❌ Ingestion logs : Indisponible
+- ❌ Kibana : Indisponible
+- ❌ Fleet Server : Indisponible
+- ✅ Support : Disponible
+
+## Prochaine mise à jour
+
+Dans 30 minutes (15:30 UTC)
+
+---
+Dernière mise à jour : 15:15 UTC
+```
+
+#### Phase 3 : Validation et retour à la normale (2 heures)
+
+**Validation service DR** :
+
+```bash
+# 1. Tests fonctionnels
+./tests/functional-tests.sh --env=dr
+
+# 2. Tests de charge (légers)
+kubectl -n elastic run load-test --image=jordi/ab -- \
+  ab -n 1000 -c 10 https://elastic-dr.hasfy.fr/
+
+# 3. Vérifier intégrité données
+# Comparer counts indices
+curl -sk -u "elastic:$PASSWORD" \
+  https://elastic-dr.hasfy.fr/_cat/indices?v
+
+# 4. Valider avec utilisateurs pilotes
+# Sélectionner 3-5 utilisateurs power pour validation
+```
+
+**Retour à la normale (une fois région primaire restaurée)** :
+
+```bash
+# 1. Créer snapshot du site DR
+curl -k -X PUT -u "elastic:$PASSWORD" \
+  https://elastic-dr.hasfy.fr/_snapshot/gcs-repo-dr/before-switch-back?wait_for_completion=true
+
+# 2. Restaurer infrastructure région primaire
+cd terraform
+terraform apply
+
+# 3. Restaurer données
+# (depuis snapshot DR)
+gsutil -m rsync -r \
+  gs://elastic-backups-dr/snapshots/ \
+  gs://elastic-backups-primary/snapshots/
+
+# 4. Basculer DNS progressivement
+# Weighted routing : 10% primary, 90% DR
+# Puis : 50% / 50%
+# Puis : 100% primary
+
+# 5. Communication retour à la normale
+```
+
+---
+
+### Stratégie 3 : Mode survie (Incident Niveau 4 prolongé)
+
+**Scénario** : Impossibilité de restaurer service Elasticsearch rapidement
+
+**Solutions de contournement** :
+
+#### Option A : Logs locaux applications
+
+```bash
+# Configurer applications pour logger localement
+# Example : application Node.js
+
+# .env
+ELASTICSEARCH_ENABLED=false
+LOG_TO_FILE=true
+LOG_FILE_PATH=/var/log/app/app.log
+
+# Rotation logs
+logrotate -f /etc/logrotate.d/app
+```
+
+#### Option B : GCP Cloud Logging (temporaire)
+
+```bash
+# Rediriger logs vers Cloud Logging
+gcloud logging write app-logs "Emergency log entry" \
+  --severity=ERROR \
+  --resource=global
+
+# Consulter
+gcloud logging read "resource.type=global AND severity>=ERROR" \
+  --limit=50 \
+  --format=json
+
+# Export vers BigQuery pour analyse
+bq mk --dataset logs_emergency
+gcloud logging sinks create emergency-logs \
+  bigquery.googleapis.com/projects/YOUR_PROJECT/datasets/logs_emergency
+```
+
+#### Option C : Service Elasticsearch tiers (ultime recours)
+
+**Elastic Cloud** :
+
+```bash
+# 1. Créer déploiement Elastic Cloud (15 min)
+# Via https://cloud.elastic.co
+
+# 2. Restaurer depuis backup GCS
+# Télécharger snapshots
+gsutil -m cp -r gs://elastic-backups-primary/snapshots/ /tmp/snapshots/
+
+# 3. Uploader vers Elastic Cloud
+# Utiliser elastic-cloud-cli ou UI
+```
+
+**Coût** : ~800 EUR/mois (vs 562 EUR self-hosted)  
+**Durée recommandée** : Maximum 1 mois
+
+---
+
+## 📊 Métriques et KPIs
+
+### Indicateurs de performance PRA
+
+| KPI | Cible | Mesure |
+|-----|-------|--------|
+| **MTPD** | &lt; 8h | Temps max service indisponible |
+| **RTO** | &lt; 4h | Temps réel de restauration |
+| **RPO** | &lt; 1h | Âge données perdues |
+| **MBCO** | 80% | % capacité minimale |
+| **Taux disponibilité** | 99.95% | Uptime mensuel |
+| **Délai communication** | &lt; 15min | Temps notification incident |
+| **Taux succès tests PRA** | 100% | Tests trimestriels |
+
+### Tableau de bord PRA
+
+**Metrics Cloud Monitoring** :
+
+```python
+# Custom metrics à créer
+from google.cloud import monitoring_v3
+
+client = monitoring_v3.MetricServiceClient()
+project_name = f"projects/{project_id}"
+
+# Métrique : Dernier test PRA
+time_series = monitoring_v3.TimeSeries()
+time_series.metric.type = "custom.googleapis.com/pra/last_test_days_ago"
+time_series.resource.type = "global"
+
+point = monitoring_v3.Point()
+point.value.int64_value = 15  # 15 jours depuis dernier test
+# ... envoyer métrique
+
+# Alerte si > 100 jours sans test
+```
+
+---
+
+## 🧪 Tests et exercices
+
+### Test trimestriel complet (4 heures)
+
+**Objectif** : Valider procédures PRA end-to-end
+
+**Planification** :
+- Fréquence : Tous les 3 mois
+- Horaire : Samedi 10h-14h (hors production)
+- Participants : Cellule de crise + équipes IT
+
+**Scénario** :
+
+```
+Jour J - 10h00 : Simulation panne région GCP Paris
+↓
+Phase 1 (10h00-10h15) : Détection et activation cellule
+- Monitoring détecte indisponibilité
+- Notifications envoyées
+- Cellule de crise activée
+↓
+Phase 2 (10h15-11h00) : Basculement infrastructure DR
+- Déploiement cluster Belgique
+- Restauration données
+- Configuration DNS
+↓
+Phase 3 (11h00-11h30) : Tests fonctionnels
+- Ingestion logs
+- Consultation Kibana
+- Fleet Server
+↓
+Phase 4 (11h30-12h00) : Communication
+- Email clients (simulation)
+- Update status page
+- Débriefing équipe
+↓
+Phase 5 (12h00-13h00) : Retour région primaire
+- Snapshot DR
+- Restauration Paris
+- Switch DNS
+↓
+Phase 6 (13h00-14h00) : Débrief et rapport
+- Analyse RTO/RPO effectifs
+- Améliorations procédures
+- Documentation leçons apprises
+```
+
+**Checklist de validation** :
+
+- [ ] Détection incident en &lt; 5 minutes
+- [ ] Cellule de crise opérationnelle en &lt; 15 minutes
+- [ ] Infrastructure DR déployée en &lt; 1 heure
+- [ ] Données restaurées avec RPO &lt; 24h
+- [ ] Services fonctionnels avec RTO &lt; 4 heures
+- [ ] Communication clients en &lt; 30 minutes
+- [ ] MBCO 80% atteint
+- [ ] Retour région primaire sans incident
+- [ ] Documentation mise à jour
+
+### Test mensuel léger (1 heure)
+
+**Objectif** : Vérifier snapshots et procédures basiques
+
+```bash
+#!/bin/bash
+# test-pra-light.sh
+
+echo "=== Test PRA mensuel $(date) ==="
+
+# 1. Vérifier derniers snapshots
+echo "[1/5] Vérification snapshots..."
+LAST_SNAPSHOT=$(curl -sk -u "elastic:$PASSWORD" \
+  https://elastic.hasfy.fr/_snapshot/gcs-repo/_all | \
+  jq -r '.snapshots | sort_by(.start_time_in_millis) | last | .snapshot')
+
+echo "Dernier snapshot : $LAST_SNAPSHOT"
+
+# 2. Vérifier backup cross-region
+echo "[2/5] Vérification backup DR..."
+gsutil ls gs://elastic-backups-dr/snapshots/ | tail -5
+
+# 3. Tester restauration index test
+echo "[3/5] Test restauration..."
+curl -sk -X POST -u "elastic:$PASSWORD" \
+  "https://elastic.hasfy.fr/_snapshot/gcs-repo/$LAST_SNAPSHOT/_restore" \
+  -H "Content-Type: application/json" \
+  -d '{"indices": "test-*", "rename_pattern": "(.+)", "rename_replacement": "restored_$1"}'
+
+# 4. Vérifier infrastructure DR
+echo "[4/5] Vérification infra DR..."
+gcloud container clusters describe elastic-dr --region=europe-west1 --format="value(status)"
+
+# 5. Valider contacts cellule de crise
+echo "[5/5] Validation contacts..."
+# Envoyer email test
+echo "Test PRA automatique" | mail -s "Test PRA $(date)" cto@hasfy.fr
+
+echo "=== Test terminé ==="
+```
+
+---
+
+## 📞 Annexes
+
+### Annexe A : Contacts d'urgence
+
+**Équipe interne** :
+
+| Nom | Rôle | Mobile | Email | Backup |
+|-----|------|--------|-------|--------|
+| John Doe | CTO | +33 6 12 34 56 78 | john@hasfy.fr | Jane Smith |
+| Jane Smith | Architecte | +33 6 23 45 67 89 | jane@hasfy.fr | Bob Martin |
+| Bob Martin | DevOps Lead | +33 6 34 56 78 90 | bob@hasfy.fr | Alice Brown |
+
+**Support externe** :
+
+- **Google Cloud Support Premium**
+  - Tel : +33 1 85 14 79 00
+  - Email : cloud-support@google.com
+  - Portal : [console.cloud.google.com/support](https://console.cloud.google.com/support)
+
+- **Elastic Support Gold**
+  - Tel : +1 650-458-2620
+  - Email : support@elastic.co
+  - Portal : [support.elastic.co](https://support.elastic.co)
+
+### Annexe B : Checklist de préparation
+
+**À maintenir à jour** :
+
+- [ ] Liste contacts cellule de crise (révision mensuelle)
+- [ ] Accès d'urgence (comptes admin, clés SSH)
+- [ ] Documentation PRA/PRI à jour
+- [ ] Infrastructure DR provisionnée et testée
+- [ ] Snapshots quotidiens fonctionnels
+- [ ] Backup cross-region configuré
+- [ ] DNS avec failover automatique
+- [ ] Monitoring et alerting opérationnels
+- [ ] Status page configurée
+- [ ] Templates communication (emails, status)
+- [ ] Tests PRA planifiés (calendrier)
+- [ ] Formation équipe réalisée (annuelle)
+
+### Annexe C : Coûts du PRA
+
+| Composant | Coût mensuel | Justification |
+|-----------|--------------|---------------|
+| **Infrastructure DR** | 150 EUR | Cluster GKE Belgique (arrêté) |
+| **Backup cross-region** | 20 EUR | Réplication GCS |
+| **Support Google Premium** | 400 EUR | SLA 1h, 24/7 |
+| **Support Elastic Gold** | 300 EUR | SLA 4h |
+| **Tests trimestriels** | 100 EUR | Temps équipe |
+| **Documentation/Formation** | 50 EUR | Mises à jour |
+| **TOTAL** | **~1020 EUR/mois** | Surcoût PRA : +82% |
+
+**ROI** : Évite perte business estimée à 10 000 EUR/heure d'indisponibilité
+
+---
+
+## 📅 Planning de révision
+
+- **Mensuel** : Test snapshots + vérification contacts
+- **Trimestriel** : Test complet PRA (4h)
+- **Semestriel** : Formation équipe élargie
+- **Annuel** : Révision complète documentation + BIA
+
+**Prochaines dates** :
+
+- Test mensuel : 1er de chaque mois, 4h du matin
+- Test trimestriel : Dernier samedi du trimestre, 10h-14h
+- Formation : Janvier et Juillet
+- Révision annuelle : Décembre
+
+---
+
+**Approbation** :
+
+- CTO : _________________ Date : _________
+- COO : _________________ Date : _________
+- CEO : _________________ Date : _________
+
+**Version** : 1.0  
+**Date** : Décembre 2025  
+**Prochaine révision** : Mars 2026
