@@ -1,6 +1,6 @@
 const meta = {
   'index': 'Vue d\'ensemble',
-  'stripe': 'Stripe',
+  'stripe': 'Facturation & paiement',
 }
 
 export default meta;

@@ -11,11 +11,11 @@ Here you'll find answers to the most frequently asked questions about Hasfy. If 
 
 ### How do I create a Hasfy account?
 
-Go to **[app.hasfy.fr](https://app.hasfy.fr)** and click "Create an account". You can sign up with an email and password, or use a magic link sent by email. A 14-day free trial is included, with no credit card required. See the [quick start guide](/quickstart) for detailed steps.
+Go to **[app.hasfy.fr](https://app.hasfy.fr)** and click "Create an account". You can sign up with an email and password, or use a magic link sent by email. A 14-day free trial is included (a credit card is required for the direct debit mandate, but nothing is charged before the trial ends). See the [quick start guide](/quickstart) for detailed steps.
 
 ### Can I use Hasfy without a credit card?
 
-Yes. The 14-day free trial requires no credit card. You can explore all the features of the Starter plan during this period. A credit card is only required when subscribing to a paid plan.
+A credit card is required to start your 14-day free trial (direct debit mandate), but **nothing is charged before the trial ends**. You can explore all the features of the Hasfy Pro plan during this period, and cancel at any time at no cost. See the [Pricing](/pricing) page for the full details.
 
 ### How do I reset my password?
 
@@ -40,20 +40,15 @@ The Hasfy agent is compatible with:
 
 ### How many pieces of equipment can I manage?
 
-The number of pieces of equipment depends on your plan:
-- **Starter**: up to 100 pieces of equipment
-- **Pro**: up to 500 pieces of equipment
-- **Enterprise**: unlimited
-
-See the [Pricing](/pricing) page for plan details.
+The number of monitored devices is **unlimited** on the Hasfy Pro plan: the cost of monitoring is already built into the seat price, with no separate counting or tier to exceed. See the [Pricing](/pricing) page for the full details.
 
 ### How does the ticketing system work?
 
 The ticketing system lets you create, assign, and track incidents and requests. Each ticket has a status (New, In Progress, Pending, Resolved, Closed), a priority, and can be assigned to a technician. Conversations, internal notes, and attachments are built in. See the [Support & Tickets](/core-features/assistance) guide.
 
-### Is AI available on all plans?
+### Is the AI Assistant included in my subscription?
 
-Basic automatic categorization is available on all plans. Advanced AI features (assisted resolution, predictive maintenance, automatic replies) are reserved for the **Pro** and **Enterprise** plans. See [AI Features](/advanced-features/ia).
+The AI Assistant is an **optional add-on**: +€30/month per user, on top of your Hasfy Pro subscription, billed at a flat rate (not per token). It adds AI-driven automatic summaries, suggestions, and equipment analysis. The Pro plan includes a quota of 3,000,000 AI tokens per month — beyond that, the AI Assistant remains usable, and the displayed tracking is purely indicative. See [AI Features](/advanced-features/ia) and the [Pricing](/pricing) page.
 
 ### Can I export my data?
 
@@ -63,15 +58,15 @@ Yes. Hasfy lets you export all your data (equipment, tickets, metrics, users) in
 
 ### What payment methods are accepted?
 
-Hasfy accepts **Visa**, **Mastercard**, and **American Express** credit cards via Stripe. Payments are secured with 3D Secure authentication.
+Hasfy subscriptions are billed and collected via **Mollie**, which supports credit cards as well as other payment methods depending on your country. The charge is collected automatically on each due date.
 
-### Can I change plans at any time?
+### Can I add or remove seats at any time?
 
-Yes. You can upgrade to a higher plan at any time — the change takes effect immediately and is billed pro rata. For a downgrade, the change takes effect at the end of the current billing period. See [Stripe Integration](/integrations/stripe).
+Yes. Hasfy offers only one plan, **Hasfy Pro**, billed per seat (admin/technician account). **Adding** a seat takes effect immediately and is billed pro rata for the remaining time in your current cycle. **Removing** a seat takes effect at the next renewal — you keep using it until the end of the period you've already paid for. See [Billing & Payment](/integrations/stripe) and the [Pricing](/pricing) page.
 
-### How does per-user billing work?
+### How does per-seat billing work?
 
-On the Starter plan, the price is **€5 per user per month**. When you add a user mid-month, the cost is calculated pro rata. When a user is removed, a credit is applied to your next invoice.
+Hasfy charges **€150/month per seat** at the current Early Access rate (€200/month at the standard rate, guaranteed for as long as your account stays active). Each seat automatically unlocks 250 free standard user accounts. Adding a seat mid-month is calculated pro rata; removing one takes effect at the next renewal. See the [Pricing](/pricing) page for the full details.
 
 ### Where can I find my invoices?
 
@@ -122,4 +117,4 @@ Yes. The Hasfy REST API lets you read and write data programmatically: create eq
 
 ### How long is monitoring data retained?
 
-Metrics retention duration depends on your plan: **90 days** (Starter), **1 year** (Pro), **2 years** (Enterprise). Beyond that, data is automatically archived and deleted.
+Monitoring metrics are retained for **1 year**. Beyond that, data is automatically archived and deleted. See the [retention policy](/settings-security/databackup).

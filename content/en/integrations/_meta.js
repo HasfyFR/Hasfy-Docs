@@ -1,6 +1,6 @@
 const meta = {
   'index': 'Overview',
-  'stripe': 'Stripe',
+  'stripe': 'Billing & Payment',
 }
 
 export default meta;

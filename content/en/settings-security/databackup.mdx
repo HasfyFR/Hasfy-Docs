@@ -26,8 +26,8 @@ All Hasfy data is hosted on **servers located in France**, in line with data sov
 | **Organization** | Name, settings, configuration | Lifetime of the subscription |
 | **Equipment** | Records, specifications, tags | Lifetime of the subscription |
 | **Tickets** | Content, conversations, attachments | Lifetime of the subscription |
-| **Metrics** | CPU, RAM, disk, network (via agent) | 90 days (Starter), 1 year (Pro), 2 years (Enterprise) |
-| **Audit logs** | User actions, changes | 1 year (Pro), 3 years (Enterprise) |
+| **Metrics** | CPU, RAM, disk, network (via agent) | 1 year |
+| **Audit logs** | User actions, changes | 1 year |
 | **Calendar events** | Interventions, maintenance | Lifetime of the subscription |
 | **Invoices** | Billing history | 10 years (legal requirement) |
 
@@ -67,7 +67,7 @@ If you need a restoration (accidental data loss, corruption):
 3. The Hasfy team performs an analysis and proposes a restoration
 4. After validation, data is restored within the timeframes indicated above
 
-> **Enterprise plan**: Enterprise customers have access to self-service restoration for snapshots from the last 24 hours, directly from **Settings &gt; Data &gt; Restoration**.
+> All Hasfy Pro accounts have access to self-service restoration for snapshots from the last 24 hours, directly from **Settings &gt; Data &gt; Restoration**.
 
 ## Data export
 
@@ -103,7 +103,7 @@ The Hasfy REST API lets you export data programmatically. See the [API documenta
 
 ### Active retention policy
 
-As long as your subscription is active, all your data is kept for the durations indicated in the storage table above. Old monitoring metrics are automatically archived and then deleted according to your plan.
+As long as your subscription is active, all your data is kept for the durations indicated in the storage table above. Old monitoring metrics are automatically archived and then deleted according to the retention periods shown.
 
 ### After cancellation
 
@@ -147,7 +147,7 @@ Hasfy complies with the **General Data Protection Regulation (GDPR)**:
 |---------------|-------|-------------------------|
 | Supabase | Database, authentication, storage | Europe |
 | Elastic | Monitoring and metrics | Europe |
-| Stripe | Payments | Europe (with certified US transfers) |
+| Mollie | Payments | Europe |
 | OVH | Hosting | France |
 
 The full list of subprocessors is available on request.

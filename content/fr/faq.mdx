@@ -11,11 +11,11 @@ Retrouvez ici les réponses aux questions les plus fréquemment posées sur Hasf
 
 ### Comment créer un compte Hasfy ?
 
-Rendez-vous sur **[app.hasfy.fr](https://app.hasfy.fr)** et cliquez sur « Créer un compte ». Vous pouvez vous inscrire avec un email et un mot de passe, ou utiliser un lien magique (magic link) envoyé par email. Un essai gratuit de 14 jours est inclus, sans carte bancaire requise. Consultez le [guide de démarrage rapide](/quickstart) pour les étapes détaillées.
+Rendez-vous sur **[app.hasfy.fr](https://app.hasfy.fr)** et cliquez sur « Créer un compte ». Vous pouvez vous inscrire avec un email et un mot de passe, ou utiliser un lien magique (magic link) envoyé par email. Un essai gratuit de 14 jours est inclus (carte bancaire requise pour le mandat de prélèvement, mais aucun débit avant la fin de l'essai). Consultez le [guide de démarrage rapide](/quickstart) pour les étapes détaillées.
 
 ### Puis-je utiliser Hasfy sans carte bancaire ?
 
-Oui. L'essai gratuit de 14 jours ne nécessite aucune carte bancaire. Vous pouvez explorer toutes les fonctionnalités du plan Starter pendant cette période. Une carte bancaire est requise uniquement lors de la souscription à un plan payant.
+Une carte bancaire est demandée pour démarrer votre essai gratuit de 14 jours (mandat de prélèvement), mais **aucun montant n'est débité avant la fin de l'essai**. Vous pouvez explorer toutes les fonctionnalités du plan Hasfy Pro pendant cette période, et annuler à tout moment sans frais. Voir la page [Tarifs](/pricing) pour le détail des conditions.
 
 ### Comment réinitialiser mon mot de passe ?
 
@@ -40,20 +40,15 @@ L'agent Hasfy est compatible avec :
 
 ### Combien d'équipements puis-je gérer ?
 
-Le nombre d'équipements dépend de votre plan :
-- **Starter** : jusqu'à 100 équipements
-- **Pro** : jusqu'à 500 équipements
-- **Enterprise** : illimité
-
-Consultez la page [Tarification](/pricing) pour le détail des plans.
+Le nombre d'équipements supervisés est **illimité** sur le plan Hasfy Pro : le coût de la supervision est déjà intégré au prix du siège, il n'y a aucun comptage séparé ni palier à dépasser. Consultez la page [Tarifs](/pricing) pour le détail de l'offre.
 
 ### Comment fonctionne le système de tickets ?
 
 Le système de tickets permet de créer, assigner et suivre les incidents et les demandes. Chaque ticket a un statut (Nouveau, En cours, En attente, Résolu, Fermé), une priorité et peut être assigné à un technicien. Des conversations, notes internes et pièces jointes sont intégrées. Consultez le guide [Assistance & Tickets](/core-features/assistance).
 
-### L'IA est-elle disponible sur tous les plans ?
+### L'Assistant IA est-il inclus dans l'abonnement ?
 
-La catégorisation automatique de base est disponible sur tous les plans. Les fonctionnalités IA avancées (résolution assistée, maintenance prédictive, réponses automatiques) sont réservées aux plans **Pro** et **Enterprise**. Voir [Fonctionnalités IA](/advanced-features/ia).
+L'Assistant IA est un **add-on optionnel** : +30 €/mois par utilisateur, en supplément de l'abonnement Hasfy Pro, facturé à tarif fixe (pas au token). Il ajoute des résumés automatiques, des suggestions et des analyses d'équipements pilotées par IA. Le plan Pro inclut un quota de 3 000 000 de tokens IA par mois — au-delà, l'Assistant IA reste utilisable, le suivi affiché est purement indicatif. Voir [Fonctionnalités IA](/advanced-features/ia) et la page [Tarifs](/pricing).
 
 ### Puis-je exporter mes données ?
 
@@ -63,15 +58,15 @@ Oui. Hasfy permet l'export de toutes vos données (équipements, tickets, métri
 
 ### Quels sont les moyens de paiement acceptés ?
 
-Hasfy accepte les cartes bancaires **Visa**, **Mastercard** et **American Express** via Stripe. Les paiements sont sécurisés avec l'authentification 3D Secure.
+Les abonnements Hasfy sont facturés et encaissés via **Mollie**, qui prend en charge la carte bancaire ainsi que d'autres moyens de paiement selon votre pays. Le prélèvement s'effectue automatiquement à chaque échéance.
 
-### Puis-je changer de plan à tout moment ?
+### Puis-je ajouter ou retirer des sièges à tout moment ?
 
-Oui. Vous pouvez passer à un plan supérieur (upgrade) à tout moment — le changement est immédiat et facturé au prorata. Pour un plan inférieur (downgrade), le changement prend effet à la fin de la période de facturation en cours. Consultez [Intégration Stripe](/integrations/stripe).
+Oui. Hasfy ne propose qu'un seul plan, **Hasfy Pro**, facturé par siège (compte admin/technicien). L'**ajout** d'un siège est immédiat et facturé au prorata de la période restante sur votre cycle en cours. Le **retrait** d'un siège prend effet au renouvellement suivant — vous en gardez l'usage jusqu'à la fin de la période déjà facturée. Consultez [Facturation & paiement](/integrations/stripe) et la page [Tarifs](/pricing).
 
-### Comment fonctionne la facturation par utilisateur ?
+### Comment fonctionne la facturation par siège ?
 
-Sur le plan Starter, le prix est de **5 € par utilisateur et par mois**. Lorsque vous ajoutez un utilisateur en cours de mois, le coût est calculé au prorata. Lorsqu'un utilisateur est retiré, un crédit est appliqué sur la prochaine facture.
+Hasfy facture **150 €/mois par siège** au tarif Early Access actuel (200 €/mois au tarif normal, garanti tant que votre compte reste actif). Chaque siège débloque automatiquement 250 comptes utilisateurs standards gratuits. L'ajout d'un siège en cours de mois est calculé au prorata ; le retrait prend effet au renouvellement suivant. Voir la page [Tarifs](/pricing) pour le détail complet.
 
 ### Où trouver mes factures ?
 
@@ -122,4 +117,4 @@ Oui. L'API REST de Hasfy permet de lire et d'écrire des données par programmat
 
 ### Les données de monitoring sont-elles conservées combien de temps ?
 
-La durée de rétention des métriques dépend de votre plan : **90 jours** (Starter), **1 an** (Pro), **2 ans** (Enterprise). Au-delà, les données sont automatiquement archivées et supprimées.
+Les métriques de supervision sont conservées **1 an**. Au-delà, les données sont automatiquement archivées puis supprimées. Voir la [politique de rétention](/settings-security/databackup).

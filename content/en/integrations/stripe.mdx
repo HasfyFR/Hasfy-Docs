@@ -1,189 +1,81 @@
 ---
-title: Stripe Integration
-description: Manage subscriptions, billing, payment methods, and the Stripe customer portal in Hasfy.
+title: Billing & Payment (Mollie)
+description: Subscription, payment, invoices, and seat management for your Hasfy Pro subscription via Mollie.
 ---
 
-# Stripe Integration
+# Billing & Payment (Mollie)
 
-Hasfy uses **Stripe** as its payment provider to securely manage subscriptions, billing, and payment methods. This page details the billing features available from Hasfy.
+Hasfy relies on **Mollie** to handle payment and billing for your subscription. This page covers how to subscribe, pay, manage your seats, and view your invoices.
 
 ## Overview
 
-The Stripe integration is **native** to Hasfy — it is automatically active for all organizations with a paid subscription. No additional configuration is required.
+Hasfy offers only **a single plan, Hasfy Pro**, billed **per seat** (administrator or technician account). There's no plan to choose and no upgrade/downgrade path: you simply adjust the **number of seats** based on the size of your IT team.
 
-### Features covered
+All payments and charges are processed by **Mollie**, which supports credit cards as well as other payment methods depending on your country.
 
-| Feature | Description |
-|---------------|-------------|
-| Subscription | Choose and subscribe to a plan (Starter, Pro, Enterprise) |
-| Recurring billing | Automatic monthly or annual charges |
-| Payment methods | Credit card, SEPA (depending on availability) |
-| Invoices | Generation and download of invoices |
-| Customer portal | Self-service management of payment information |
-| Seat management | Adding/removing billed users |
-| Plan changes | Self-service upgrade or downgrade |
+## Subscribing
 
-## Subscribing to a plan
+1. Create your account at **[app.hasfy.fr](https://app.hasfy.fr)** — signing up automatically starts your **14-day free trial**
+2. Enter your payment details (credit card) to activate the direct debit mandate — **nothing is charged before the trial ends**
+3. Set the **number of seats** you need (one seat per administrator or technician account); each seat automatically unlocks 250 free standard user accounts
+4. At the end of the trial, your subscription automatically switches to the current rate (currently €150/month per seat, Early Access rate)
 
-### Choosing a plan
+See the [Pricing](/pricing) page for the full details on prices and conditions.
 
-1. Go to **Settings &gt; Billing &gt; Subscription**
-2. Review the available plans:
+## Billing cycle
 
-| Plan | Price | Users | Equipment | Metrics |
-|------|------|-------------|-------------|-----------|
-| **Starter** | €5/user/month | Up to 20 | 100 | 90 days |
-| **Pro** | On request | Up to 50 | 500 | 1 year |
-| **Enterprise** | Custom quote | Unlimited | Unlimited | 2 years |
+The Hasfy Pro subscription is billed **monthly**, on the anniversary of your subscription date. The charge via Mollie is collected automatically on each due date, using the payment method on file for your account.
 
-3. Click **"Choose this plan"**
-4. You are redirected to the secure Stripe payment form
+## Free trial
 
-### Billing cycle
+- **14 days free**, **€0 at signup**
+- A **credit card is required** to start the trial (direct debit mandate), but nothing is charged before the trial period ends
+- **Cancellable at any time during the trial**, at no cost
+- At the end of the trial, the subscription automatically starts at the current rate, with no action required on your part
 
-When subscribing, choose your billing cycle:
-
-- **Monthly**: charged each month on the subscription date
-- **Annual**: charged annually with **2 months free** (i.e. 10 months billed for 12 months of access)
-
-> **Tip**: The annual subscription offers significant savings. If you're satisfied after your first month, switch to annual from **Settings &gt; Billing &gt; Billing cycle**.
-
-### Free trial
-
-Hasfy offers a **14-day free trial** on the Starter plan — no credit card required. At the end of the trial period, you can:
-
-- Subscribe to a paid plan to continue
-- Let the account expire (your data is retained for 30 days)
+See the "14-day free trial" section on the [Pricing](/pricing) page for the full details.
 
 ## Payment methods
 
-### Credit card
+Payments are handled by **Mollie**, which supports:
 
-The primary payment method is a credit card:
+- **Credit cards** (Visa, Mastercard, etc.)
+- **Other payment methods** depending on your billing country
 
-- **Visa**, **Mastercard**, and **American Express** accepted
-- Payments are secured via Stripe with **3D Secure authentication** when required by your bank
-- Your card number is never stored by Hasfy — it is managed exclusively by Stripe
-
-### Adding or changing a payment method
-
-1. Go to **Settings &gt; Billing &gt; Payment methods**
-2. Click **"Add a card"** or **"Edit"**
-3. Enter your card information in the secure Stripe form
-4. The new payment method replaces the old one for future charges
-
-### Payment failure
-
-In the event of a payment failure (expired card, insufficient funds, bank rejection):
-
-1. **Notification**: you receive an email alerting you to the failure
-2. **Automatic retry**: Stripe automatically retries the payment after 3, 5, and 7 days
-3. **Update**: update your payment method to avoid interruption
-4. **Suspension**: after 3 consecutive failures (about 14 days), access to paid features is suspended
-5. **Reactivation**: update your card and the payment is retried immediately
-
-> **Important**: Your data is never deleted in the event of a suspension. Only access to features is restricted. Once payment is settled, full access is restored instantly.
+The payment method is registered once when subscribing (or activating the free trial) and reused automatically for each due date. You can update it at any time from **Settings &gt; Billing &gt; Payment method**.
 
 ## Invoices
 
-### Viewing invoices
-
 All your invoices are accessible from **Settings &gt; Billing &gt; Invoice history**:
 
-| Information | Description |
-|-------------|-------------|
-| Invoice number | Unique invoice identifier |
-| Date | Issue date |
-| Amount | Total amount including tax |
-| Status | Paid, Pending, Unpaid |
-| Actions | Download (PDF), View in Stripe |
-
-### Downloading
-
-Click **"Download"** next to an invoice to get the PDF. The invoice includes:
-
-- Hasfy's contact details and your organization's
-- Plan details and number of seats
-- The amount excluding tax, VAT, and the total amount including tax
-- The payment method used
-
-### Billing information
-
-To change the information shown on your invoices (company name, address, VAT number):
-
-1. Go to **Settings &gt; Billing &gt; Billing information**
-2. Edit the desired fields:
-   - Legal company name
-   - Billing address
-   - Intra-community VAT number
-   - Email address for receiving invoices
-3. Click **"Save"**
-
-Changes apply to future invoices. Invoices already issued are not modified.
-
-## Changing plans
-
-### Upgrading
-
-To move to a higher plan:
-
-1. Go to **Settings &gt; Billing &gt; Subscription**
-2. Click **"Change plan"**
-3. Select the desired plan
-4. Confirm the change
-
-The upgrade is **immediate**: you instantly benefit from the new features. The amount is calculated on a **prorated** basis for the remaining period.
-
-### Downgrading
-
-To move to a lower plan:
-
-1. Same procedure as for an upgrade
-2. The downgrade takes effect at the **end of the current billing period**
-3. Make sure you comply with the limits of the new plan (number of users, equipment)
-
-> **Warning**: If your usage exceeds the limits of the lower plan (e.g. 30 users for a plan limited to 20), you must reduce usage before the downgrade takes effect. Hasfy will notify you of the necessary adjustments.
+- View the full history online
+- Download as **PDF**
+- Detail of each charge (number of seats, AI Assistant add-on if applicable, amount collected)
 
 ## Seat management
 
-### Per-seat billing
+The number of seats can be adjusted at any time from **Settings &gt; Billing &gt; Seats**:
 
-On the Starter plan, the number of users directly affects the cost:
+- **Adding a seat**: takes effect immediately and is billed **pro rata** for the remaining time in your current billing cycle
+- **Removing a seat**: takes effect **at the next renewal** — you keep using the seat until the end of the period you've already paid for, with no partial refund mid-cycle
 
-- **Base price**: €5 per user per month
-- **Adding a user**: when you invite a new user, the cost is automatically adjusted on a prorated basis
-- **Removing a user**: when a user is removed, a credit is applied to the next invoice
+Each seat added or removed automatically updates your included standard-user quota (250 accounts per seat).
 
-### Viewing current usage
+## Client portal
 
-From **Settings &gt; Billing &gt; Usage**, you can view:
+Hasfy provides a **client portal** that you can give your own clients access to (especially useful for MSPs managing multiple organizations):
 
-- Current number of active users
-- Plan limit
-- Estimated cost for the next invoice
-- History of seat count changes
+- Optional custom subdomain
+- Read access to information relevant to your clients (equipment, tickets, etc.)
 
-## Stripe customer portal
-
-For advanced management, access the **Stripe customer portal** directly:
-
-1. Go to **Settings &gt; Billing**
-2. Click **"Manage on Stripe"**
-3. The Stripe portal opens in a new tab
-
-From the Stripe portal, you can:
-- Update your payment methods
-- View and download all your invoices
-- Manage your subscription
-- Cancel your subscription
+> **Billing your end clients**: today, billing your own clients through the portal works in **manual mode** — you generate and send your invoices as PDFs, and payment is made by **bank transfer**. Online card payment for your client invoices is not yet automated in Hasfy; this feature is on our roadmap.
 
 ## Cancelling your subscription
 
-To cancel your Hasfy subscription:
+You can cancel your subscription at any time from **Settings &gt; Billing &gt; Cancel subscription**:
 
-1. Go to **Settings &gt; Billing &gt; Subscription**
-2. Click **"Cancel subscription"**
-3. Indicate the reason for cancellation *(optional but appreciated)*
-4. Confirm the cancellation
+- Access to features is maintained until the **end of the current billing period**
+- No further charges are collected after cancellation
+- After expiration, you have 30 days of read-only access to export your data before permanent deletion
 
-The cancellation takes effect at the **end of the current billing period**. You retain access to all features until that date. After expiration, see the [data retention policy](/settings-security/databackup) for retention periods.
+See the [data retention policy](/settings-security/databackup) for details on the process after cancellation.
