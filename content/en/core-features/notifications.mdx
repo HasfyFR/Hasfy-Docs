@@ -1,0 +1,148 @@
+---
+title: Notifications
+description: Hasfy's notification system — real-time alerts, email notifications, notification preferences and management of critical alerts.
+---
+
+# Notifications
+
+Hasfy's notification system keeps you informed in real time about the activity of your IT fleet and your team's actions. Notifications are designed to be relevant and unobtrusive, with granular control over what you receive.
+
+## Notification center
+
+The **notification center** is accessible from the 🔔 icon in the navigation bar. A numeric badge shows the number of unread notifications.
+
+### Center interface
+
+Clicking the icon opens a side panel containing:
+
+- **Chronological list**: all your notifications, from most recent to oldest
+- **Quick filters**: All, Unread, Critical
+- **Bulk actions**: "Mark all as read", "Clear read notifications"
+
+Each notification displays:
+- **Icon**: visually identifies the type (ticket, equipment, system, calendar)
+- **Title**: a summary of the event
+- **Detail**: additional information (equipment name, ticket number, etc.)
+- **Timestamp**: date and time of the event
+- **Link**: click to go directly to the relevant item
+
+## Notification types
+
+### Equipment notifications
+
+| Event | Criticality | Description |
+|-----------|-----------|-------------|
+| Agent disconnected | 🔴 Critical | A monitoring agent has not communicated for more than 5 minutes |
+| Agent reconnected | 🟢 Info | A previously disconnected agent is back online |
+| CPU threshold exceeded | 🟠 Warning | CPU usage exceeds the configured threshold (default: 90%) |
+| RAM threshold exceeded | 🟠 Warning | Memory usage exceeds the configured threshold (default: 90%) |
+| Critical disk space | 🔴 Critical | Available disk space drops below the configured threshold (default: 10%) |
+| Equipment added | ⚪ Info | A new piece of equipment has been added to the inventory |
+| Status changed | ⚪ Info | A piece of equipment's status has changed (active, maintenance, retired) |
+
+### Ticket notifications
+
+| Event | Criticality | Description |
+|-----------|-----------|-------------|
+| New ticket assigned | 🔵 Normal | A ticket has been assigned to you |
+| New comment | 🔵 Normal | A message has been added to a ticket you're following |
+| Status change | ⚪ Info | A ticket you're following has changed status |
+| Urgent ticket created | 🔴 Critical | A ticket with "Urgent" priority has been created |
+| SLA approaching | 🟠 Warning | A ticket's SLA deadline is at 75% of its due time |
+| SLA breached | 🔴 Critical | A ticket's SLA deadline has been exceeded |
+| Mention (@) | 🔵 Normal | You were mentioned in a ticket comment |
+
+### Calendar notifications
+
+| Event | Criticality | Description |
+|-----------|-----------|-------------|
+| Event reminder | 🔵 Normal | A calendar event is approaching (according to the configured reminder) |
+| Maintenance window | ⚪ Info | A maintenance window is imminent |
+| Event canceled | ⚪ Info | An event you're attending has been canceled |
+| Schedule conflict | 🟠 Warning | Two events overlap on your schedule |
+
+### Organization notifications
+
+| Event | Criticality | Description |
+|-----------|-----------|-------------|
+| New member | ⚪ Info | A user has joined your organization |
+| Role changed | ⚪ Info | A member's role has been changed |
+| Invitation accepted | ⚪ Info | An invitation you sent has been accepted |
+
+### System notifications
+
+| Event | Criticality | Description |
+|-----------|-----------|-------------|
+| Scheduled maintenance | ⚪ Info | Maintenance of the Hasfy platform is scheduled |
+| New feature | ⚪ Info | A Hasfy update is available |
+| Plan limit approaching | 🟠 Warning | You are approaching your plan's equipment limit |
+
+## Notification channels
+
+### In-app
+
+In-app notifications are the main channel. They appear in the notification center and are always enabled. They cannot be completely disabled, but they can be filtered by category.
+
+### Email
+
+Email notifications send a message to your account's email address for important events. By default, only **critical** and **warning** notifications are sent by email.
+
+Sending frequency configuration:
+
+- **Real time**: one email per notification
+- **Hourly digest**: one summary email per hour
+- **Daily digest**: one summary email per day
+- **Disabled**: no email (in-app only)
+
+To configure: **Settings &gt; Preferences &gt; Notifications &gt; Email**.
+
+## Preference configuration
+
+### By category
+
+Go to **Settings &gt; Preferences &gt; Notifications** to fine-tune your notifications:
+
+For each category (Equipment, Tickets, Calendar, Organization, System), independently configure:
+
+1. **In-app**: enabled/disabled per event type
+2. **Email**: enabled/disabled per event type
+3. **Minimum criticality**: only receive notifications at or above a minimum level (e.g. "Warning and above")
+
+### Monitoring alert thresholds
+
+Customize the thresholds that trigger monitoring alerts:
+
+| Metric | Warning threshold (default) | Critical threshold (default) |
+|----------|------|---------|
+| CPU | 80% | 95% |
+| RAM | 85% | 95% |
+| Disk | 80% | 90% |
+| Agent offline | 5 min | 15 min |
+
+To change these thresholds: **Settings &gt; Alerts &gt; Monitoring**.
+
+### Quiet hours
+
+Enable quiet hours to receive only **critical** notifications during certain time ranges:
+
+1. **Settings &gt; Preferences &gt; Notifications &gt; Quiet hours**
+2. Set the time range (e.g. 8 PM - 8 AM)
+3. Select the relevant days
+4. Non-critical notifications will be queued and delivered at the end of the quiet period
+
+## Managing notifications
+
+### Marking as read/unread
+
+- **Individually**: click the button to the right of each notification
+- **In bulk**: use "Mark all as read" at the top of the notification center
+
+### Deleting notifications
+
+Notifications are automatically deleted after **30 days**. You can delete them manually using the "Clear read notifications" button.
+
+### Follow/Unfollow
+
+For tickets, you can choose to **follow** or **unfollow** a specific ticket:
+- **Automatic following**: you automatically follow tickets you create or are assigned to
+- **Manual following**: click the 🔔 icon on a ticket to follow or unfollow it

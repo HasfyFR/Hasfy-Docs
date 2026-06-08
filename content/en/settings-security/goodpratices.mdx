@@ -1,0 +1,167 @@
+---
+title: Security best practices
+description: Recommendations and best practices for securing your use of Hasfy — passwords, sessions, API keys, and access control.
+---
+
+# Security best practices
+
+This guide gathers security recommendations to protect your organization and your data on Hasfy. Following these best practices significantly reduces the risk of unauthorized access and compromise.
+
+## Password management
+
+### Minimum requirements
+
+Hasfy enforces the following criteria for all passwords:
+
+- Minimum **8 characters**
+- At least **1 uppercase letter**
+- At least **1 lowercase letter**
+- At least **1 digit**
+
+### Advanced recommendations
+
+| Practice | Recommendation |
+|----------|---------------|
+| Length | 12 characters or more |
+| Complexity | Include special characters (!@#$%^&*) |
+| Uniqueness | Never reuse the same password as on other services |
+| Manager | Use a password manager (1Password, Bitwarden, etc.) |
+| Change | Change your password immediately if you suspect a compromise |
+| Sharing | Never share your password, even with a colleague or the Hasfy team |
+
+### Passphrases
+
+An effective technique is to use a **passphrase**: a string of random words that's easy to remember but hard to guess. For example, `horse-battery-correct-stapler` is more secure and more memorable than `P@ssw0rd123!`.
+
+## Multi-factor authentication
+
+Enabling MFA is the single most impactful security measure you can take. See the full guide on the [Multi-factor authentication](/settings-security/mfas) page.
+
+**Activation priority:**
+
+1. **Immediately**: Owner and Admin accounts
+2. **Within 7 days**: Technician accounts
+3. **Recommended**: Employee accounts
+
+## Session management
+
+### Active sessions
+
+- Regularly review your **active sessions** in **My account &gt; Security &gt; Sessions**
+- Revoke any session you don't recognize
+- After using a shared computer, **log out** every time
+
+### Session expiration
+
+Hasfy sessions expire automatically:
+
+| Setting | Default duration | Configurable (Enterprise) |
+|-----------|------------------|--------------------------|
+| Active session | 24 hours of inactivity | ✅ (1h - 30 days) |
+| "Remember me" session | 30 days | ✅ (7 - 90 days) |
+| Reset token | 1 hour | ❌ |
+| Magic link | 5 minutes | ❌ |
+
+> **Enterprise recommendation**: Reduce session duration to **8 hours** for high-security environments.
+
+### Lockout after failed attempts
+
+After **5 consecutive failed login attempts**, the account is temporarily locked for **15 minutes**. This mechanism protects against brute-force attacks.
+
+## Browser security
+
+### Recommendations
+
+- Use an **up-to-date browser**: the latest version of Chrome, Firefox, Safari, or Edge
+- **HTTPS**: make sure the URL shows `https://app.hasfy.fr` with the green padlock
+- **Extensions**: limit browser extensions, as some can intercept your data
+- **Private mode**: use private browsing mode on shared computers
+- **Autofill**: if you don't use a password manager, disable automatic password saving in your browser
+
+### Phishing detection
+
+Hasfy will never ask you for:
+- Your password by email or phone
+- To click a link to "verify" your account (except as part of actions you've just initiated)
+- To install software outside the official agent installation process
+
+If you receive a suspicious email claiming to be from Hasfy, forward it to **security@hasfy.fr**.
+
+## API key management
+
+### Creation and use
+
+If you use the Hasfy API (see [API documentation](/api)), follow these principles:
+
+| Practice | Detail |
+|----------|--------|
+| **Principle of least privilege** | Create keys with only the permissions they need |
+| **Regular rotation** | Regenerate your API keys every 90 days |
+| **Separation** | Use different keys for each application/integration |
+| **Secure storage** | Never hard-code keys in source code |
+| **Environment variables** | Use environment variables or a secrets vault |
+| **Immediate revocation** | Revoke a key as soon as it's no longer needed or if it's compromised |
+
+### Monitoring
+
+- Review the **usage logs** of your API keys in **Settings &gt; API &gt; Activity**
+- Set up **alerts** for abnormal usage (unusual request volume, unknown IP)
+
+## Access control
+
+### Principle of least privilege
+
+Assign each user the **minimum role necessary** to perform their tasks:
+
+- A user who only creates tickets → **Employee**
+- A technician who manages equipment and tickets → **Technician**
+- An IT manager who configures the organization → **Admin**
+- The person responsible for billing and the organization → **Owner**
+
+### Regular access reviews
+
+Carry out an **access review** at least every quarter:
+
+1. Go to **Settings &gt; Users**
+2. Identify **inactive** accounts (last login &gt; 90 days)
+3. Check that **roles** still match current responsibilities
+4. **Disable** accounts of people who have left the organization
+5. **Adjust** roles if responsibilities have changed
+
+### Offboarding checklist
+
+When a team member leaves your organization:
+
+- [ ] Disable their Hasfy account immediately
+- [ ] Revoke all their active sessions
+- [ ] Reassign their ongoing tickets
+- [ ] Reassign their equipment
+- [ ] Revoke any API keys they created
+- [ ] Check the audit log for their most recent actions
+- [ ] Update emergency contacts if applicable
+
+## Agent security
+
+The Hasfy agent installed on your machines communicates over HTTPS with Hasfy servers:
+
+- **Encrypted communication**: TLS 1.3 for all exchanges
+- **Mutual authentication**: the agent identifies itself with a unique enrollment key
+- **Automatic updates**: the agent updates itself to fix vulnerabilities
+- **Minimal permissions**: the agent only has access to system metrics, not user files
+
+### Enrollment key
+
+- The enrollment key is **single-use** per machine
+- Do not share enrollment keys over unsecured channels
+- If you suspect a compromise, **regenerate** the key from the Hasfy console
+
+## Reporting incidents
+
+If you suspect a security incident:
+
+1. **Change your password immediately**
+2. **Revoke** all active sessions
+3. Contact **security@hasfy.fr** with the details of the incident
+4. If applicable, notify the Owner of your organization
+
+Hasfy is committed to handling any security report within **24 business hours** and communicating the measures taken.

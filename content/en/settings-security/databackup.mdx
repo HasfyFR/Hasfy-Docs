@@ -1,0 +1,169 @@
+---
+title: Data & Backups
+description: Data storage policy, automatic backups, data export, retention, and GDPR compliance for the Hasfy platform.
+---
+
+# Data & Backups
+
+Hasfy takes the protection of your data seriously. This page details how your data is stored, backed up, exported, and protected, in compliance with European regulations.
+
+## Data storage
+
+### Location
+
+All Hasfy data is hosted on **servers located in France**, in line with data sovereignty requirements:
+
+- **Database**: PostgreSQL hosted via Supabase, European datacenter
+- **Files and attachments**: Supabase Storage with replication
+- **Monitoring metrics**: Elasticsearch for supervision data reported by agents
+- **Backups**: geographically separate storage for resilience
+
+### Types of data stored
+
+| Category | Data | Retention period |
+|-----------|---------|-------------------|
+| **User profiles** | Name, email, avatar, role | Lifetime of the account |
+| **Organization** | Name, settings, configuration | Lifetime of the subscription |
+| **Equipment** | Records, specifications, tags | Lifetime of the subscription |
+| **Tickets** | Content, conversations, attachments | Lifetime of the subscription |
+| **Metrics** | CPU, RAM, disk, network (via agent) | 90 days (Starter), 1 year (Pro), 2 years (Enterprise) |
+| **Audit logs** | User actions, changes | 1 year (Pro), 3 years (Enterprise) |
+| **Calendar events** | Interventions, maintenance | Lifetime of the subscription |
+| **Invoices** | Billing history | 10 years (legal requirement) |
+
+### Encryption
+
+- **In transit**: all communications between your browser, the agent, and Hasfy servers are encrypted via **TLS 1.3**
+- **At rest**: data is encrypted at rest with **AES-256** on storage volumes
+- **Attachments**: uploaded files are individually encrypted before storage
+
+## Automatic backups
+
+### Backup policy
+
+Hasfy performs automatic backups at several levels:
+
+| Backup type | Frequency | Retention | Restoration time |
+|-------------------|-----------|-----------|----------------------|
+| **Database snapshot** | Every 6 hours | 7 days | &lt; 1 hour |
+| **Full backup** | Daily (02:00 UTC) | 30 days | &lt; 4 hours |
+| **Weekly backup** | Every Sunday | 12 weeks | &lt; 8 hours |
+| **Monthly backup** | 1st of the month | 12 months | &lt; 12 hours |
+| **Files and attachments** | Continuous (replication) | Same as data | &lt; 1 hour |
+
+### Backup verification
+
+Backups are **automatically tested** every week:
+- Restoration to a test environment
+- Data integrity verification
+- Validation report sent to the Hasfy infrastructure team
+
+### Restoration
+
+If you need a restoration (accidental data loss, corruption):
+
+1. Contact Hasfy support via **support@hasfy.fr** or from the interface
+2. Specify the **nature of the loss** and the **approximate date** of the last correct version
+3. The Hasfy team performs an analysis and proposes a restoration
+4. After validation, data is restored within the timeframes indicated above
+
+> **Enterprise plan**: Enterprise customers have access to self-service restoration for snapshots from the last 24 hours, directly from **Settings &gt; Data &gt; Restoration**.
+
+## Data export
+
+### Export from the interface
+
+You can export your data at any time from the Hasfy interface:
+
+| Data | Format | Access |
+|---------|--------|-------|
+| Equipment | CSV, PDF | Settings &gt; Data &gt; Export |
+| Tickets | CSV, PDF | Settings &gt; Data &gt; Export |
+| Monitoring metrics | CSV | Settings &gt; Data &gt; Export |
+| Users | CSV | Settings &gt; Data &gt; Export |
+| Audit logs | CSV | Settings &gt; Data &gt; Export |
+| Full report | ZIP (CSV + files) | Settings &gt; Data &gt; Full export |
+
+### Full export (portability)
+
+In compliance with GDPR, you can request a **full export** of all your data:
+
+1. Go to **Settings &gt; Data &gt; Full export**
+2. Click **"Request a full export"**
+3. Hasfy prepares a ZIP archive containing all your data in an open format (CSV, JSON)
+4. You receive an email with a secure download link (valid for 48 hours)
+
+Preparation time depends on the volume of data (typically 1 to 24 hours).
+
+### Export via API
+
+The Hasfy REST API lets you export data programmatically. See the [API documentation](/api) for available endpoints.
+
+## Data retention
+
+### Active retention policy
+
+As long as your subscription is active, all your data is kept for the durations indicated in the storage table above. Old monitoring metrics are automatically archived and then deleted according to your plan.
+
+### After cancellation
+
+In the event of subscription cancellation:
+
+| Step | Timeframe | Action |
+|-------|-------|--------|
+| Cancellation | Day 0 | Read-only access for 30 days |
+| Day +30 | End of access | Login no longer possible |
+| Day +60 | Data deletion | Permanent and irreversible deletion |
+| Notification | Day 0, +15, +25 | Email reminders to export your data |
+
+> **Important**: Export your data before the end of the 30-day grace period. After deletion, data cannot be recovered.
+
+## GDPR compliance
+
+Hasfy complies with the **General Data Protection Regulation (GDPR)**:
+
+### User rights
+
+| Right | How to exercise it |
+|-------|-------------------|
+| **Right of access** | Settings &gt; Data &gt; Full export |
+| **Right to rectification** | Direct edit in the interface |
+| **Right to erasure** | Settings &gt; My account &gt; Delete my account |
+| **Right to portability** | Full export in open format (CSV, JSON) |
+| **Right to object** | Contact support@hasfy.fr |
+| **Right to restriction** | Contact dpo@hasfy.fr |
+
+### Technical measures
+
+- **Data minimization**: Hasfy only collects the data necessary for the service to function
+- **Pseudonymization**: monitoring metrics are linked to technical identifiers, not to individuals
+- **Records of processing activities**: maintained and available on request
+- **Impact assessment** (DPIA): carried out for high-risk processing
+- **DPO**: a Data Protection Officer is appointed and reachable at dpo@hasfy.fr
+
+### Subprocessors
+
+| Subprocessor | Use | Data location |
+|---------------|-------|-------------------------|
+| Supabase | Database, authentication, storage | Europe |
+| Elastic | Monitoring and metrics | Europe |
+| Stripe | Payments | Europe (with certified US transfers) |
+| OVH | Hosting | France |
+
+The full list of subprocessors is available on request.
+
+## Data deletion
+
+### User account deletion
+
+Deleting a user account results in:
+- Anonymization of all contributions (tickets, comments): the name is replaced with "Deleted user"
+- Deletion of all personal data (profile, avatar)
+- Retention of anonymized activity data to preserve the integrity of the history
+
+### Organization deletion
+
+Deleting an organization (Owner only) results in:
+- Deletion of **all** data: equipment, tickets, metrics, files, audit logs
+- Deletion within 30 days (grace period for cancellation)
+- Confirmation by entering the organization name and a code sent by email

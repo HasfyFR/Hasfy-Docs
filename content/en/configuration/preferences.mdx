@@ -1,0 +1,131 @@
+---
+title: Application preferences
+description: Personalize your Hasfy experience — theme, language, time zone, notifications, and dashboard layout.
+---
+
+# Application preferences
+
+Preferences let you personalize the Hasfy interface to match your working habits. Access this section via **Settings &gt; Preferences**.
+
+## Appearance theme
+
+Hasfy offers three display modes to suit your working environment:
+
+| Mode | Description |
+|------|-------------|
+| **Light** | White-background interface, ideal for well-lit environments |
+| **Dark** | Dark-background interface, reduces eye strain in low-light conditions |
+| **System** | Automatically adapts to your operating system's theme |
+
+To change the theme:
+1. Go to **Preferences &gt; Appearance**
+2. Select the desired mode
+3. The change is applied instantly
+
+> **Tip**: **System** mode is recommended if you work at varying hours — Hasfy will automatically switch between light and dark based on your OS settings.
+
+## Language
+
+The Hasfy interface is currently available in **French**. The documentation and interface elements are written in French.
+
+Additional languages are planned on the roadmap (English, Spanish, German). You will be notified when new languages become available.
+
+## Time zone
+
+The time zone determines how dates and times are displayed throughout the application: ticket timestamps, calendar events, audit logs, and notifications.
+
+1. Go to **Preferences &gt; Region**
+2. Select your **time zone** from the dropdown list (e.g. Europe/Paris, America/Montreal)
+3. Choose your preferred **date format**:
+   - `DD/MM/YYYY` (French format — default)
+   - `MM/DD/YYYY` (US format)
+   - `YYYY-MM-DD` (ISO format)
+4. Choose your **time format**:
+   - 24-hour (default): `14:30`
+   - 12-hour: `2:30 PM`
+
+> **Note**: The time zone is specific to your user account. Each member of the organization can configure their own independently, which is especially useful for teams spread across multiple time zones.
+
+## Notification preferences
+
+### In-app notifications
+
+Notifications appear as a badge and dropdown menu in the application header. Configure which notifications you want to receive:
+
+| Category | Examples | Default |
+|-----------|----------|------------|
+| **Tickets** | New ticket assigned, status change, comment | Enabled |
+| **Equipment** | Monitoring alert, status change, agent disconnected | Enabled |
+| **Calendar** | Event reminder, event modified or cancelled | Enabled |
+| **Organization** | New member, role change, invitation accepted | Enabled |
+| **System** | Scheduled maintenance, feature updates | Enabled |
+
+### Email notifications
+
+For each category above, you can enable or disable email notifications separately. By default, only **critical** notifications are sent by email:
+
+- Critical monitoring alerts (equipment offline, low disk space)
+- Tickets with **Urgent** priority
+- Security actions (suspicious login, password change)
+
+### Email frequency
+
+Choose how often you receive non-critical emails:
+
+- **Real-time**: each notification generates an immediate email
+- **Hourly digest**: a summary every hour
+- **Daily digest**: a summary email each morning at the time of your choice
+- **Disabled**: no emails (in-app notifications only)
+
+### Quiet hours
+
+Set a time range during which only critical notifications reach you:
+
+1. Enable **quiet hours**
+2. Set the **start** time (e.g. 8:00 PM) and **end** time (e.g. 8:00 AM)
+3. Select the **days** concerned (e.g. every day, weekdays only)
+
+## Dashboard layout
+
+Customize the layout of your main dashboard:
+
+### Available widgets
+
+| Widget | Description |
+|--------|-------------|
+| **Fleet summary** | Number of devices by status (active, under maintenance, retired) |
+| **Overall health** | Visual indicator of fleet health (green, orange, red) |
+| **Open tickets** | Number of tickets in progress by priority |
+| **Real-time metrics** | Average CPU, RAM, and disk usage of monitored machines |
+| **Recent activity** | Latest actions in the organization |
+| **Calendar** | Upcoming events and maintenance |
+| **Top alerts** | Most frequent alerts |
+
+### Customization
+
+1. From the dashboard, click the **⚙️ Customize** icon
+2. **Drag and drop** widgets to rearrange their position
+3. **Resize** widgets by dragging their edges
+4. **Hide** widgets you don't need using the ✕ button
+5. **Add** widgets from the "Available widgets" panel
+6. Click **"Save layout"**
+
+> **Note**: The layout is saved per user. Each team member can have their own dashboard arrangement.
+
+## Tutorials and contextual help
+
+Manage the display of built-in interface help:
+
+- **Discovery tutorials**: guided tooltips when first using each module. Enabled by default, can be disabled here
+- **Help bubbles**: "?" icons displaying explanations on hover. Enabled by default
+- **Keyboard shortcuts**: display the list of available shortcuts with `Ctrl + /` (or `Cmd + /` on macOS)
+
+## Resetting preferences
+
+To restore all preferences to their default values:
+
+1. Go to **Preferences &gt; Advanced**
+2. Click **"Reset preferences"**
+3. Confirm the reset
+
+This action only resets display and notification preferences — not your profile information or organization settings.

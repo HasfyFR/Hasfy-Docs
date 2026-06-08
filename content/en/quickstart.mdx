@@ -1,0 +1,124 @@
+---
+title: Quick Start
+description: Step-by-step guide to creating your Hasfy account, configuring your organization, adding your first piece of equipment, and installing the monitoring agent.
+---
+
+# Quick Start
+
+This guide walks you through everything from creating your account to viewing your first monitoring metrics. Plan for about **10 minutes** to complete all the steps.
+
+## Prerequisites
+
+Before you begin, make sure you have:
+
+- A valid professional email address
+- A modern web browser (Chrome, Firefox, Safari, Edge)
+- A workstation (Windows 10+, macOS 12+, or Linux) for installing the agent *(optional for this initial setup)*
+
+## Step 1: Create your account
+
+1. Go to **[app.hasfy.fr](https://app.hasfy.fr)** and click **"Create an account"**
+2. Enter your **email address** and choose a **secure password** (minimum 8 characters, including an uppercase letter, a lowercase letter, and a digit)
+3. You can also sign up via a **magic link** sent by email — no password required in this case
+4. Confirm your registration by clicking the confirmation link you receive by email
+5. You'll be redirected to the onboarding screen
+
+> **Tip**: The magic link is especially handy for a quick first login. You can set up a permanent password later in your account settings.
+
+## Step 2: Complete onboarding
+
+Hasfy's onboarding guides you through the initial setup of your workspace:
+
+1. **Personal information**: fill in your first name, last name, and contact phone number
+2. **Creating your organization**: give your organization a name (e.g. "Acme Corp IT") and specify its industry
+3. **Calibration questions**: answer a few questions about the size of your IT fleet, your top priorities, and your level of experience. These answers allow Hasfy to personalize your experience
+4. **Profile picture** *(optional)*: upload an avatar to personalize your account
+5. Click **"Finish setup"**
+
+You'll then land on your organization's **dashboard**, ready to be populated.
+
+## Step 3: Add your first piece of equipment
+
+From the dashboard, go to the **Equipment** module:
+
+1. Click the **"+ Add equipment"** button at the top right
+2. Fill in the basic information:
+   - **Name**: a meaningful identifier (e.g. "PC-Office-Martin", "Server-Prod-01")
+   - **Type**: select the equipment type (Workstation, Server, Printer, Network, Mobile, Other)
+   - **Operating system**: Windows, macOS, Linux, or Other
+   - **Serial number** *(optional)*: the manufacturer's serial number
+   - **Assignment** *(optional)*: assign the equipment to a user in your organization
+3. Add **tags** to make filtering easier (e.g. "Accounting", "Server room", "Critical")
+4. Click **"Save"**
+
+The equipment now appears in your inventory with the status **"Active — Awaiting agent"**.
+
+> **Note**: You can add equipment manually even without installing the agent. The inventory will then work as a static registry. The agent adds the dimension of real-time monitoring.
+
+## Step 4: Install the Hasfy agent
+
+The Hasfy agent is lightweight software that installs on every machine you want to monitor. It automatically reports system metrics to your dashboard.
+
+### Download
+
+1. From the equipment's record, click **"Install agent"**, or go to **Settings &gt; Agents &gt; Download**
+2. Select the **operating system** of the target machine:
+   - **Windows**: `.exe` installer (compatible with Windows 10 and later)
+   - **macOS**: `.dmg` installer (compatible with macOS 12 Monterey and later)
+   - **Linux**: `.deb` package (Debian/Ubuntu) or `.rpm` package (RHEL/Fedora)
+
+### Installation
+
+**On Windows:**
+1. Run the downloaded `.exe` file
+2. Follow the installation wizard (accept the terms, choose the installation folder)
+3. At the "Configuration" step, paste the **enrollment key** provided by Hasfy
+4. The agent starts automatically as a Windows service
+
+**On macOS:**
+1. Open the `.dmg` file and drag the application into the Applications folder
+2. Launch the application — it will ask for the **enrollment key**
+3. Grant the requested system permissions (disk access, network)
+4. The agent runs in the background and starts automatically on boot
+
+**On Linux:**
+```bash
+# Debian/Ubuntu
+sudo dpkg -i hasfy-agent_latest_amd64.deb
+sudo hasfy-agent enroll --key YOUR_ENROLLMENT_KEY
+sudo systemctl enable --now hasfy-agent
+
+# RHEL/Fedora
+sudo rpm -i hasfy-agent_latest_x86_64.rpm
+sudo hasfy-agent enroll --key YOUR_ENROLLMENT_KEY
+sudo systemctl enable --now hasfy-agent
+```
+
+### Verification
+
+After installation, go back to Hasfy:
+1. Open the relevant equipment's record
+2. The status changes from **"Awaiting agent"** to **"Agent connected"** (green indicator)
+3. The first metrics appear within seconds: CPU, RAM, disk space, network
+
+## Step 5: Explore the dashboard
+
+Go to the **Dashboard** page to view your data:
+
+- **Summary cards**: total number of equipment, equipment online, active alerts, open tickets
+- **Health chart**: overall fleet status (normal, warning, critical)
+- **Real-time metrics**: CPU, RAM, and disk usage of your monitored machines
+- **Recent activity**: the latest actions performed in your organization
+
+## What's next?
+
+You now have an operational Hasfy account with your first monitored piece of equipment. Here are the recommended next steps:
+
+| Action | Guide |
+|--------|-------|
+| Invite your team | [User Management](/settings-security/usermanagment) |
+| Configure notifications | [Notifications](/core-features/notifications) |
+| Create your first ticket | [Support & Tickets](/core-features/assistance) |
+| Customize your dashboard | [KPIs & Dashboard](/core-features/kpis) |
+| Enable two-factor authentication | [Multi-factor authentication](/settings-security/mfas) |
+| Explore pricing plans | [Pricing](/pricing) |

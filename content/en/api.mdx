@@ -1,0 +1,239 @@
+---
+title: Hasfy API
+description: Overview of the Hasfy REST API — authentication, endpoints, rate limits, and usage examples.
+---
+
+# Hasfy API
+
+The Hasfy REST API lets you interact with your platform programmatically. Whether you want to automate tasks, integrate Hasfy with your existing tools, or build custom workflows, the API gives you full access to your data.
+
+## Overview
+
+The Hasfy API is a **REST API** accessible over HTTPS. It follows standard REST conventions:
+
+- **Data format**: JSON
+- **Protocol**: HTTPS exclusively
+- **Base URL**: `https://api.hasfy.fr/v1`
+- **Versioning**: the version number is included in the URL (`/v1`)
+
+### Who can use the API?
+
+The API is available on **all** Hasfy plans, with different quotas depending on the plan:
+
+| Plan | Requests/minute | Requests/day |
+|------|----------------|---------------|
+| **Starter** | 60 | 10,000 |
+| **Pro** | 300 | 100,000 |
+| **Enterprise** | 1,000 | Unlimited |
+
+## Authentication
+
+### API keys
+
+Access to the API is done via **API keys**. Each key is tied to a user and inherits their permissions.
+
+#### Creating an API key
+
+1. Go to **Settings &gt; API &gt; API Keys**
+2. Click **"Create an API key"**
+3. Give the key a **descriptive name** (e.g. "Inventory sync script", "Zapier integration")
+4. Select the key's **permissions**:
+   - **Read-only**: read access to data (GET only)
+   - **Read/Write**: full access (GET, POST, PUT, DELETE)
+   - **Custom**: select the allowed resources
+5. Click **"Create"**
+6. The key is displayed **only once** — copy it and store it somewhere safe
+
+> **Important**: The API key is shown only at creation time. If you lose it, you will need to create a new one.
+
+#### Using the API key
+
+Include the API key in the `Authorization` header of your requests:
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     https://api.hasfy.fr/v1/equipments
+```
+
+#### Revoking an API key
+
+If a key is compromised or no longer needed:
+
+1. Go to **Settings &gt; API &gt; API Keys**
+2. Click **"Revoke"** next to the relevant key
+3. The key is immediately invalidated
+
+## Main endpoints
+
+### Equipment
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/v1/equipments` | List all equipment |
+| `GET` | `/v1/equipments/:id` | Get details of a piece of equipment |
+| `POST` | `/v1/equipments` | Create a piece of equipment |
+| `PUT` | `/v1/equipments/:id` | Update a piece of equipment |
+| `DELETE` | `/v1/equipments/:id` | Delete a piece of equipment |
+| `GET` | `/v1/equipments/:id/metrics` | Get metrics for a piece of equipment |
+
+### Tickets
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/v1/tickets` | List all tickets |
+| `GET` | `/v1/tickets/:id` | Get details of a ticket |
+| `POST` | `/v1/tickets` | Create a ticket |
+| `PUT` | `/v1/tickets/:id` | Update a ticket |
+| `POST` | `/v1/tickets/:id/comments` | Add a comment |
+| `PUT` | `/v1/tickets/:id/status` | Change the status |
+| `PUT` | `/v1/tickets/:id/assign` | Assign a technician |
+
+### Users
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/v1/users` | List the organization's users |
+| `GET` | `/v1/users/:id` | Get details of a user |
+| `POST` | `/v1/users/invite` | Invite a user |
+| `PUT` | `/v1/users/:id/role` | Change a user's role |
+
+### Organization
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/v1/organization` | Organization details |
+| `GET` | `/v1/organization/stats` | Overall statistics |
+
+### Metrics
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| `GET` | `/v1/metrics/overview` | Metrics overview |
+| `GET` | `/v1/metrics/equipment/:id` | Metrics for a piece of equipment |
+| `GET` | `/v1/metrics/alerts` | List active alerts |
+
+## Pagination
+
+Endpoints that return lists support pagination:
+
+```
+GET /v1/equipments?page=1&per_page=25
+```
+
+| Parameter | Default | Max | Description |
+|-----------|--------|-----|-------------|
+| `page` | 1 | — | Page number |
+| `per_page` | 25 | 100 | Number of items per page |
+
+The response includes pagination metadata:
+
+```json
+{
+  "data": [...],
+  "pagination": {
+    "page": 1,
+    "per_page": 25,
+    "total": 142,
+    "total_pages": 6
+  }
+}
+```
+
+## Filtering and sorting
+
+### Filters
+
+Use query parameters to filter results:
+
+```
+GET /v1/equipments?type=workstation&status=active&tag=Accounting
+GET /v1/tickets?status=open&priority=high&assigned_to=user_id
+```
+
+### Sorting
+
+Use the `sort` parameter:
+
+```
+GET /v1/equipments?sort=name:asc
+GET /v1/tickets?sort=created_at:desc
+```
+
+## Error handling
+
+The API uses standard HTTP status codes:
+
+| Code | Meaning |
+|------|--------------|
+| `200` | Success |
+| `201` | Resource created |
+| `400` | Invalid request (missing or incorrect parameters) |
+| `401` | Not authenticated (missing or invalid API key) |
+| `403` | Forbidden (insufficient permissions) |
+| `404` | Resource not found |
+| `429` | Too many requests (rate limit reached) |
+| `500` | Server error |
+
+Errors include a descriptive message:
+
+```json
+{
+  "error": {
+    "code": "RATE_LIMIT_EXCEEDED",
+    "message": "You have exceeded the limit of 60 requests per minute. Please try again in 45 seconds.",
+    "retry_after": 45
+  }
+}
+```
+
+## Rate Limiting
+
+Rate limits are enforced per API key:
+
+- Response headers indicate your quota:
+  - `X-RateLimit-Limit`: number of allowed requests
+  - `X-RateLimit-Remaining`: requests remaining
+  - `X-RateLimit-Reset`: timestamp when the counter resets
+- If the limit is exceeded, the API returns a `429` status code along with the wait time
+
+## Usage examples
+
+### Listing active equipment
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     "https://api.hasfy.fr/v1/equipments?status=active&sort=name:asc"
+```
+
+### Creating a ticket
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "title": "Printer out of service",
+       "description": "The printer on the 2nd floor has not been responding since this morning.",
+       "category": "incident",
+       "priority": "high",
+       "equipment_id": "eq_abc123"
+     }' \
+     "https://api.hasfy.fr/v1/tickets"
+```
+
+### Retrieving metrics for a piece of equipment
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     "https://api.hasfy.fr/v1/metrics/equipment/eq_abc123?period=7d"
+```
+
+## Best practices
+
+| Practice | Detail |
+|----------|--------|
+| Store keys securely | Environment variables or a secrets vault |
+| Handle errors | Implement retries with exponential backoff for 429 and 5xx errors |
+| Pagination | Always paginate large lists instead of loading everything at once |
+| Caching | Cache data that changes infrequently (user lists, tags) |
+| Monitoring | Monitor your quota usage to anticipate your needs |

@@ -1,0 +1,155 @@
+---
+title: Calendar
+description: Plan your interventions, maintenance and IT events with Hasfy's built-in calendar.
+---
+
+# Calendar
+
+The Hasfy **Calendar** module centralizes the scheduling of all activities related to managing your IT fleet: maintenance interventions, technical appointments, planned maintenance windows and reminders.
+
+## Calendar views
+
+The calendar offers several display modes, accessible via the buttons in the top right:
+
+| View | Description | Recommended use |
+|-----|-------------|-----------------|
+| **Month** | Classic monthly view with a preview of events per day | Overview of the monthly workload |
+| **Week** | Detailed 7-day view with time slots | Fine-grained planning of interventions |
+| **Day** | Hour-by-hour view of a single day | Precise tracking on busy days |
+| **List** | Chronological list of upcoming events | Printing and export |
+
+### Navigation
+
+- **Today**: click the "Today" button to return to the current date
+- **Navigation**: use the ◀ ▶ arrows to navigate between periods
+- **Quick selection**: click on a date in the side mini-calendar to jump straight to it
+
+## Event types
+
+### Scheduled intervention
+
+A technical intervention planned in advance:
+
+- Linked to an existing **ticket** and/or a specific **piece of equipment**
+- Assigned to a **technician**, who will receive a reminder before the intervention
+- Configurable estimated duration
+- Can be recurring
+
+### Maintenance window
+
+A defined time slot for carrying out maintenance operations:
+
+- A period during which service interruptions may occur
+- Displayed distinctly (colored bar) on the calendar
+- Monitoring alerts can be muted during these windows
+- Automatic notification to affected users
+
+### Reminder
+
+A simple memo-type event:
+
+- Warranty expiration date
+- License renewal deadline
+- Periodic check to be carried out
+- Any other reminder related to fleet management
+
+### Event linked to a ticket
+
+When a ticket requires a scheduled intervention, an event is automatically created in the calendar with a two-way link: from the ticket to the event and vice versa.
+
+## Creating an event
+
+1. **Quick method**: click directly on a time slot in the calendar
+2. **Full method**: click **"+ New event"** in the top right
+
+### Creation form
+
+- **Title** *(required)*: a short description of the event (e.g. "Production server maintenance", "Replacement of workstation PC-042")
+- **Type**: Intervention, Maintenance window, Reminder
+- **Start date and time** *(required)*
+- **End date and time** *(required)*
+- **All day**: check this for an event without a specific time
+- **Description**: additional details, instructions, procedure to follow
+- **Assigned technician**: select the responsible technician
+- **Related equipment**: link the event to a piece of equipment
+- **Related ticket**: link the event to an existing ticket
+- **Color**: choose a color to visually identify the event type
+- **Reminder**: set up a reminder (15 min, 30 min, 1h, 1 day before)
+
+### Recurring events
+
+For regular maintenance, set up recurrence:
+
+1. When creating an event, enable **"Recurrence"**
+2. Choose the frequency:
+   - **Daily**: every day or every X days
+   - **Weekly**: choose the days of the week (e.g. every Tuesday and Thursday)
+   - **Monthly**: a specific day of the month (e.g. the 1st of each month) or a relative day (e.g. the 2nd Monday)
+   - **Custom**: a tailored interval
+3. Set the **end of recurrence**:
+   - Never (repeats indefinitely)
+   - After X occurrences
+   - On a specific date
+
+> **Tip**: Recurring events are particularly useful for planned preventive maintenance (checking backups every Monday, monthly server restart, etc.).
+
+## Editing and deleting an event
+
+### Editing
+
+1. Click on the event in the calendar
+2. Edit the desired fields in the panel that opens
+3. Click **"Save"**
+
+For a recurring event, Hasfy asks you whether the change applies to:
+- **This event only**
+- **This event and the following ones**
+- **All events in the series**
+
+### Drag and drop
+
+To quickly reschedule an event:
+- **Move**: drag the event to another time slot
+- **Resize**: drag the bottom edge of the event to change its duration
+
+### Deletion
+
+1. Click on the event
+2. Click **"Delete"**
+3. For a recurring event, choose to delete only this occurrence or the entire series
+
+## Filtering and display
+
+### Filters
+
+Use the side filter panel to customize the display:
+
+- **By type**: Intervention, Maintenance window, Reminder
+- **By technician**: show events for a specific technician
+- **By equipment**: events linked to a given piece of equipment
+- **By color/category**: filter by color code
+
+### Overlaid calendars
+
+If your organization has several technicians, you can overlay their calendars to view team availability and avoid scheduling conflicts. Each technician is identified by a distinct color.
+
+## Calendar notifications
+
+The calendar generates automatic notifications:
+
+| Event | Notification | Recipient |
+|-----------|-------------|-------------|
+| Reminder before intervention | In-app + email (depending on preferences) | Assigned technician |
+| Maintenance window approaching | In-app | All members of the organization |
+| Event modified | In-app | Affected participants |
+| Event canceled | In-app + email | Affected participants |
+| Scheduling conflict | In-app | Administrator |
+
+## Integration with other modules
+
+The calendar integrates naturally with Hasfy's other features:
+
+- **Tickets**: interventions scheduled from a ticket appear on the calendar
+- **Equipment**: maintenance windows linked to a piece of equipment are visible on its record
+- **Notifications**: calendar reminders generate configurable notifications
+- **KPIs**: the number of planned and completed interventions feeds into performance indicators

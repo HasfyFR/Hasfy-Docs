@@ -1,0 +1,179 @@
+---
+title: Support & Tickets
+description: Hasfy's ticketing system — ticket creation, assignment, priorities, conversations, internal notes, resolution workflow and SLA tracking.
+---
+
+# Support & Tickets
+
+The Hasfy **Support** module provides a complete ticketing system for managing incidents, service requests and maintenance interventions. It centralizes communication between users, technicians and administrators.
+
+## Ticket overview
+
+The main page displays the list of all tickets as a table with configurable columns:
+
+| Column | Description |
+|---------|-------------|
+| **ID** | Unique ticket number (e.g. #TKT-0042) |
+| **Title** | Short summary of the issue or request |
+| **Status** | New, In progress, On hold, Resolved, Closed |
+| **Priority** | Low, Normal, High, Urgent |
+| **Category** | Type of request (Incident, Request, Maintenance, Other) |
+| **Assigned to** | Responsible technician |
+| **Equipment** | Related equipment (link to its record) |
+| **Created on** | Creation date |
+| **Updated** | Date of the last change |
+
+### Available filters
+
+- **By status**: show open, on-hold, resolved tickets, etc.
+- **By priority**: filter by priority level
+- **By assignment**: your tickets, unassigned, assigned to a specific technician
+- **By category**: Incident, Request, Maintenance
+- **By equipment**: tickets linked to a specific piece of equipment
+- **By period**: creation date range
+- **By creator**: tickets created by a specific user
+
+## Creating a ticket
+
+### From the Support module
+
+1. Click **"+ New ticket"**
+2. Fill in the information:
+
+**Required fields:**
+- **Title**: a clear, concise summary of the issue (e.g. "HR printer not responding", "Software installation request")
+- **Description**: a complete description of the issue or request. Be as precise as possible: error messages, context, actions already attempted
+- **Category**: Incident (malfunction), Request (new install, access), Maintenance (preventive or corrective)
+- **Priority**: Low, Normal, High, Urgent
+
+**Optional fields:**
+- **Related equipment**: select from the list of your equipment
+- **Assigned to**: select a technician (otherwise the ticket is created as "Unassigned")
+- **Attachments**: screenshots, logs, documents (max 10 MB per file, common formats accepted)
+- **Tags**: keywords to help with classification
+
+3. Click **"Create ticket"**
+
+### From an equipment record
+
+You can create a ticket directly from a piece of equipment's record. The equipment is automatically pre-filled in the creation form.
+
+### As an employee (client)
+
+Users with the **Employee** role have access to a simplified form for submitting requests. They fill in the title, description and priority. Categorization and assignment are handled by the IT team.
+
+## Resolution workflow
+
+### Ticket statuses
+
+A ticket follows a workflow defined by its statuses:
+
+```
+New → In progress → Resolved → Closed
+New → In progress → On hold → In progress → Resolved → Closed
+```
+
+| Status | Description | Who can change it |
+|--------|-------------|-----------------|
+| **New** | Ticket that has just been created, not yet picked up | Automatic upon creation |
+| **In progress** | A technician is actively working on the ticket | Technician, Admin |
+| **On hold** | The ticket requires external information or action (waiting for a part, customer reply) | Technician, Admin |
+| **Resolved** | The issue is resolved, awaiting confirmation | Technician, Admin |
+| **Closed** | Ticket permanently closed | Admin, or automatically after 7 days in "Resolved" |
+
+### Changing a ticket's status
+
+1. Open the relevant ticket
+2. Click on the current status button (at the top of the page)
+3. Select the new status
+4. Add a **transition comment** to explain the change (recommended)
+5. Confirm
+
+### Assigning a ticket
+
+To assign or reassign a ticket:
+
+1. Open the ticket
+2. In the side panel, click **"Assigned to"**
+3. Select a technician from the list
+4. The technician receives an assignment notification
+
+> **Tip**: Unassigned tickets appear at the top of the list with a red visual indicator. Set up alerts to be notified of unassigned tickets after a certain delay.
+
+## Priorities
+
+Priorities determine the processing order and the associated SLA deadlines:
+
+| Priority | Color | First response time (SLA) | Resolution time (SLA) |
+|----------|---------|-------------------------------|--------------------------|
+| **Urgent** | 🔴 Red | 30 minutes | 4 hours |
+| **High** | 🟠 Orange | 2 hours | 8 hours |
+| **Normal** | 🔵 Blue | 4 hours | 24 hours |
+| **Low** | ⚪ Gray | 8 hours | 72 hours |
+
+> **Note**: SLA deadlines are indicative and configurable by the organization administrator in **Settings &gt; SLA**.
+
+## Conversations and collaboration
+
+### Discussion thread
+
+Each ticket has a chronological discussion thread enabling exchanges between all parties:
+
+- **Public messages**: visible to the ticket creator, technicians and administrators. Use them to communicate with the user who submitted the request
+- **Internal notes**: visible only to technicians and administrators. Use them for internal technical discussions, procedures followed or sensitive information
+
+To add a message:
+1. Type your text in the reply box at the bottom of the ticket
+2. Choose between **"Public reply"** and **"Internal note"** using the selector
+3. Add **attachments** if needed (screenshots, logs)
+4. Click **"Send"**
+
+### Mentions
+
+Mention a colleague in a message by typing `@` followed by their name. The mentioned person will receive a specific notification.
+
+### Attachments
+
+Each message can include attached files:
+- **Accepted formats**: images (JPG, PNG, GIF), documents (PDF, DOC, DOCX, XLS), archives (ZIP), logs (TXT, LOG)
+- **Maximum size**: 10 MB per file
+- **Maximum number**: 5 files per message
+
+## SLA tracking
+
+Service level agreement (SLA) tracking is built into every ticket:
+
+### SLA indicators
+
+- **First response time**: the delay between ticket creation and the first message from a technician
+- **Resolution time**: the delay between creation and the move to "Resolved" status
+- **Real-time counter**: a timer displayed on each ticket shows the time remaining before the SLA is breached
+
+### SLA alerts
+
+- **Warning**: notification sent when 75% of the SLA deadline has elapsed
+- **Breach**: an escalation notification sent to the administrator when the SLA is breached
+- Tickets in SLA breach are highlighted in the list (red border)
+
+## Automatic categorization
+
+If the AI assistant is enabled (see [AI Features](/advanced-features/ia)), incoming tickets are automatically:
+
+- **Categorized**: Incident, Request or Maintenance
+- **Prioritized**: priority suggestion based on content analysis
+- **Tagged**: keywords automatically extracted
+
+The technician can modify these suggestions at any time.
+
+## Ticket statistics
+
+From the Support view, a statistics panel displays:
+
+- **Open tickets**: number of active tickets (New + In progress + On hold)
+- **Average resolution time**: calculated over the last 30 days
+- **SLA compliance rate**: percentage of tickets resolved within the deadlines
+- **Breakdown by category**: pie chart
+- **Breakdown by priority**: bar chart
+- **Top technicians**: ranking by number of resolved tickets
+
+These statistics are also available in greater detail in the [KPIs](/core-features/kpis) module.

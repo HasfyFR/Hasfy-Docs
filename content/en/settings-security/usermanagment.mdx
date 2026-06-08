@@ -1,0 +1,191 @@
+---
+title: User management
+description: Invite users, assign roles, and manage access permissions across your Hasfy organization.
+---
+
+# User management
+
+User management lets you control who has access to your Hasfy workspace, at what permission level, and lets you manage account lifecycles within your organization.
+
+## Overview
+
+Access user management from **Settings &gt; Users**. The page displays a list of all members of your organization:
+
+| Column | Description |
+|---------|-------------|
+| **User** | First name, last name, and avatar |
+| **Email** | Account email address |
+| **Role** | Owner, Admin, Technician, or Employee |
+| **Status** | Active, Invited (pending), Disabled |
+| **Last activity** | Date of last login |
+| **Added on** | Date added to the organization |
+
+## Role system
+
+Hasfy offers four hierarchical roles with increasing permissions:
+
+### Employee (End user / Client)
+
+The default role for end users who interact with the IT service:
+
+| Permission | Access |
+|------------|-------|
+| Create tickets | ✅ (simplified form) |
+| View their own tickets | ✅ |
+| Comment on their tickets | ✅ |
+| View equipment assigned to them | ✅ |
+| View all equipment | ❌ |
+| Manage equipment | ❌ |
+| View KPIs | ❌ |
+| Access the calendar | ❌ |
+| Manage users | ❌ |
+| Access settings | ❌ |
+
+### Technician
+
+The role for IT team members who work on incidents:
+
+| Permission | Access |
+|------------|-------|
+| All Employee permissions | ✅ |
+| View and manage all tickets | ✅ |
+| Assign tickets | ✅ |
+| View and manage all equipment | ✅ |
+| Install and manage agents | ✅ |
+| Access the full calendar | ✅ |
+| Create events | ✅ |
+| View KPIs | ✅ |
+| Access the marketplace | ✅ |
+| Manage users | ❌ |
+| Modify organization settings | ❌ |
+| Manage billing | ❌ |
+
+### Admin (Administrator)
+
+The role for IT managers who run the organization:
+
+| Permission | Access |
+|------------|-------|
+| All Technician permissions | ✅ |
+| Invite and manage users | ✅ |
+| Modify roles (except Owner) | ✅ |
+| Disable accounts | ✅ |
+| Configure organization settings | ✅ |
+| Manage integrations | ✅ |
+| Configure alerts and SLAs | ✅ |
+| Export data | ✅ |
+| Manage billing | ❌ |
+| Delete the organization | ❌ |
+
+### Owner
+
+The top-level role, automatically assigned to the creator of the organization:
+
+| Permission | Access |
+|------------|-------|
+| All Admin permissions | ✅ |
+| Manage billing and subscription | ✅ |
+| Transfer ownership | ✅ |
+| Delete the organization | ✅ |
+| Promote a member to Admin | ✅ |
+| Revoke an Admin | ✅ |
+
+> **Note**: There can only be one Owner per organization. To transfer ownership, go to **Settings &gt; Organization &gt; Transfer ownership**.
+
+## Inviting users
+
+### Email invitation
+
+1. Go to **Settings &gt; Users**
+2. Click **"+ Invite a user"**
+3. Enter the **email address** of the person to invite
+4. Select the **role** to assign (Employee, Technician, Admin)
+5. Add a **custom message** *(optional)* that will be included in the invitation email
+6. Click **"Send invitation"**
+
+The invitee receives an email containing a link to:
+- **Create a Hasfy account** if they don't already have one
+- **Join the organization** if they already have a Hasfy account
+
+### Bulk invitation
+
+To invite several people at once:
+
+1. Click **"Bulk invite"**
+2. Enter the email addresses (one per line or comma-separated)
+3. Select the **shared role** for all invitees
+4. Click **"Send invitations"**
+
+### Invitation status
+
+Track the status of your invitations in the **"Pending invitations"** tab:
+
+| Status | Description |
+|--------|-------------|
+| **Pending** | The invitation has been sent but not yet accepted |
+| **Accepted** | The user has joined the organization |
+| **Expired** | The invitation was not accepted within 7 days |
+| **Cancelled** | The invitation was revoked by an administrator |
+
+You can **resend** an expired invitation or **cancel** a pending invitation.
+
+## Changing a user's role
+
+1. In the user list, click the user's name
+2. In the details panel, click the **current role**
+3. Select the **new role**
+4. Confirm the change
+
+> **Restrictions**: Only Admins and Owners can modify roles. An Admin cannot promote a user to Owner. Only the Owner can promote a user to Admin.
+
+## Disabling an account
+
+Disabling an account prevents the user from logging in to Hasfy while keeping their data intact:
+
+1. Go to the user's profile
+2. Click **"Disable account"**
+3. Confirm the action
+
+A disabled user:
+- Can no longer log in
+- Keeps their tickets and assignments
+- Has all historical data preserved
+- Can be **reactivated** at any time
+
+> **Recommendation**: Prefer disabling over deleting in order to preserve history. Disable accounts of people leaving the organization rather than deleting them.
+
+## Deleting a user
+
+Deletion is permanent and completely removes the user from the organization:
+
+1. Go to the user's profile
+2. Click **"Remove from organization"**
+3. Choose how to handle their assigned items:
+   - **Reassign**: transfer tickets and equipment to another user
+   - **Unassign**: remove assignments without transferring them
+4. Type **"CONFIRM"** to validate
+
+> **Warning**: The user keeps their personal Hasfy account but loses access to your organization and all its data.
+
+## Seat management
+
+The number of users in your organization is tied to your subscription plan:
+
+| Plan | Included users | Additional user |
+|------|--------------------|-----------------------------|
+| **Starter** | 5 | €5/month per user |
+| **Pro** | 15 | Included in the price |
+| **Enterprise** | Unlimited | Custom quote |
+
+When you reach your plan's limit, a message invites you to **upgrade** your subscription or **purchase additional seats** from **Settings &gt; Billing**.
+
+## Audit and traceability
+
+All actions related to user management are recorded in the **audit log**:
+
+- Invitations sent, accepted, declined
+- Role changes
+- Account deactivations and reactivations
+- User deletions
+
+The audit log is accessible from **Settings &gt; Audit** (Owner and Admin only).

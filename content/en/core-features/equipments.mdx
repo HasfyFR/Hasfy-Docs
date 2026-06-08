@@ -1,0 +1,193 @@
+---
+title: Equipment management
+description: Manage your entire IT fleet inventory with Hasfy — adding, editing, tags, lifecycle, health metrics and bulk operations.
+---
+
+# Equipment management
+
+The **Equipment** module is the core of Hasfy. It centralizes the inventory of all your IT assets and provides a complete view of their status, history and performance metrics.
+
+## Overview
+
+The module's main page displays the list of all the equipment in your organization as an **interactive table**:
+
+| Column | Description |
+|---------|-------------|
+| **Name** | Equipment identifier (link to its detail page) |
+| **Type** | Workstation, Server, Printer, Network, Mobile, Other |
+| **Status** | Active, Under maintenance, Retired, Awaiting agent |
+| **OS** | Detected or specified operating system |
+| **Assigned to** | User responsible for the equipment |
+| **Agent** | Agent connection indicator (green/red/gray) |
+| **Health** | Health indicator based on metrics (good, warning, critical) |
+| **Last activity** | Date of the last metric or action |
+
+### Filtering and search
+
+Use the search bar and filters to quickly find a piece of equipment:
+
+- **Text search**: by name, serial number, IP address or assigned user name
+- **Filter by type**: show only workstations, servers, etc.
+- **Filter by status**: Active, Under maintenance, Retired
+- **Filter by tags**: select one or more tags
+- **Filter by health**: Normal, Warning, Critical
+- **Filter by agent**: Connected, Disconnected, Not installed
+
+Filters can be combined and persist throughout your browsing session.
+
+### Sorting
+
+Click on any column header to sort the list in ascending or descending order. The default sort is alphabetical by name.
+
+## Adding equipment
+
+### Adding a single item
+
+1. Click **"+ Add equipment"** in the top right corner
+2. Fill in the form:
+
+**Essential information:**
+- **Name** *(required)*: a meaningful identifier (e.g. "PC-HR-001", "SRV-PROD-02")
+- **Type** *(required)*: select from the list (Workstation, Server, Printer, Network, Mobile, Other)
+- **Operating system**: Windows, macOS, Linux, iOS, Android, Other, N/A
+
+**Additional information:**
+- **Serial number**: manufacturer's number for inventory tracking
+- **Manufacturer**: Dell, HP, Lenovo, Apple, etc.
+- **Model**: exact model reference
+- **Purchase date**: for lifecycle and warranty tracking
+- **Warranty end date**: Hasfy will alert you before it expires
+- **Location**: building, floor, room (free text)
+- **IP address**: network address if known
+
+**Assignment:**
+- **Assigned to**: select a user from your organization
+- **Department**: free text or selection if departments are configured
+
+**Tags:**
+- Add one or more tags for categorization (e.g. "Critical", "Accounting", "Server room")
+- Create new tags on the fly by typing their name
+
+3. Click **"Save"**
+
+### Bulk import (CSV)
+
+To import a large number of pieces of equipment:
+
+1. Click **"Import"** in the actions menu
+2. Download the **CSV template** provided by Hasfy
+3. Fill in the CSV file with your data (one row per piece of equipment)
+4. Upload the completed file
+5. Hasfy displays a **preview** of the data to be imported with error detection
+6. Fix any reported errors
+7. Click **"Import X equipment items"**
+
+The CSV template includes the following columns: `nom`, `type`, `os`, `numero_serie`, `fabricant`, `modele`, `date_achat`, `localisation`, `assigne_a_email`, `tags`.
+
+## Equipment detail page
+
+Click on a piece of equipment's name to access its full record, organized into tabs:
+
+### General tab
+
+- All information entered when it was created
+- **"Edit"** button to modify the fields
+- Current status with the option to change it
+- Unique QR code for the equipment (printable for physical labeling)
+
+### Metrics tab (Agent required)
+
+When the Hasfy agent is installed and connected, this tab displays real-time metrics:
+
+- **CPU**: usage percentage with a chart over 24h/7d/30d
+- **RAM**: usage and total capacity
+- **Disk**: used space, free space, occupancy rate per partition
+- **Network**: inbound/outbound bandwidth, latency
+- **Uptime**: time since the last restart
+- **Processes**: list of the most resource-intensive processes
+
+The charts let you zoom in on a specific period and identify usage spikes.
+
+### History tab
+
+A chronological history of all actions related to the equipment:
+
+- Creation and edits to the record
+- Status changes
+- Assignments and reassignments
+- Associated tickets (with a direct link)
+- Triggered monitoring alerts
+- Agent installations and updates
+
+### Tickets tab
+
+A list of all tickets linked to this piece of equipment, filterable by status (open, resolved, all). You can create a new ticket directly linked to the equipment via the **"Create a ticket"** button.
+
+## Equipment lifecycle
+
+Each piece of equipment follows a lifecycle defined by its status:
+
+```
+Active → Under maintenance → Active (back in service)
+Active → Retired (end of life)
+Under maintenance → Retired (unrepairable)
+```
+
+### Available statuses
+
+| Status | Description | Color |
+|--------|-------------|---------|
+| **Active** | Equipment in service, operational | 🟢 Green |
+| **Under maintenance** | Equipment temporarily out of service for repair or update | 🟠 Orange |
+| **Retired** | Equipment permanently out of service (recycled, sold, destroyed) | 🔴 Red |
+| **Awaiting agent** | Equipment registered but the agent is not yet installed | ⚪ Gray |
+
+To change the status of a piece of equipment:
+1. Open the equipment record
+2. Click on the current status badge
+3. Select the new status
+4. Add a **comment** *(optional but recommended)* to record the reason for the change
+5. Confirm
+
+## Tags and organization
+
+Tags let you categorize your equipment beyond the type-based classification:
+
+### Examples of tagging strategies
+
+- **By department**: Accounting, HR, Management, R&D
+- **By criticality**: Critical, Important, Standard
+- **By location**: Building A, Floor 2, Server room
+- **By project**: 2025 Migration, New site
+- **By contract**: Warranty, Leasing, Owned
+
+### Tag management
+
+- Create tags by typing them in while editing a piece of equipment
+- Manage the full list of tags from **Settings &gt; Tags**
+- Assign colors to tags for quick visual identification
+- Delete unused tags to keep your list tidy
+
+## Bulk operations
+
+Select multiple pieces of equipment using the checkboxes to perform grouped actions:
+
+- **Change status**: move all selected equipment to the same status
+- **Assign**: assign the equipment to a user
+- **Add tags**: apply one or more tags to the selection
+- **Export**: download a CSV file of the selected equipment
+- **Delete**: permanently delete the selected equipment (irreversible action)
+
+> **Warning**: Deleting a piece of equipment is permanent. The history, metrics and associated tickets will be kept, but the equipment will no longer be accessible. Prefer the "Retired" status to preserve traceability.
+
+## Data export
+
+Export your inventory data at any time:
+
+1. From the equipment list, click **"Export"**
+2. Choose the format: **CSV** or **PDF**
+3. Select the columns to include
+4. Optionally apply filters (only the filtered equipment will be exported)
+5. Click **"Download"**
+
+The CSV export is compatible with Excel, Google Sheets and all common spreadsheet tools. The PDF export generates a formatted report ready to be shared.

@@ -1,0 +1,138 @@
+---
+title: Glossary
+description: Definitions of key terms used in Hasfy — IT vocabulary, fleet management, monitoring, and ITSM.
+---
+
+# Glossary
+
+This glossary defines the technical and business terms used in Hasfy and in the field of IT fleet management.
+
+---
+
+### Agent
+
+Lightweight software installed on a workstation or server to collect and report monitoring metrics (CPU, RAM, disk, network) to Hasfy. The Hasfy agent is built on **Elastic Agent** and is available for Windows, macOS, and Linux.
+
+### Alert
+
+A notification automatically triggered when a metric exceeds a configured threshold (e.g. CPU &gt; 90%, disk space &lt; 10%). Alerts can be of type **warning** (intermediate threshold) or **critical** (urgent threshold requiring immediate action).
+
+### API (Application Programming Interface)
+
+A programming interface that allows external applications to communicate with Hasfy via HTTP requests. The Hasfy REST API allows you to read and write data (equipment, tickets, metrics) programmatically.
+
+### Assignment
+
+The action of assigning a ticket or piece of equipment to a specific user (usually a technician). Assignment determines who is responsible for handling it and triggers notifications.
+
+### Backlog
+
+The set of open, not-yet-resolved tickets in the ticketing system. Tracking the backlog helps measure the support team's workload.
+
+### CMDB (Configuration Management Database)
+
+A configuration management database that lists all IT assets and their relationships. In Hasfy, the Equipment module plays this role by centralizing the fleet inventory.
+
+### Lifecycle
+
+The succession of states a piece of equipment goes through from acquisition to retirement: **Active** → **Under maintenance** → **Retired**. Tracking the lifecycle helps anticipate renewals and trace history.
+
+### Dashboard
+
+A visual interface that brings together key indicators (KPIs), charts, and statistics, providing an overview of the state of the IT fleet and the support team's activity.
+
+### Elastic Agent
+
+A data collection agent developed by Elastic, used as the technological foundation of the Hasfy agent. It enables system metrics to be sent to an Elasticsearch infrastructure.
+
+### Enrollment
+
+The process of registering an agent with the Hasfy server. Enrollment is performed using a unique **enrollment key** that authenticates the machine and links it to a piece of equipment in the inventory.
+
+### Equipment
+
+Any IT asset managed in Hasfy: workstation, server, printer, network device (switch, router, access point), mobile device, etc. Each piece of equipment has a detailed record in the inventory.
+
+### Escalation
+
+The process of transferring a ticket to a higher level of support or to a manager when the initial technician cannot resolve the issue or the SLA has been exceeded.
+
+### Fleet
+
+The centralized management system for Hasfy agents. Fleet allows you to deploy, configure, and update agents installed across your entire fleet from the Hasfy interface.
+
+### ITSM (IT Service Management)
+
+The management of IT services — a set of practices and processes for planning, delivering, managing, and improving IT services. Hasfy covers the main ITSM functions: incident, request, asset, and change management.
+
+### KPI (Key Performance Indicator)
+
+A key performance indicator used to measure the effectiveness of IT management. Examples in Hasfy: SLA resolution rate, average resolution time, number of equipment in alert state, fleet health score.
+
+### Magic Link
+
+A passwordless authentication method. A unique, temporary login link is sent by email. By clicking it, the user is automatically logged in to Hasfy.
+
+### Marketplace
+
+A marketplace built into Hasfy that connects organizations with qualified independent technicians for one-off interventions.
+
+### Metric
+
+Quantitative data collected by the monitoring agent: CPU usage (%), RAM usage (%), free disk space (GB/%), network bandwidth, uptime, etc. Metrics feed the dashboard and the alert system.
+
+### MFA / 2FA (Multi-Factor Authentication / Two-Factor Authentication)
+
+Multi-factor authentication — a security method that requires two distinct proofs of identity to log in. In Hasfy: password + TOTP code (via an authenticator app) or email code.
+
+### MSP (Managed Service Provider)
+
+A managed service provider — a company that provides outsourced IT services (fleet management, support, monitoring) to other organizations. Hasfy is designed to meet the specific needs of MSPs.
+
+### Internal note
+
+A message in a ticket visible only to technicians and administrators, hidden from Employee users. Used for internal technical discussions and procedures not intended for the customer.
+
+### Onboarding
+
+The guided initial setup process offered to new Hasfy users: creating the organization, entering profile information, calibrating preferences, and inviting the team.
+
+### Organization
+
+A grouping entity in Hasfy that represents a company, department, or service provider. All data (equipment, tickets, users) is segregated by organization.
+
+### Owner
+
+The highest-level role in a Hasfy organization. The Owner has all rights, including billing management, ownership transfer, and organization deletion. Each organization has a single Owner.
+
+### RLS (Row Level Security)
+
+Row-level security — a database mechanism that ensures each user can only access data belonging to their own organization. Used by Hasfy to enforce strict data segregation.
+
+### RMM (Remote Monitoring and Management)
+
+A category of tools that enable remote monitoring and administration of IT systems. Hasfy incorporates RMM functions through its monitoring agent.
+
+### SLA (Service Level Agreement)
+
+A service level agreement that defines response and resolution times for tickets based on their priority. In Hasfy, SLAs are configurable and compliance is tracked in real time.
+
+### Tag
+
+A label associated with a piece of equipment or a ticket to make classification and filtering easier. Tags are freely defined by the organization (e.g. "Critical", "Accounting", "VIP").
+
+### Ticket
+
+A record of an incident, service request, or maintenance task in the ticketing system. Each ticket has a unique identifier, a status, a priority, an assignee, and a conversation history.
+
+### TOTP (Time-based One-Time Password)
+
+A time-based one-time password — an algorithm that generates a 6-digit code that changes every 30 seconds, used for multi-factor authentication.
+
+### Uptime
+
+The length of time a piece of equipment has been running continuously since its last restart. Uptime is one of the basic metrics reported by the monitoring agent.
+
+### Webhook
+
+An automatic notification mechanism by which Hasfy sends an HTTP request to an external URL when an event occurs (e.g. new ticket, alert triggered). A feature planned on the roadmap.

@@ -1,0 +1,77 @@
+---
+title: Integrations — Overview
+description: Discover the integrations available in Hasfy and how they connect your IT platform to your tools.
+---
+
+# Integrations
+
+Hasfy integrates with the essential tools and services to centralize your IT fleet management and automate your workflows. This page presents the available integrations, how they work, and the prerequisites for setting them up.
+
+## Available integrations
+
+### Stripe — Billing and subscriptions
+
+The Stripe integration handles all of Hasfy's billing:
+
+- **Subscription management**: sign-up, plan changes, cancellation
+- **Billing portal**: direct access to the Stripe customer portal to manage payment methods
+- **Automatic invoices**: automatic generation and delivery of invoices
+- **Seat management**: adding/removing users with real-time price adjustment
+
+➡️ [Full Stripe integration guide](/integrations/stripe)
+
+### Elastic Agent — Monitoring
+
+Hasfy's monitoring agent is based on **Elastic Agent** and handles metrics reporting:
+
+- **System metrics**: CPU, RAM, disk, network, uptime
+- **Continuous collection**: data sent every 60 seconds
+- **Alerts**: alerts triggered when thresholds are exceeded
+- **History**: metrics retained according to your plan's duration
+
+The agent is managed via **Elastic Fleet**, which enables centralized deployment and updates of agents.
+
+> **Note**: The Elastic integration is native to Hasfy. No additional configuration is required — installing the agent is enough.
+
+### REST API — Custom integrations
+
+Hasfy's REST API lets you connect any tool or system:
+
+- **Reading data**: programmatically retrieve your equipment, tickets, and metrics
+- **Creating data**: create tickets, add equipment via scripts or integrations
+- **Webhooks** *(coming soon)*: receive automatic notifications in your tools
+
+➡️ [API Documentation](/api)
+
+## Upcoming integrations
+
+Hasfy's roadmap includes new integrations:
+
+| Integration | Description | Status |
+|-------------|-------------|--------|
+| **Slack** | Ticket and alert notifications in your Slack channels | 🔜 Planned |
+| **Microsoft Teams** | Notifications and ticket creation from Teams | 🔜 Planned |
+| **Zapier** | Connect Hasfy to 5,000+ apps with no code | 🔜 Planned |
+| **Active Directory / LDAP** | User synchronization and SSO authentication | 🔜 Planned |
+| **Jira** | Ticket synchronization between Hasfy and Jira | 📋 Under consideration |
+| **Google Workspace** | Calendar integration and SSO authentication | 📋 Under consideration |
+| **GLPI** | Import equipment from an existing GLPI inventory | 📋 Under consideration |
+
+> **Suggest an integration**: Need an integration that isn't listed? Contact us at **feedback@hasfy.fr** or via the [Contact](/contactus) page. The most requested integrations are prioritized on our roadmap.
+
+## General prerequisites
+
+To use Hasfy integrations, you need:
+
+- A Hasfy account with the **Admin** or **Owner** role (configuring integrations requires administrative rights)
+- A **Pro** or **Enterprise** subscription for certain advanced integrations (the API is available on all plans)
+- The credentials or API keys of the third-party service to integrate
+
+## Configuration
+
+All integrations are configured from **Settings &gt; Integrations**. Each integration has its own configuration page with:
+
+- **Status**: enabled/disabled
+- **Configuration**: integration-specific settings
+- **Tests**: ability to test the connection
+- **Logs**: log of exchanges between Hasfy and the third-party service

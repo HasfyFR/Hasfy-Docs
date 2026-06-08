@@ -1,4 +1,4 @@
-import './globals.css'
+import '../globals.css'
 import { Footer, Layout, Navbar } from 'nextra-theme-docs'
 import { Banner, Head } from 'nextra/components'
 import { getPageMap } from 'nextra/page-map'
@@ -14,11 +14,19 @@ const leagueSpartan = League_Spartan({
   subsets: ['latin'],
 })
  
-export const metadata = {
-  title: 'Hasfy Docs',
-  description: 'Documentation officielle de Hasfy.',
+const DESCRIPTIONS = {
+  fr: 'Documentation officielle de Hasfy.',
+  en: 'Official Hasfy documentation.',
 }
- 
+
+export async function generateMetadata({ params }) {
+  const { lang } = await params
+  return {
+    title: 'Hasfy Docs',
+    description: DESCRIPTIONS[lang] || DESCRIPTIONS.fr,
+  }
+}
+
 const navbar = (
   <Navbar
     logo={
@@ -31,10 +39,12 @@ const navbar = (
 )
 const footer = <Footer>{new Date().getFullYear()} © Hasfy.</Footer>
  
-export default async function RootLayout({ children }) {
+export default async function RootLayout({ children, params }) {
+  const { lang } = await params
+
   return (
     <html
-      lang="fr"
+      lang={lang}
       dir="ltr"
       suppressHydrationWarning
     >
@@ -49,8 +59,12 @@ export default async function RootLayout({ children }) {
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Layout
             navbar={navbar}
-            pageMap={await getPageMap()}
+            pageMap={await getPageMap(`/${lang}`)}
             docsRepositoryBase="https://github.com/HasfyFR/Hasfy-Docs/tree/main"
+            i18n={[
+              { locale: 'fr', name: 'Français' },
+              { locale: 'en', name: 'English' },
+            ]}
             footer={footer}
           >
             {children}

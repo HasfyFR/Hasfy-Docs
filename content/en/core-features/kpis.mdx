@@ -1,0 +1,152 @@
+---
+title: Dashboard & KPIs
+description: Visualize the health of your IT fleet, track key performance indicators and analyze trends with the Hasfy dashboard.
+---
+
+# Dashboard & KPIs
+
+The Hasfy **Dashboard** module offers a synthetic, real-time view of the state of your IT fleet. Key performance indicators (KPIs) let you steer your IT activity, identify trends and make informed decisions.
+
+## Summary cards
+
+At the top of the dashboard, four summary cards display the essential metrics:
+
+| Card | Content | Detail |
+|-------|---------|--------|
+| **Equipment** | Total number of active equipment | Breakdown by status (active, maintenance, retired) |
+| **Connected agents** | Number of monitored machines online | Agent coverage percentage |
+| **Open tickets** | Number of tickets being processed | Breakdown by priority |
+| **Active alerts** | Number of unresolved monitoring alerts | Criticality (warning vs critical) |
+
+Each card also shows the **trend** compared to the previous period (up/down arrow with percentage).
+
+## Fleet health indicators
+
+### Overall health score
+
+A circular visual indicator displays the fleet's **overall health score** on a scale from 0 to 100:
+
+- **90-100** 🟢: Fleet in excellent condition
+- **70-89** 🟡: A few points to watch
+- **50-69** 🟠: Interventions recommended
+- **0-49** 🔴: Critical situation requiring immediate action
+
+This score is calculated based on:
+- Agent connection status
+- System metrics (CPU, RAM, disk)
+- Number of active alerts
+- Ticket resolution rate
+
+### Health breakdown
+
+A horizontal bar chart shows the breakdown of equipment by health status:
+
+- **Normal**: metrics within acceptable thresholds, no alerts
+- **Warning**: at least one metric exceeds the warning threshold (e.g. disk at 80%)
+- **Critical**: at least one metric exceeds the critical threshold (e.g. disk at 95%, agent disconnected)
+
+## Monitoring metrics
+
+### Average resource usage
+
+Line charts display the trend of your fleet's average metrics:
+
+- **Average CPU**: average processor usage across all monitored machines
+- **Average RAM**: average memory usage
+- **Average disk**: average disk occupancy rate
+
+Each chart is interactive:
+- **Hover**: displays the exact value at a given moment
+- **Zoom**: select an area to zoom in on a period
+- **Period**: switch between 24h, 7 days, 30 days, 90 days
+
+### Top resource-consuming equipment
+
+A ranking displays the 10 most heavily used pieces of equipment:
+- **Top CPU**: machines with the highest CPU usage
+- **Top RAM**: machines using the most memory
+- **Top Disk**: machines with the least available disk space
+
+This ranking helps quickly identify machines that need particular attention (overload, need for an upgrade, abnormal process).
+
+## Ticketing indicators
+
+### Resolution metrics
+
+| KPI | Description | Period |
+|-----|-------------|---------|
+| **Tickets created** | Number of tickets opened during the period | Configurable |
+| **Tickets resolved** | Number of tickets moved to "Resolved" | Configurable |
+| **Average first response time** | Average delay between creation and the first technical response | Rolling 30 days |
+| **Average resolution time** | Average delay between creation and resolution | Rolling 30 days |
+| **SLA compliance rate** | Percentage of tickets resolved within SLA deadlines | Rolling 30 days |
+| **Reopening rate** | Percentage of tickets reopened after resolution | Rolling 30 days |
+
+### Trend chart
+
+A dual-axis chart displays:
+- **Bars**: tickets created vs. tickets resolved per day/week/month
+- **Line**: average resolution time
+
+This chart helps identify periods of high load and measure your team's capacity to absorb demand.
+
+### Ticket breakdown
+
+Two pie charts show:
+- **By category**: Incidents, Requests, Maintenance
+- **By priority**: Urgent, High, Normal, Low
+
+## Filters and customization
+
+### Global filters
+
+Apply filters to adjust all widgets simultaneously:
+
+- **Date range**: select a custom period or a preset (today, 7 days, 30 days, 90 days, 12 months, custom)
+- **Equipment**: filter by equipment type, tag or group
+- **Technician**: display the metrics for a specific technician
+- **Comparison**: enable comparison mode to overlay data from two periods
+
+### Widget customization
+
+Each dashboard widget can be:
+
+1. **Resized**: drag the edges to adjust the size
+2. **Moved**: drag and drop to rearrange the layout
+3. **Configured**: click the ⚙️ icon to adjust specific settings (thresholds, displayed metrics, chart type)
+4. **Hidden**: click ✕ to remove a widget from your view
+5. **Added**: open the "Widgets" panel to add additional indicators
+
+> **Note**: The dashboard layout is saved per user. Each team member can customize their own view without affecting others.
+
+## Export and reports
+
+### Quick export
+
+From the dashboard, click **"Export"** to download a report:
+
+- **PDF format**: a formatted report with charts, ready to be shared or printed
+- **CSV format**: raw data for analysis in a spreadsheet
+
+### Automatic periodic report
+
+Set up automatic report sending:
+
+1. Go to **Settings &gt; Reports**
+2. Enable **automatic reports**
+3. Configure:
+   - **Frequency**: weekly (every Monday) or monthly (the 1st of the month)
+   - **Recipients**: email addresses of the people who should receive the report
+   - **Content**: select the sections to include
+4. The report is automatically sent by email in PDF format
+
+## KPI-based alerts
+
+Define automatic alerts linked to your indicator thresholds:
+
+- **SLA compliance rate**: alert if the rate drops below a defined threshold (e.g. &lt; 80%)
+- **Unassigned tickets**: alert if the number of tickets without a technician exceeds a threshold
+- **Fleet health**: alert if the overall score drops below a critical threshold
+- **Disk space**: alert if the average disk usage exceeds an occupancy threshold
+
+These alerts are configurable in **Settings &gt; Alerts &gt; KPIs**.
