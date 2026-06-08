@@ -7,7 +7,6 @@ import 'nextra-theme-docs/style.css'
 import { League_Spartan } from "next/font/google";
 import Link from 'next/link'
 import { ThemeProvider } from '@/components/providers/theme-provider'
-import { SupabaseAuthProvider } from '@/components/providers/auth-provider'
 import { Toaster } from '@/components/ui/toaster'
 
 const leagueSpartan = League_Spartan({
@@ -48,17 +47,15 @@ export default async function RootLayout({ children }) {
       </Head>
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <SupabaseAuthProvider>
-            <Layout
-              navbar={navbar}
-              pageMap={await getPageMap()}
-              docsRepositoryBase="https://github.com/HasfyFR/Hasfy-Docs/tree/main"
-              footer={footer}
-            >
-              {children}
-            </Layout>
-            <Toaster />
-          </SupabaseAuthProvider>
+          <Layout
+            navbar={navbar}
+            pageMap={await getPageMap()}
+            docsRepositoryBase="https://github.com/HasfyFR/Hasfy-Docs/tree/main"
+            footer={footer}
+          >
+            {children}
+          </Layout>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
