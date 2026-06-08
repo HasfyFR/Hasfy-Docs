@@ -50,7 +50,6 @@ const meta = {
     }
   },
   'api': 'API',
-  'casestudies': 'Case Studies',
   'glossary': 'Glossary',
   'SeparatorMore': {
     type: 'separator',
