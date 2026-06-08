@@ -1,135 +1,54 @@
 ---
 title: AI Assistant
-description: Hasfy's artificial intelligence features — assisted ticket resolution, automatic categorization, smart suggestions, and predictive maintenance.
+description: Hasfy's AI Assistant add-on — ticket summaries, solution suggestions, and equipment diagnostics powered by Mistral AI.
 ---
 
 # AI Assistant
 
-Hasfy's **AI Assistant** leverages artificial intelligence to speed up incident resolution, automate repetitive tasks, and provide predictive insights into the health of your IT fleet.
+Hasfy's **AI Assistant** is an optional add-on designed to save you time on two recurring tasks: quickly understanding a ticket and diagnosing a problem on a piece of equipment. Instead of re-reading a long thread of exchanges or starting an investigation from scratch, you can rely on AI to get a summary, resolution leads, or a diagnostic report in seconds.
 
-> **Availability**: The AI Assistant is an **optional add-on** (+€30/month per user, flat rate) on top of your Hasfy Pro subscription. The Pro plan includes a quota of 3,000,000 AI tokens per month. See the [Pricing](/pricing) page for the full details.
+## Ticket summaries
 
-## Assisted ticket resolution
+From any ticket, click **"AI Summary"** to generate a clear, concise summary of the ticket and all of its exchanges (messages, internal notes, status updates).
 
-### How it works
+- The summary is generated **on demand** — it isn't created automatically when the ticket is opened
+- You can **regenerate** the summary at any time using the dedicated button, for example after new exchanges are added
+- Each generation (or regeneration) **consumes AI tokens**, deducted from your monthly quota
 
-When a ticket is created, the AI assistant automatically analyzes:
+This is especially useful for picking up an ongoing ticket, getting a quick recap before a meeting, or handing off context to a colleague.
 
-1. **The title and description** of the ticket to understand the issue
-2. **The history of similar tickets** resolved in your organization
-3. **The metrics of the affected equipment** (if an agent is installed)
-4. **The knowledge base** accumulated by Hasfy
+## Solution suggestions
 
-Within seconds, the AI proposes one or more **resolution suggestions** directly in the ticket thread.
+While working on a ticket, the AI Assistant can search your **organization's knowledge base** — indexed documents and previously resolved tickets — to suggest relevant resolution leads.
 
-### Resolution suggestions
+- The assistant relies on semantic search (RAG) over your organization's indexed content, not on generic knowledge disconnected from your context
+- Suggestions are therefore based on **what has already worked for you**, or on documentation you've added to Hasfy yourself
+- The technician remains the sole decision-maker: the AI proposes leads, it doesn't resolve the ticket for you
 
-Suggestions appear in a dedicated panel at the top of the ticket, marked with the **"AI Suggestion"** badge. Each suggestion includes:
+## Equipment diagnostics
 
-- **Probable diagnosis**: the AI identifies the most likely cause of the issue
-- **Resolution steps**: a detailed, step-by-step procedure to resolve the incident
-- **Confidence level**: an indicator of how reliable the suggestion is (high, medium, low)
-- **Similar tickets**: links to past tickets that had the same issue
+On a monitored equipment's record, you can click **"Generate an AI diagnostic report to analyze this equipment"**.
 
-### Technician actions
+- The report is generated from the **data collected by the agent** on that piece of equipment (metrics, status, history)
+- It helps you analyze an ongoing issue or better understand a machine's behavior, without manually combing through metric charts
+- As with ticket summaries, generating a diagnostic is an **on-demand** action that consumes AI tokens
 
-When faced with an AI suggestion, the technician can:
+## Activation and pricing
 
-- **Apply**: mark the suggestion as helpful and use it for resolution
-- **Adapt**: modify the suggestion before applying it
-- **Reject**: flag that the suggestion is not relevant (improves learning)
-- **Ignore**: not use the suggestion without giving feedback
+The AI Assistant is an **optional add-on**, which can be enabled or disabled from your organization's **billing settings**:
 
-> **Important**: AI is a decision-support tool. The technician always remains the decision-maker and is responsible for the final resolution.
+| | |
+|---|---|
+| **Price** | **+€30/month per user**, on top of the Hasfy Pro subscription |
+| **Billing mode** | Flat-rate per user — you don't pay per token |
+| **Quota included in the Pro plan** | **3,000,000 AI tokens per month** |
 
-### Continuous improvement
+> The 3,000,000 tokens/month quota included in the Pro plan comfortably covers everyday use. The token counter shown in your workspace is purely **indicative**: it lets you track your consumption, but it neither blocks usage nor bills you for going over the quota.
 
-The AI assistant continuously improves thanks to feedback from your team:
+See the [Pricing](/pricing) page for the full details.
 
-- **Applied** suggestions reinforce the models for similar cases
-- **Rejected** suggestions adjust the weighting to avoid false positives
-- The more your organization uses Hasfy, the more relevant and accurate the suggestions become
+## Model and data
 
-## Automatic categorization
+The AI Assistant's features are powered by **Mistral AI** models: text generation for summaries and diagnostics, and semantic search (embeddings) to query your knowledge base for solution suggestions.
 
-### Classifying incoming tickets
-
-When a ticket is created (particularly by an Employee user), the AI analyzes the content and automatically suggests:
-
-- **Category**: Incident, Service request, Maintenance
-- **Subcategory**: Hardware, Software, Network, Printing, Access, Other
-- **Suggested priority**: based on the perceived urgency in the message and the potential impact
-- **Automatic tags**: keywords extracted from the ticket content
-
-These suggestions are pre-filled into the ticket fields. The technician or administrator can change them at any time.
-
-### Duplicate detection
-
-Before a ticket is created, the AI checks whether similar tickets are already open:
-
-- If a **potential duplicate** is detected, the user is notified and can choose to attach themselves to the existing ticket rather than creating a new one
-- If **similar resolved tickets** exist, a solution is proposed directly to the user
-
-## Predictive analysis
-
-### Predictive maintenance
-
-By analyzing the metrics reported by agents over an extended period, the AI identifies **degradation trends**:
-
-| Indicator | AI analysis | Recommended action |
-|------------|-----------|-------------------|
-| Disk gradually filling up | Predicted saturation in 15 days | Clean up or add disk space |
-| Gradual increase in CPU usage | Possible hardware degradation or rogue process | Investigate processes |
-| Frequency of restarts | Abnormal number of restarts detected | Check hardware (RAM, power supply) |
-| Frequent agent disconnections | Network issue or system instability | Check connectivity |
-
-Predictive maintenance alerts appear on the dashboard under the **"AI Recommendations"** section and can automatically generate preventive maintenance tickets.
-
-### Ticketing trend analysis
-
-The AI analyzes patterns in your tickets to identify:
-
-- **Recurring spikes**: days or periods when ticket volume increases
-- **Rising categories**: types of issues that are becoming increasingly frequent
-- **Problematic equipment**: machines generating an abnormal number of tickets
-- **Abnormal resolution times**: tickets taking longer than average to resolve
-
-These insights are presented in a monthly report accessible from **Dashboard &gt; AI Insights**.
-
-## Automatic responses
-
-### First-level responses
-
-For common requests (password reset, usage guides, FAQ), the AI can provide an immediate **automatic response** to the user:
-
-1. The user creates a ticket
-2. The AI identifies a common request with a high confidence level
-3. A detailed response is automatically posted on the ticket
-4. The user can indicate whether the response solved their problem
-5. If the issue persists, the ticket is automatically escalated to a technician
-
-> **Configuration**: Automatic responses are disabled by default. Enable them from **Settings &gt; AI &gt; Automatic responses** and set the minimum confidence threshold (recommended: 85%).
-
-## AI configuration
-
-### Available settings
-
-Go to **Settings &gt; AI** to configure:
-
-| Setting | Description | Default |
-|-----------|-------------|--------|
-| Resolution suggestions | Enable/disable suggestions on tickets | Enabled |
-| Automatic categorization | Pre-fill category, priority, and tags | Enabled |
-| Duplicate detection | Check for duplicates when a ticket is created | Enabled |
-| Predictive maintenance | Analyze metric trends | Enabled |
-| Automatic responses | Automatically respond to common requests | Disabled |
-| Confidence threshold | Minimum level required to display a suggestion | 70% |
-
-### Data privacy
-
-Hasfy's AI processes data **strictly within your organization**:
-
-- An organization's data is never used to train another organization's models
-- Base models are pre-trained on anonymized IT-domain data
-- Fine-tuning is performed exclusively on your organization's data
-- You can disable all AI features at any time without losing any data
+> **[To be completed]**: details on the privacy policy specific to AI processing (retention period for data sent to the model, level of isolation between organizations, etc.) are still to be confirmed before publishing — see the [general privacy policy](/settings-security/databackup) in the meantime.
