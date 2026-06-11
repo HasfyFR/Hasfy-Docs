@@ -7,7 +7,7 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ARG NEXT_PUBLIC_SITE_URL
 
 COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && corepack prepare pnpm@latest --activate && pnpm install --frozen-lockfile
+RUN corepack enable && corepack prepare pnpm@10.12.4 --activate && pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm run build
 
