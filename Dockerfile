@@ -23,7 +23,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/next.config.mjs ./
 COPY --from=builder /app/mdx-components.jsx ./
 COPY --from=builder /app/content ./content
-COPY --from=builder /app/docs ./docs
 
 USER nextjs
 EXPOSE 3000
