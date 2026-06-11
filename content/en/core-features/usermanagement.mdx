@@ -1,0 +1,122 @@
+---
+title: Users & Groups
+description: Manage your organization's members, roles, groups, and custom roles in Hasfy.
+---
+
+# Users & Groups
+
+The **Users & Groups** page centralizes access management for your Hasfy organization: who can sign in, with what role, and how your teams are organized.
+
+## Overview
+
+Access this page from the **main navigation menu** (Users icon). It's restricted to the **Owner** and **Admin** roles: other roles don't have access to it.
+
+It has 3 tabs:
+
+- **Users**: the list of all members of your organization
+- **Groups**: grouping of members (e.g. by team, site, or client)
+- **Custom Roles**: creation of custom roles (see below)
+
+![Users & Groups page showing the member table and the 3 tabs](/images/userandgroups.jpg)
+
+### The user table
+
+| Column | Description |
+|--------|-------------|
+| **Name** | Member's first name, last name, and avatar |
+| **Email** | Account email address |
+| **Job title** | Job title set for this member |
+| **Role** | Owner, Admin, Technician, Employee, or a custom role |
+| **Actions** | Action menu: change role, disable/re-enable, resend invitation, remove from organization |
+
+The table is paginated ("Showing X to Y of Z users").
+
+## Roles
+
+Hasfy provides **4 built-in roles**. The technical "viewer" role is displayed as **"Employee"** in the interface.
+
+- **Owner**: every permission, without exception (billing, organization deletion, ownership transfer). An organization has a single Owner, assigned automatically when it's created.
+- **Admin**: near-complete management of the organization (equipment, tickets, automations, users, integrations, etc.), except billing and organization deletion/transfer.
+- **Technician**: day-to-day operational access (equipment, tickets, automations, alerts...), with no access to user management or organization settings.
+- **Employee**: read-only access to the fleet, with self-service ticket creation.
+
+### Permissions by role
+
+| Domain | Owner | Admin | Technician | Employee |
+|--------|-------|-------|------------|----------|
+| **Equipment** | Everything | View, manage, install agent, export the fleet | View, manage, install agent (no export) | View only (their equipment + the fleet) |
+| **Tickets** | Everything | Create, view all tickets, assign, close, manage tags | Create, view all tickets, assign, close (no tag management) | Create their own tickets (self-service) + view all tickets |
+| **Dashboards** | Everything | View, create, manage all dashboards, manage visibility | View, create dashboards | View only |
+| **Automations & scripts** | Everything | Manage automations and scripts | Run scripts only | No access |
+| **Alerts** | Everything | View, manage, acknowledge | View, acknowledge | View only |
+| **Knowledge base** | Everything | View, manage | View | View |
+| **Client portal** | Everything | Access + manage | Access | Access |
+| **Users & Groups** | Everything | View, invite, change role, remove, disable/re-enable, manage groups | No access (can't view the list) | No access |
+| **Organization settings** | Everything (incl. billing, deletion, transfer) | View, edit (excluding billing, deletion, transfer) | No access | No access |
+| **API keys** | All | Their keys + view and revoke others' | Their own keys (create, view) | View their own keys |
+| **MSP clients** | Everything (incl. MSP billing) | View, manage clients and the portal (excluding MSP billing) | View clients and the portal | View clients |
+| **Audit** | Yes | Yes | No | No |
+| **Remote access** | Everything | Use, manage | Use | No access |
+
+> ⚠️ **Note**: a **Technician** doesn't have access to the Users & Groups page and can't view the list of organization members. Only **Owner** and **Admin** can view and manage users.
+
+## Custom roles
+
+In addition to the 4 built-in roles, the **"Custom Roles"** tab lets you create tailored roles with granular permissions, suited to how your team is organized. This feature is available to all organizations on the Hasfy Pro subscription, alongside the 4 built-in roles.
+
+![Custom Roles tab](/images/customroles.jpg)
+
+## Adding users
+
+The **"Add user"** button opens a dialog with two tabs:
+
+### Form
+
+To add one user at a time, by entering:
+
+- **Email**
+- **First name**
+- **Last name**
+- **Job title**
+- **Role**
+
+### CSV import
+
+To add several users at once, import a CSV file. The import is subject to a per-file row limit: if the file exceeds this limit, Hasfy displays a message indicating how many users were added and how many were rejected.
+
+## Account lifecycle
+
+### Invitation
+
+When you add a user (form or CSV import), their account is created immediately with **"pending"** status. An invitation email is sent containing a link to the password setup page. Once they set their password, their account moves to **"active"** status.
+
+The invitation link has a limited validity period. If the recipient hasn't used it in time, click **"Resend invitation"** from the action menu while the account is still "pending".
+
+### Disabling and re-enabling
+
+An Owner or Admin can **disable** a member's account: the person can no longer sign in, but their data and history are preserved. The account can be **re-enabled** at any time from the same action menu.
+
+### Removing from the organization
+
+The **"Remove"** action removes the member from your organization. This does **not** delete their Hasfy account: the person could join another organization afterwards. This is not an account deletion in the GDPR sense.
+
+> The **Owner** role can never be removed this way. To change the Owner, use **"Transfer ownership"** from **Settings &gt; Organization** (Owner only, requires password confirmation).
+
+
+
+## Changing a user's role
+
+Changing a member's role is restricted to **Admin** and **Owner**, from the action menu in the user table. Every change (old role → new role) is recorded in the **audit log** (Settings &gt; Audit).
+
+> The **Owner** role can't be changed through this function: use **"Transfer ownership"** instead (see above).
+
+## Seats and billing
+
+On this page, Hasfy automatically calculates:
+
+- **billable seats**: **Admin** and **Technician** accounts
+- **free standard users** ("Employee"): **250 included per billable seat**
+
+Subscription and billing management is done from **Settings &gt; Billing** (Owner only). See [Billing & Payment](/configuration/billing).
+
+> If your organization's **free trial** has ended without an active subscription, you can no longer invite new users until the subscription is activated.

@@ -1,6 +1,6 @@
 ---
 title: Assistant IA
-description: L'add-on Assistant IA de Hasfy — résumés de tickets, suggestions de solutions et diagnostics d'équipement propulsés par Mistral AI.
+description: "L'add-on Assistant IA de Hasfy : résumés de tickets, suggestions de solutions et diagnostics d'équipement propulsés par Mistral AI."
 ---
 
 # Assistant IA
@@ -9,17 +9,17 @@ L'**Assistant IA** de Hasfy est un add-on optionnel conçu pour vous faire gagne
 
 ## Résumés de tickets
 
-Depuis n'importe quel ticket, cliquez sur **« Résumé IA »** pour générer une synthèse claire et concise du ticket et de l'ensemble de ses échanges (messages, notes internes, mises à jour de statut).
+Depuis n'importe quel ticket, cliquez sur **« Résumé IA »** pour générer une synthèse claire et concise du ticket : l'ensemble des échanges (côté équipe et côté portail client) ainsi que son statut actuel.
 
-- Le résumé est généré **à la demande** — il n'est pas créé automatiquement à l'ouverture du ticket
-- Vous pouvez **régénérer** le résumé à tout moment via le bouton dédié, par exemple après l'ajout de nouveaux échanges
+- Le résumé est généré **à la demande** : il n'est pas créé automatiquement à l'ouverture du ticket
+- Vous pouvez **régénérer** le résumé à tout moment via le bouton dédié, par exemple après l'ajout de nouveaux échanges. Une confirmation vous est demandée avant de relancer la génération (« Régénérer le résumé IA ? Un nouveau résumé consommera des jetons IA. Continuer ? »)
 - Chaque génération (ou régénération) **consomme des jetons IA**, décomptés de votre quota mensuel
 
 C'est particulièrement utile pour reprendre un ticket en cours, faire un point rapide avant une réunion, ou transmettre le contexte à un collègue.
 
 ## Suggestions de solutions
 
-Lorsque vous travaillez sur un ticket, l'Assistant IA peut rechercher dans la **base de connaissances de votre organisation** — documents indexés et tickets passés déjà résolus — pour vous proposer des pistes de résolution pertinentes.
+Lorsque vous travaillez sur un ticket, l'Assistant IA peut rechercher dans la **base de connaissances de votre organisation** (qui regroupe à la fois les documents que vous avez ajoutés manuellement et les tickets déjà résolus de votre organisation, automatiquement réindexés) pour vous proposer des pistes de résolution pertinentes.
 
 - L'assistant s'appuie sur une recherche sémantique (RAG) dans le contenu indexé de votre organisation, pas sur des connaissances génériques déconnectées de votre contexte
 - Les suggestions s'appuient donc sur **ce qui a déjà fonctionné** chez vous, ou sur la documentation que vous avez vous-même intégrée à Hasfy
@@ -35,20 +35,52 @@ Sur la fiche d'un équipement supervisé par l'agent Hasfy, vous pouvez cliquer 
 
 ## Activation et tarification
 
-L'Assistant IA est un **add-on optionnel**, à activer ou désactiver depuis les **paramètres de facturation de votre organisation** :
+L'Assistant IA est un **add-on optionnel**, activable ou désactivable via un **interrupteur unique pour toute l'organisation**, dans **Paramètres > Facturation** (réservé au rôle **Owner**). Une fois activé, tous les membres de l'organisation ont accès aux fonctionnalités IA (résumés, suggestions, diagnostics), quel que soit leur rôle. Il n'y a pas d'activation individuelle par compte.
 
 | | |
 |---|---|
-| **Prix** | **+30 €/mois par utilisateur**, en supplément de l'abonnement Hasfy Pro |
-| **Mode de facturation** | Tarif fixe (« flat-rate ») par utilisateur — vous ne payez pas au token |
+| **Prix** | **+30 €/mois par siège facturable** (compte Administrateur ou Technicien), en supplément de l'abonnement Hasfy Pro |
+| **Mode de facturation** | Tarif fixe (« flat-rate ») par siège facturable : vous ne payez pas au token |
 | **Quota inclus dans le plan Pro** | **3 000 000 de tokens IA par mois** |
 
+> Les comptes **Employé** (accès en lecture) ne sont pas comptabilisés dans ce calcul : ils restent gratuits, à raison de 250 inclus par siège facturable. Voir [Utilisateurs & groupes](/core-features/usermanagement).
+
 > Le quota de 3 000 000 de tokens/mois inclus dans le plan Pro couvre largement un usage courant. Le compteur de tokens affiché dans votre espace est purement **indicatif** : il vous permet de suivre votre consommation, mais ne bloque ni ne facture d'usage supplémentaire au-delà du quota.
+
+La désactivation de l'add-on prend effet au renouvellement suivant : vous conservez l'accès aux fonctionnalités IA jusqu'à la fin de la période déjà facturée.
 
 Voir la page [Tarifs](/pricing) pour le détail complet.
 
 ## Modèle et données
 
-Les fonctionnalités de l'Assistant IA sont propulsées par les modèles de **Mistral AI** : génération de texte pour les résumés et diagnostics, et recherche sémantique (embeddings) pour interroger votre base de connaissances dans le cadre des suggestions de solutions.
+### Modèle utilisé
 
-> **[À compléter]** : les détails sur la politique de confidentialité spécifique aux traitements IA (durée de rétention des données envoyées au modèle, niveau d'isolation entre organisations, etc.) restent à confirmer avant publication — voir la [politique de confidentialité générale](/settings-security/databackup) en attendant.
+Les fonctionnalités de l'Assistant IA sont propulsées par **Mistral AI** (`mistral-small-latest`). Il n'y a pas de GPT (OpenAI) ni de Google Gemini impliqués dans le traitement.
+
+### Données transmises à Mistral
+
+À chaque appel IA, les informations suivantes sont transmises à l'**API Mistral** (serveurs Mistral, hors Union Européenne) :
+
+- ID, titre, statut, priorité et description du ticket
+- Tous les messages du ticket (contenu et horodatages)
+- Prénom, nom et email du créateur du ticket
+- Prénom, nom et email des techniciens assignés
+- Noms des pièces jointes *(pas leur contenu)*
+- Nom et type de l'équipement associé au ticket
+- Tags du ticket
+- Documents de la base de connaissances pertinents (jusqu'à 800 caractères par document)
+- Tickets similaires déjà résolus (contexte RAG)
+
+### Isolation entre organisations
+
+Les requêtes de contexte envoyées à Mistral sont filtrées par `organization_id` au niveau base de données. Une organisation ne peut pas accéder aux données d'une autre via l'IA.
+
+### Mise en cache des résultats
+
+Les résultats générés par l'IA sont **stockés en base** dans le ticket (colonne `solutions_ai`, format JSON). Un second appel sur le même ticket retourne le résultat mis en cache sans rappeler Mistral, sauf si vous cliquez sur **« Régénérer »** (`forceRefresh=true`).
+
+### Accord de traitement des données (DPA) avec Mistral
+
+> ⚠️ **Aucun DPA (Data Processing Agreement) n'est actuellement signé avec Mistral AI.** L'API Mistral est utilisée dans le cadre des **conditions générales standard**, selon lesquelles les données transmises via l'API peuvent être utilisées par Mistral pour l'amélioration de son service. Il n'existe pas de garantie contractuelle de non-entraînement sur vos données.
+
+**Recommandation** : si votre organisation traite des données sensibles (données personnelles de clients, informations médicales, données confidentielles), nous vous conseillons de **ne pas activer l'add-on IA** jusqu'à la signature d'un DPA avec Mistral. Contactez-nous via [Nous contacter](/contactus) pour connaître l'avancement de ce point.

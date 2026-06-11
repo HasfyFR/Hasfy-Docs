@@ -1,6 +1,6 @@
 ---
 title: Foire aux questions (FAQ)
-description: Réponses aux questions les plus fréquentes sur Hasfy — compte, fonctionnalités, facturation, sécurité et technique.
+description: "Réponses aux questions les plus fréquentes sur Hasfy : compte, fonctionnalités, facturation, sécurité et technique."
 ---
 
 # Foire aux questions (FAQ)
@@ -29,7 +29,7 @@ Actuellement, un compte Hasfy est associé à **une seule organisation**. Si vou
 
 ### Qu'est-ce que l'agent Hasfy et est-il obligatoire ?
 
-L'agent Hasfy est un logiciel léger installé sur les machines de votre parc pour remonter les métriques de supervision (CPU, RAM, disque, réseau) en temps réel. Il n'est **pas obligatoire** — vous pouvez utiliser Hasfy comme un simple outil d'inventaire et de ticketing sans installer l'agent. L'agent apporte la dimension de supervision et de monitoring. Consultez le [guide d'installation](/quickstart#étape-4--installer-lagent-hasfy).
+L'agent Hasfy est un logiciel léger installé sur les machines de votre parc pour remonter les métriques de supervision (CPU, RAM, disque, réseau) en temps réel. Il n'est **pas obligatoire** : vous pouvez utiliser Hasfy comme un simple outil d'inventaire et de ticketing sans installer l'agent. L'agent apporte la dimension de supervision et de monitoring. Consultez le [guide d'installation](/quickstart#étape-4--installer-lagent-hasfy).
 
 ### Sur quels systèmes d'exploitation l'agent fonctionne-t-il ?
 
@@ -48,11 +48,11 @@ Le système de tickets permet de créer, assigner et suivre les incidents et les
 
 ### L'Assistant IA est-il inclus dans l'abonnement ?
 
-L'Assistant IA est un **add-on optionnel** : +30 €/mois par utilisateur, en supplément de l'abonnement Hasfy Pro, facturé à tarif fixe (pas au token). Propulsé par Mistral AI, il génère des **résumés de tickets** à la demande, propose des **suggestions de solutions** issues de votre base de connaissances, et produit des **rapports de diagnostic** sur vos équipements supervisés. Le plan Pro inclut un quota de 3 000 000 de tokens IA par mois — au-delà, l'Assistant IA reste utilisable, le suivi affiché est purement indicatif. Voir [Fonctionnalités IA](/advanced-features/ia) et la page [Tarifs](/pricing).
+L'Assistant IA est un **add-on optionnel** : +30 €/mois par siège facturable (compte Administrateur ou Technicien), en supplément de l'abonnement Hasfy Pro, facturé à tarif fixe (pas au token). Propulsé par Mistral AI, il génère des **résumés de tickets** à la demande, propose des **suggestions de solutions** issues de votre base de connaissances, et produit des **rapports de diagnostic** sur vos équipements supervisés. Le plan Pro inclut un quota de 3 000 000 de tokens IA par mois. Au-delà, l'Assistant IA reste utilisable et le suivi affiché reste purement indicatif. Voir [Fonctionnalités IA](/advanced-features/ia) et la page [Tarifs](/pricing).
 
 ### Puis-je exporter mes données ?
 
-Oui. Hasfy permet l'export de toutes vos données (équipements, tickets, métriques, utilisateurs) en formats **CSV** et **PDF** depuis l'interface. Un export complet en archive ZIP est également disponible pour la portabilité des données (conformité RGPD). Voir [Données & Sauvegardes](/settings-security/databackup).
+Oui. Plusieurs exports sont disponibles directement depuis l'interface, par module : le parc d'équipements (page **Équipements**), les tickets (page **Assistance**) et le journal d'audit (**Paramètres &gt; Audit**), aux formats CSV, JSON ou Markdown. L'API REST permet également d'exporter vos données par programmation. Voir [Données & Sauvegardes](/settings-security/databackup).
 
 ## Facturation & Abonnement
 
@@ -62,7 +62,7 @@ Les abonnements Hasfy sont facturés et encaissés via **Mollie**, qui prend en 
 
 ### Puis-je ajouter ou retirer des sièges à tout moment ?
 
-Oui. Hasfy ne propose qu'un seul plan, **Hasfy Pro**, facturé par siège (compte admin/technicien). L'**ajout** d'un siège est immédiat et facturé au prorata de la période restante sur votre cycle en cours. Le **retrait** d'un siège prend effet au renouvellement suivant — vous en gardez l'usage jusqu'à la fin de la période déjà facturée. Consultez [Facturation & paiement](/integrations/stripe) et la page [Tarifs](/pricing).
+Oui. Hasfy ne propose qu'un seul plan, **Hasfy Pro**, facturé par siège (compte admin/technicien). L'**ajout** d'un siège est immédiat et facturé au prorata de la période restante sur votre cycle en cours. Le **retrait** d'un siège prend effet au renouvellement suivant : vous en gardez l'usage jusqu'à la fin de la période déjà facturée. Consultez [Facturation & paiement](/configuration/billing) et la page [Tarifs](/pricing).
 
 ### Comment fonctionne la facturation par siège ?
 
@@ -74,28 +74,26 @@ Toutes vos factures sont accessibles dans **Paramètres &gt; Facturation &gt; Hi
 
 ### Que se passe-t-il si j'annule mon abonnement ?
 
-L'accès aux fonctionnalités est maintenu jusqu'à la fin de la période de facturation en cours. Après expiration, vous disposez de 30 jours en lecture seule pour exporter vos données. Les données sont supprimées 60 jours après la fin de l'abonnement. Voir la [politique de rétention](/settings-security/databackup).
+L'accès aux fonctionnalités est maintenu jusqu'à la fin de la période de facturation en cours. Pensez à exporter vos données importantes avant la fin de cette période. Pour toute question sur la conservation de vos données après résiliation, contactez-nous via [Nous contacter](/contactus).
 
 ## Sécurité
 
 ### Mes données sont-elles sécurisées ?
 
-Oui. Hasfy applique les mesures de sécurité suivantes :
-- Chiffrement **TLS 1.3** pour toutes les communications
-- Chiffrement **AES-256** des données au repos
-- Hébergement sur des **serveurs en France**
-- Sauvegardes automatiques quotidiennes
-- Authentification multi-facteurs (MFA) disponible
+Oui. Hasfy applique notamment les mesures suivantes :
+- Toutes les communications (interface web, agent, API) sont chiffrées en **HTTPS/TLS**
+- L'authentification à deux facteurs (2FA) est disponible pour tous les comptes
+- Hébergement chez des prestataires européens (Supabase, OVHcloud)
 
-Consultez les [bonnes pratiques de sécurité](/settings-security/goodpratices) pour les recommandations détaillées.
+Consultez [Données & Sauvegardes](/settings-security/databackup) et les [bonnes pratiques de sécurité](/settings-security/goodpratices) pour plus de détails.
 
 ### Hasfy est-il conforme au RGPD ?
 
-Oui. Hasfy est pleinement conforme au Règlement Général sur la Protection des Données (RGPD). Vous disposez de tous les droits prévus : accès, rectification, effacement, portabilité et opposition. Un DPO est désigné et joignable à dpo@hasfy.fr. Voir [Données & Sauvegardes](/settings-security/databackup).
+Oui. Hasfy respecte les droits prévus par le Règlement Général sur la Protection des Données (RGPD) : accès, rectification, effacement, portabilité et opposition. Pour exercer l'un de ces droits, contactez-nous via la page [Nous contacter](/contactus). Voir [Données & Sauvegardes](/settings-security/databackup).
 
 ### Comment activer l'authentification à deux facteurs ?
 
-Accédez à **Paramètres &gt; Mon compte &gt; Sécurité**, activez l'authentification à deux facteurs et scannez le QR code affiché avec une application d'authentification (Google Authenticator, Authy, etc.), puis validez avec le code à 6 chiffres généré. Consultez le guide [Authentification à deux facteurs](/settings-security/mfas).
+Ouvrez la fenêtre **Paramètres**, section **Sécurité**, cliquez sur « Activer la 2FA » et scannez le QR code affiché avec une application d'authentification (Google Authenticator, Authy, etc.), puis validez avec le code à 6 chiffres généré. Consultez le guide [Authentification à deux facteurs](/settings-security/mfas).
 
 ## Questions techniques
 
@@ -117,4 +115,4 @@ Oui. L'API REST de Hasfy permet de lire et d'écrire des données par programmat
 
 ### Les données de monitoring sont-elles conservées combien de temps ?
 
-Les métriques de supervision sont conservées **1 an**. Au-delà, les données sont automatiquement archivées puis supprimées. Voir la [politique de rétention](/settings-security/databackup).
+Les métriques de supervision remontées par l'agent sont conservées tant que votre abonnement est actif. Pour toute question sur la conservation de vos données, contactez-nous via [Nous contacter](/contactus).

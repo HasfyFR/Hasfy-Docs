@@ -1,225 +1,408 @@
 ---
 title: API Hasfy
-description: Vue d'ensemble de l'API REST Hasfy — authentification, endpoints, limites de débit et exemples d'utilisation.
+description: "Vue d'ensemble de l'API REST Hasfy : authentification, endpoints, limites de débit et exemples d'utilisation."
 ---
 
 # API Hasfy
 
-L'API REST de Hasfy vous permet d'interagir avec votre plateforme de manière programmatique. Que ce soit pour automatiser des tâches, intégrer Hasfy avec vos outils existants ou construire des workflows personnalisés, l'API offre un accès complet à vos données.
+L'API REST de Hasfy vous permet d'interagir avec votre organisation de manière programmatique : automatiser des tâches, intégrer Hasfy avec vos outils existants ou construire des workflows personnalisés.
 
-## Vue d'ensemble
+## Présentation
 
-L'API Hasfy est une **API REST** accessible via HTTPS. Elle suit les conventions REST standard :
+L'API Hasfy est une **API REST** qui répond en JSON, accessible exclusivement en HTTPS.
 
 - **Format des données** : JSON
 - **Protocole** : HTTPS exclusivement
-- **Base URL** : `https://api.hasfy.fr/v1`
-- **Versioning** : le numéro de version est inclus dans l'URL (`/v1`)
+- **Base URL** : `https://app.hasfy.fr/api/v1`
+- **Versioning** : le préfixe `/api/v1` indique la version de l'API
 
 ### Qui peut utiliser l'API ?
 
-L'API est incluse dans l'abonnement Hasfy Pro — accessible à tous les comptes administrateurs et techniciens (sièges), sans option supplémentaire à activer.
+L'API est incluse dans l'abonnement Hasfy Pro, sans option supplémentaire, pour tout siège administrateur ou technicien.
 
 ## Authentification
 
 ### Clés API
 
-L'accès à l'API se fait via des **clés API** (API keys). Chaque clé est liée à un utilisateur et hérite de ses permissions.
+L'accès à l'API se fait via des **clés API**. Une clé est toujours liée à un utilisateur : elle hérite de ses permissions **et** est en plus restreinte par les scopes qui lui sont attribués. Une clé ne peut donc jamais faire plus que ce que peut faire l'utilisateur qui l'a créée.
 
 #### Créer une clé API
 
 1. Accédez à **Paramètres &gt; API &gt; Clés API**
 2. Cliquez sur **« Créer une clé API »**
 3. Donnez un **nom descriptif** à la clé (ex. « Script sync inventaire », « Intégration Zapier »)
-4. Sélectionnez les **permissions** de la clé :
-   - **Lecture seule** : accès en lecture aux données (GET uniquement)
-   - **Lecture/Écriture** : accès complet (GET, POST, PUT, DELETE)
-   - **Personnalisé** : sélectionnez les ressources autorisées
-5. Cliquez sur **« Créer »**
-6. La clé est affichée **une seule fois** — copiez-la et conservez-la en lieu sûr
+4. Sélectionnez un ou plusieurs **scopes** (voir tableau ci-dessous)
+5. Choisissez une **expiration** : Jamais, 30 jours, 90 jours, 6 mois ou 1 an
+6. Cliquez sur **« Créer »**
+7. La clé est affichée **une seule fois** : copiez-la et conservez-la en lieu sûr
 
-> **Important** : La clé API est affichée uniquement lors de la création. Si vous la perdez, vous devrez en créer une nouvelle.
+> **Important** : la clé API est affichée uniquement lors de la création. Si vous la perdez, vous devrez en créer une nouvelle.
+
+#### Scopes disponibles
+
+| Scope | Description |
+|-------|-------------|
+| `equipment:read` | Lire les données d'équipements |
+| `equipment:write` | Créer et mettre à jour des équipements |
+| `tickets:read` | Lire les tickets |
+| `tickets:write` | Créer et mettre à jour des tickets |
+| `users:read` | Lire les utilisateurs |
+| `alerts:read` | Lire les alertes |
+| `alerts:write` | Gérer les alertes |
+| `dashboards:read` | Lire les tableaux de bord |
+| `automations:read` | Lire les automations |
+| `automations:write` | Gérer les automations |
+
+> D'autres scopes au format `ressource:action` peuvent être proposés selon les modules activés sur votre organisation.
 
 #### Utiliser la clé API
 
 Incluez la clé API dans l'en-tête `Authorization` de vos requêtes :
 
 ```bash
-curl -H "Authorization: Bearer VOTRE_CLE_API" \
-     https://api.hasfy.fr/v1/equipments
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     "https://app.hasfy.fr/api/v1/whoami"
 ```
 
 #### Révoquer une clé API
-
-Si une clé est compromise ou n'est plus nécessaire :
 
 1. Accédez à **Paramètres &gt; API &gt; Clés API**
 2. Cliquez sur **« Révoquer »** à côté de la clé concernée
 3. La clé est immédiatement invalidée
 
-## Endpoints principaux
+## Endpoints
 
-### Équipements
+L'API expose actuellement **7 endpoints**. Tous les chemins ci-dessous sont relatifs à `https://app.hasfy.fr/api/v1`.
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/equipments` | Liste tous les équipements |
-| `GET` | `/v1/equipments/:id` | Détail d'un équipement |
-| `POST` | `/v1/equipments` | Créer un équipement |
-| `PUT` | `/v1/equipments/:id` | Modifier un équipement |
-| `DELETE` | `/v1/equipments/:id` | Supprimer un équipement |
-| `GET` | `/v1/equipments/:id/metrics` | Métriques d'un équipement |
+| Méthode | Endpoint | Description | Scope requis |
+|---------|----------|-------------|--------------|
+| `GET` | `/equipments` | Liste l'équipement de l'organisation | `equipment:read` |
+| `POST` | `/equipments/bulk-create` | Crée jusqu'à 100 équipements et génère leurs jetons d'installation | `equipment:write` |
+| `GET` | `/tickets` | Liste les tickets | `tickets:read` |
+| `POST` | `/tickets` | Crée un ticket | `tickets:write` |
+| `GET` | `/users` | Liste les membres de l'organisation | `users:read` |
+| `GET` | `/whoami` | Identité associée à la clé | — |
+| `GET` | `/health` | Vérifie la validité de la clé | — |
 
-### Tickets
+### `GET /equipments`
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/tickets` | Liste tous les tickets |
-| `GET` | `/v1/tickets/:id` | Détail d'un ticket |
-| `POST` | `/v1/tickets` | Créer un ticket |
-| `PUT` | `/v1/tickets/:id` | Modifier un ticket |
-| `POST` | `/v1/tickets/:id/comments` | Ajouter un commentaire |
-| `PUT` | `/v1/tickets/:id/status` | Changer le statut |
-| `PUT` | `/v1/tickets/:id/assign` | Assigner un technicien |
+Liste l'équipement de l'organisation, paginé.
 
-### Utilisateurs
+**Paramètres de requête**
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/users` | Liste les utilisateurs de l'organisation |
-| `GET` | `/v1/users/:id` | Détail d'un utilisateur |
-| `POST` | `/v1/users/invite` | Inviter un utilisateur |
-| `PUT` | `/v1/users/:id/role` | Modifier le rôle |
+| Paramètre | Description |
+|-----------|-------------|
+| `limit` | Nombre de résultats (1-200, défaut 50) |
+| `offset` | Décalage pour la pagination (défaut 0) |
+| `status` | Filtre optionnel par statut |
 
-### Organisation
+**Permission** : `equipment:read`. Sans la permission de voir tout l'équipement de l'organisation, seul l'équipement assigné au propriétaire de la clé est retourné.
 
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/organization` | Détails de l'organisation |
-| `GET` | `/v1/organization/stats` | Statistiques globales |
+**Réponse**
 
-### Métriques
-
-| Méthode | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/metrics/overview` | Vue d'ensemble des métriques |
-| `GET` | `/v1/metrics/equipment/:id` | Métriques d'un équipement |
-| `GET` | `/v1/metrics/alerts` | Liste des alertes actives |
-
-## Pagination
-
-Les endpoints renvoyant des listes supportent la pagination :
-
-```
-GET /v1/equipments?page=1&per_page=25
+```json
+{
+  "data": [...],
+  "pagination": { "total": 142, "limit": 50, "offset": 0 }
+}
 ```
 
-| Paramètre | Défaut | Max | Description |
-|-----------|--------|-----|-------------|
-| `page` | 1 | — | Numéro de page |
-| `per_page` | 25 | 100 | Nombre d'éléments par page |
+### `POST /equipments/bulk-create`
+
+Crée jusqu'à 100 équipements en une fois et génère leurs jetons d'installation.
+
+**Corps de la requête**
+
+```json
+{
+  "items": [
+    {
+      "name": "PC-COMPTA-01",
+      "type": "workstation",
+      "platform": "windows",
+      "location": "Bureau 1er étage",
+      "unitId": "...",
+      "managedBy": "...",
+      "assignToUserId": "..."
+    }
+  ],
+  "tokenKind": "bulk"
+}
+```
+
+Seuls `name` et `type` sont obligatoires pour chaque élément de `items`. `tokenKind` vaut `bulk` ou `invitation` (optionnel).
+
+**Permission** : `equipment:write` (action « Gérer les équipements »).
+
+**Réponse**
+
+```json
+{
+  "requested": 1,
+  "created": 1,
+  "failed": 0,
+  "items": [
+    { "name": "PC-COMPTA-01", "id": "...", "installUrl": "https://..." }
+  ]
+}
+```
+
+### `GET /tickets`
+
+Liste les tickets, paginé.
+
+**Paramètres de requête**
+
+| Paramètre | Description |
+|-----------|-------------|
+| `limit` | Nombre de résultats (1-200, défaut 50) |
+| `offset` | Décalage pour la pagination (défaut 0) |
+| `status` | Filtre optionnel par statut |
+| `priority` | Filtre optionnel par priorité |
+
+**Permission** : `tickets:read`. Sans la permission de voir tous les tickets de l'organisation, seuls les tickets créés par le propriétaire de la clé sont retournés.
+
+**Réponse**
+
+```json
+{
+  "data": [...],
+  "pagination": { "total": 38, "limit": 50, "offset": 0 }
+}
+```
+
+### `POST /tickets`
+
+Crée un ticket pour le compte du propriétaire de la clé.
+
+**Corps de la requête**
+
+| Champ | Type | Obligatoire | Détail |
+|-------|------|-------------|--------|
+| `title` | string | Oui | 5 à 200 caractères |
+| `description` | string | Oui | 10 à 5000 caractères |
+| `priority` | string | Non | `low`, `medium`, `high` ou `critical` (défaut `medium`) |
+| `equipmentId` | uuid | Non | Équipement concerné |
+
+**Permission** : `tickets:write`
+
+**Réponse `201`**
+
+```json
+{
+  "id": "...",
+  "title": "Imprimante hors service",
+  "status": "open",
+  "priority": "high",
+  "equipment_id": "...",
+  "created_by": "...",
+  "created_at": "2026-06-11T10:00:00Z"
+}
+```
+
+### `GET /users`
+
+Liste les membres de l'organisation, paginé.
+
+**Paramètres de requête** : `limit` (1-200, défaut 50), `offset` (défaut 0)
+
+**Permission** : `users:read`. Le champ `email` n'est inclus dans `profile` que si le propriétaire de la clé dispose de la permission de gestion des utilisateurs.
+
+**Réponse**
+
+```json
+{
+  "data": [
+    { "userId": "...", "role": "technician", "profile": { ... } }
+  ],
+  "pagination": { "total": 12, "limit": 50, "offset": 0 }
+}
+```
+
+### `GET /whoami`
+
+Retourne l'identité associée à la clé : organisation, utilisateur et rôle effectif, ainsi que les métadonnées de la clé (nom, scopes, expiration).
+
+Aucun scope spécifique n'est requis : une clé valide suffit. Pratique pour déboguer une intégration.
+
+**Réponse**
+
+```json
+{
+  "organization": { "id": "...", "name": "..." },
+  "user": { "id": "...", "role": "admin" },
+  "apiKey": {
+    "name": "Script sync inventaire",
+    "scopes": ["equipment:read", "tickets:write"],
+    "expiresAt": "2026-12-01T00:00:00Z"
+  }
+}
+```
+
+### `GET /health`
+
+Vérifie que la clé est valide et que les quotas associés ne sont pas dépassés.
+
+**Réponse**
+
+```json
+{ "status": "ok" }
+```
+
+## Pagination & filtrage
+
+### Pagination
+
+Les endpoints qui renvoient des listes (`/equipments`, `/tickets`, `/users`) sont paginés via deux paramètres de requête :
+
+| Paramètre | Défaut | Plage | Description |
+|-----------|--------|-------|-------------|
+| `limit` | 50 | 1-200 | Nombre d'éléments retournés |
+| `offset` | 0 | — | Nombre d'éléments à ignorer |
 
 La réponse inclut les métadonnées de pagination :
 
 ```json
 {
   "data": [...],
-  "pagination": {
-    "page": 1,
-    "per_page": 25,
-    "total": 142,
-    "total_pages": 6
-  }
+  "pagination": { "total": 142, "limit": 50, "offset": 0 }
 }
 ```
 
-## Filtrage et tri
+### Filtrage
 
-### Filtres
-
-Utilisez des paramètres de requête pour filtrer les résultats :
-
-```
-GET /v1/equipments?type=workstation&status=active&tag=Comptabilité
-GET /v1/tickets?status=open&priority=high&assigned_to=user_id
-```
-
-### Tri
-
-Utilisez le paramètre `sort` :
+| Endpoint | Paramètres de filtre |
+|----------|----------------------|
+| `/equipments` | `status` |
+| `/tickets` | `status`, `priority` |
 
 ```
-GET /v1/equipments?sort=name:asc
-GET /v1/tickets?sort=created_at:desc
+GET /api/v1/equipments?status=active&limit=20
+GET /api/v1/tickets?status=open&priority=high
+```
+
+> Aucun paramètre de tri (`sort`) n'est disponible actuellement.
+
+## Limites de débit (rate limiting)
+
+Deux mécanismes distincts s'appliquent à chaque requête.
+
+### 1. Limite par minute (anti-abus)
+
+| Limite | Valeur |
+|--------|--------|
+| Par adresse IP | 60 requêtes / minute |
+| Par clé API | 600 requêtes / minute |
+| Burst | 10 requêtes / seconde |
+
+En-têtes de réponse :
+
+- `X-RateLimit-Limit`
+- `X-RateLimit-Remaining`
+- `X-RateLimit-Reset`
+
+En cas de dépassement, l'API renvoie `429` avec un en-tête `Retry-After` (en secondes) :
+
+```json
+{ "error": "Too many requests", "retryAfter": 12 }
+```
+
+ou, si c'est la limite propre à la clé API qui est atteinte :
+
+```json
+{ "error": "API key rate limit exceeded", "retryAfter": 12 }
+```
+
+### 2. Quota journalier par plan
+
+Chaque organisation dispose d'un quota de requêtes `/api/v1` par jour (fenêtre glissante de 24h), dépendant de son plan. Ce quota peut être illimité selon le plan souscrit.
+
+En-têtes de réponse :
+
+- `X-Quota-Limit`
+- `X-Quota-Used`
+- `X-Quota-Remaining`
+
+En cas de dépassement, l'API renvoie `429` avec `Retry-After: 3600` :
+
+```json
+{ "error": "API quota exceeded", "limit": 5000, "used": 5000, "window": "24h" }
 ```
 
 ## Gestion des erreurs
 
-L'API utilise les codes HTTP standards :
+L'API utilise des codes HTTP standards. Les erreurs sont renvoyées dans un format simple et plat :
+
+```json
+{ "error": "message décrivant l'erreur" }
+```
 
 | Code | Signification |
-|------|--------------|
+|------|----------------|
 | `200` | Succès |
 | `201` | Ressource créée |
-| `400` | Requête invalide (paramètres manquants ou incorrects) |
-| `401` | Non authentifié (clé API manquante ou invalide) |
-| `403` | Accès interdit (permissions insuffisantes) |
+| `400` | Requête invalide. Pour les erreurs de validation, la réponse inclut aussi un champ `details` |
+| `401` | Clé API manquante, invalide, expirée, ou propriétaire de la clé n'appartenant plus à l'organisation |
+| `403` | Permissions insuffisantes (scope ou rôle) |
 | `404` | Ressource non trouvée |
-| `429` | Trop de requêtes (rate limit atteint) |
+| `429` | Limite de débit ou quota journalier dépassé |
 | `500` | Erreur serveur |
 
-Les erreurs incluent un message descriptif :
+Exemple d'erreur de validation (`400`) :
 
 ```json
 {
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "Vous avez dépassé la limite de 60 requêtes par minute. Réessayez dans 45 secondes.",
-    "retry_after": 45
-  }
+  "error": "Validation failed",
+  "details": [
+    { "path": ["title"], "message": "String must contain at least 5 character(s)" }
+  ]
 }
 ```
-
-## Rate Limiting
-
-Les limites de débit sont appliquées par clé API :
-
-- Les en-têtes de réponse indiquent votre quota :
-  - `X-RateLimit-Limit` : nombre de requêtes autorisées
-  - `X-RateLimit-Remaining` : requêtes restantes
-  - `X-RateLimit-Reset` : timestamp de réinitialisation du compteur
-- En cas de dépassement, l'API renvoie un code `429` avec le délai d'attente
 
 ## Exemples d'utilisation
 
 ### Lister les équipements actifs
 
 ```bash
-curl -H "Authorization: Bearer VOTRE_CLE_API" \
-     "https://api.hasfy.fr/v1/equipments?status=active&sort=name:asc"
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     "https://app.hasfy.fr/api/v1/equipments?status=active&limit=20"
 ```
 
 ### Créer un ticket
 
 ```bash
 curl -X POST \
-     -H "Authorization: Bearer VOTRE_CLE_API" \
+     -H "Authorization: Bearer YOUR_API_KEY" \
      -H "Content-Type: application/json" \
      -d '{
        "title": "Imprimante hors service",
-       "description": "L imprimante du 2e étage ne répond plus depuis ce matin.",
-       "category": "incident",
+       "description": "Cette imprimante du 2e étage ne répond plus depuis ce matin.",
        "priority": "high",
-       "equipment_id": "eq_abc123"
+       "equipmentId": "5b1f7e2a-6e3a-4b8b-9a90-2f6a6f0c7e10"
      }' \
-     "https://api.hasfy.fr/v1/tickets"
+     "https://app.hasfy.fr/api/v1/tickets"
 ```
 
-### Récupérer les métriques d'un équipement
+### Créer plusieurs équipements en une fois
 
 ```bash
-curl -H "Authorization: Bearer VOTRE_CLE_API" \
-     "https://api.hasfy.fr/v1/metrics/equipment/eq_abc123?period=7d"
+curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "items": [
+         { "name": "PC-COMPTA-01", "type": "workstation", "location": "1er étage" },
+         { "name": "PC-COMPTA-02", "type": "workstation", "location": "1er étage" }
+       ]
+     }' \
+     "https://app.hasfy.fr/api/v1/equipments/bulk-create"
+```
+
+### Vérifier l'identité de la clé
+
+```bash
+curl -H "Authorization: Bearer YOUR_API_KEY" \
+     "https://app.hasfy.fr/api/v1/whoami"
 ```
 
 ## Bonnes pratiques
@@ -229,5 +412,5 @@ curl -H "Authorization: Bearer VOTRE_CLE_API" \
 | Stocker les clés en sécurité | Variables d'environnement ou coffre-fort de secrets |
 | Gérer les erreurs | Implémentez des retries avec backoff exponentiel pour les erreurs 429 et 5xx |
 | Pagination | Paginez toujours les listes volumineuses au lieu de tout charger d'un coup |
-| Cache | Mettez en cache les données qui changent peu (liste d'utilisateurs, tags) |
-| Monitoring | Surveillez votre consommation de quota pour anticiper les besoins |
+| Cache | Mettez en cache les données qui changent peu (liste d'utilisateurs) |
+| Monitoring | Surveillez les en-têtes `X-Quota-*` pour anticiper vos besoins |

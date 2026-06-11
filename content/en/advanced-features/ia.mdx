@@ -1,6 +1,6 @@
 ---
 title: AI Assistant
-description: Hasfy's AI Assistant add-on — ticket summaries, solution suggestions, and equipment diagnostics powered by Mistral AI.
+description: Hasfy's AI Assistant add-on, ticket summaries, solution suggestions, and equipment diagnostics powered by Mistral AI.
 ---
 
 # AI Assistant
@@ -9,17 +9,17 @@ Hasfy's **AI Assistant** is an optional add-on designed to save you time on two 
 
 ## Ticket summaries
 
-From any ticket, click **"AI Summary"** to generate a clear, concise summary of the ticket and all of its exchanges (messages, internal notes, status updates).
+From any ticket, click **"AI Summary"** to generate a clear, concise summary of the ticket: all of its exchanges (both team-side and client-portal side) along with its current status.
 
-- The summary is generated **on demand** — it isn't created automatically when the ticket is opened
-- You can **regenerate** the summary at any time using the dedicated button, for example after new exchanges are added
+- The summary is generated **on demand**: it isn't created automatically when the ticket is opened
+- You can **regenerate** the summary at any time using the dedicated button, for example after new exchanges are added. A confirmation is requested before regenerating ("Regenerate AI summary? A new summary will consume AI tokens. Continue?")
 - Each generation (or regeneration) **consumes AI tokens**, deducted from your monthly quota
 
 This is especially useful for picking up an ongoing ticket, getting a quick recap before a meeting, or handing off context to a colleague.
 
 ## Solution suggestions
 
-While working on a ticket, the AI Assistant can search your **organization's knowledge base** — indexed documents and previously resolved tickets — to suggest relevant resolution leads.
+While working on a ticket, the AI Assistant can search your **organization's knowledge base** (which combines the documents you've added manually and your organization's already-resolved tickets, automatically re-indexed) to suggest relevant resolution leads.
 
 - The assistant relies on semantic search (RAG) over your organization's indexed content, not on generic knowledge disconnected from your context
 - Suggestions are therefore based on **what has already worked for you**, or on documentation you've added to Hasfy yourself
@@ -35,20 +35,52 @@ On a monitored equipment's record, you can click **"Generate an AI diagnostic re
 
 ## Activation and pricing
 
-The AI Assistant is an **optional add-on**, which can be enabled or disabled from your organization's **billing settings**:
+The AI Assistant is an **optional add-on**, enabled or disabled via a **single, organization-wide toggle** in **Settings > Billing** (reserved to the **Owner** role). Once enabled, every member of the organization gets access to the AI features (summaries, suggestions, diagnostics), regardless of their role. There's no per-account activation.
 
 | | |
 |---|---|
-| **Price** | **+€30/month per user**, on top of the Hasfy Pro subscription |
-| **Billing mode** | Flat-rate per user — you don't pay per token |
+| **Price** | **+€30/month per billable seat** (Administrator or Technician account), on top of the Hasfy Pro subscription |
+| **Billing mode** | Flat-rate per billable seat: you don't pay per token |
 | **Quota included in the Pro plan** | **3,000,000 AI tokens per month** |
 
+> **Employee** accounts (read-only access) aren't counted in this calculation: they remain free, with 250 included per billable seat. See [Users & Groups](/core-features/usermanagement).
+
 > The 3,000,000 tokens/month quota included in the Pro plan comfortably covers everyday use. The token counter shown in your workspace is purely **indicative**: it lets you track your consumption, but it neither blocks usage nor bills you for going over the quota.
+
+Disabling the add-on takes effect at the next renewal: you keep access to the AI features until the end of the period you've already paid for.
 
 See the [Pricing](/pricing) page for the full details.
 
 ## Model and data
 
-The AI Assistant's features are powered by **Mistral AI** models: text generation for summaries and diagnostics, and semantic search (embeddings) to query your knowledge base for solution suggestions.
+### Model used
 
-> **[To be completed]**: details on the privacy policy specific to AI processing (retention period for data sent to the model, level of isolation between organizations, etc.) are still to be confirmed before publishing — see the [general privacy policy](/settings-security/databackup) in the meantime.
+The AI Assistant's features are powered by **Mistral AI** (`mistral-small-latest`). No OpenAI GPT or Google Gemini models are involved in any processing.
+
+### Data sent to Mistral
+
+On each AI call, the following information is transmitted to the **Mistral API** (Mistral servers, outside the European Union):
+
+- Ticket ID, title, status, priority, and description
+- All ticket messages (content and timestamps)
+- First name, last name, and email of the ticket creator
+- First name, last name, and email of assigned technicians
+- Attachment names *(not their content)*
+- Name and type of the equipment linked to the ticket
+- Ticket tags
+- Relevant knowledge base documents (up to 800 characters per document)
+- Similar already-resolved tickets (RAG context)
+
+### Isolation between organizations
+
+The context queries sent to Mistral are filtered by `organization_id` at the database level. One organization cannot access another organization's data through the AI.
+
+### Result caching
+
+AI-generated results are **stored in the database** within the ticket (`solutions_ai` column, JSON format). A second call on the same ticket returns the cached result without calling Mistral again, unless you click **"Regenerate"** (`forceRefresh=true`).
+
+### Data processing agreement (DPA) with Mistral
+
+> ⚠️ **No DPA (Data Processing Agreement) is currently signed with Mistral AI.** The Mistral API is used under **standard terms and conditions**, under which data transmitted via the API may be used by Mistral for service improvement. There is no contractual guarantee of non-training on your data.
+
+**Recommendation**: if your organization handles sensitive data (client personal data, medical information, confidential data), we advise you to **not enable the AI add-on** until a DPA with Mistral is in place. Contact us via [Contact](/contactus) for an update on this matter.

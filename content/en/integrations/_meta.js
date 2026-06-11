@@ -1,6 +1,7 @@
 const meta = {
   'index': 'Overview',
-  'stripe': 'Billing & Payment',
+  'mollie-connect': 'Mollie Connect',
+  'pennylane': 'Pennylane',
 }
 
 export default meta;

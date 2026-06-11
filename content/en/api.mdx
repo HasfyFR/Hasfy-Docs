@@ -1,44 +1,59 @@
 ---
 title: Hasfy API
-description: Overview of the Hasfy REST API — authentication, endpoints, rate limits, and usage examples.
+description: "Overview of the Hasfy REST API: authentication, endpoints, rate limits, and usage examples."
 ---
 
 # Hasfy API
 
-The Hasfy REST API lets you interact with your platform programmatically. Whether you want to automate tasks, integrate Hasfy with your existing tools, or build custom workflows, the API gives you full access to your data.
+The Hasfy REST API lets you interact with your organization programmatically: automate tasks, integrate Hasfy with your existing tools, or build custom workflows.
 
 ## Overview
 
-The Hasfy API is a **REST API** accessible over HTTPS. It follows standard REST conventions:
+The Hasfy API is a **REST API** that responds in JSON, accessible exclusively over HTTPS.
 
 - **Data format**: JSON
 - **Protocol**: HTTPS exclusively
-- **Base URL**: `https://api.hasfy.fr/v1`
-- **Versioning**: the version number is included in the URL (`/v1`)
+- **Base URL**: `https://app.hasfy.fr/api/v1`
+- **Versioning**: the `/api/v1` prefix indicates the API version
 
 ### Who can use the API?
 
-The API is included with the Hasfy Pro subscription — accessible to every administrator and technician account (seat), with no extra option to enable.
+The API is included with the Hasfy Pro subscription, with no extra option to enable, for every administrator or technician seat.
 
 ## Authentication
 
 ### API keys
 
-Access to the API is done via **API keys**. Each key is tied to a user and inherits their permissions.
+Access to the API is done via **API keys**. A key is always tied to a user: it inherits their permissions **and** is further restricted by the scopes assigned to it. A key can therefore never do more than the user who created it can do.
 
 #### Creating an API key
 
 1. Go to **Settings &gt; API &gt; API Keys**
 2. Click **"Create an API key"**
 3. Give the key a **descriptive name** (e.g. "Inventory sync script", "Zapier integration")
-4. Select the key's **permissions**:
-   - **Read-only**: read access to data (GET only)
-   - **Read/Write**: full access (GET, POST, PUT, DELETE)
-   - **Custom**: select the allowed resources
-5. Click **"Create"**
-6. The key is displayed **only once** — copy it and store it somewhere safe
+4. Select one or more **scopes** (see table below)
+5. Choose an **expiration**: Never, 30 days, 90 days, 6 months, or 1 year
+6. Click **"Create"**
+7. The key is displayed **only once**: copy it and store it somewhere safe
 
-> **Important**: The API key is shown only at creation time. If you lose it, you will need to create a new one.
+> **Important**: the API key is shown only at creation time. If you lose it, you'll need to create a new one.
+
+#### Available scopes
+
+| Scope | Description |
+|-------|-------------|
+| `equipment:read` | Read equipment data |
+| `equipment:write` | Create and update equipment |
+| `tickets:read` | Read tickets |
+| `tickets:write` | Create and update tickets |
+| `users:read` | Read users |
+| `alerts:read` | Read alerts |
+| `alerts:write` | Manage alerts |
+| `dashboards:read` | Read dashboards |
+| `automations:read` | Read automations |
+| `automations:write` | Manage automations |
+
+> Other scopes following the `resource:action` format may be available depending on the modules enabled for your organization.
 
 #### Using the API key
 
@@ -46,149 +61,303 @@ Include the API key in the `Authorization` header of your requests:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     https://api.hasfy.fr/v1/equipments
+     "https://app.hasfy.fr/api/v1/whoami"
 ```
 
 #### Revoking an API key
-
-If a key is compromised or no longer needed:
 
 1. Go to **Settings &gt; API &gt; API Keys**
 2. Click **"Revoke"** next to the relevant key
 3. The key is immediately invalidated
 
-## Main endpoints
+## Endpoints
 
-### Equipment
+The API currently exposes **7 endpoints**. All paths below are relative to `https://app.hasfy.fr/api/v1`.
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/equipments` | List all equipment |
-| `GET` | `/v1/equipments/:id` | Get details of a piece of equipment |
-| `POST` | `/v1/equipments` | Create a piece of equipment |
-| `PUT` | `/v1/equipments/:id` | Update a piece of equipment |
-| `DELETE` | `/v1/equipments/:id` | Delete a piece of equipment |
-| `GET` | `/v1/equipments/:id/metrics` | Get metrics for a piece of equipment |
+| Method | Endpoint | Description | Required scope |
+|---------|----------|-------------|--------------|
+| `GET` | `/equipments` | List the organization's equipment | `equipment:read` |
+| `POST` | `/equipments/bulk-create` | Create up to 100 pieces of equipment and generate their install tokens | `equipment:write` |
+| `GET` | `/tickets` | List tickets | `tickets:read` |
+| `POST` | `/tickets` | Create a ticket | `tickets:write` |
+| `GET` | `/users` | List the organization's members | `users:read` |
+| `GET` | `/whoami` | Identity associated with the key | — |
+| `GET` | `/health` | Check that the key is valid | — |
 
-### Tickets
+### `GET /equipments`
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/tickets` | List all tickets |
-| `GET` | `/v1/tickets/:id` | Get details of a ticket |
-| `POST` | `/v1/tickets` | Create a ticket |
-| `PUT` | `/v1/tickets/:id` | Update a ticket |
-| `POST` | `/v1/tickets/:id/comments` | Add a comment |
-| `PUT` | `/v1/tickets/:id/status` | Change the status |
-| `PUT` | `/v1/tickets/:id/assign` | Assign a technician |
+Lists the organization's equipment, paginated.
 
-### Users
+**Query parameters**
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/users` | List the organization's users |
-| `GET` | `/v1/users/:id` | Get details of a user |
-| `POST` | `/v1/users/invite` | Invite a user |
-| `PUT` | `/v1/users/:id/role` | Change a user's role |
+| Parameter | Description |
+|-----------|-------------|
+| `limit` | Number of results (1-200, default 50) |
+| `offset` | Pagination offset (default 0) |
+| `status` | Optional status filter |
 
-### Organization
+**Permission**: `equipment:read`. Without the permission to view all of the organization's equipment, only the equipment assigned to the key's owner is returned.
 
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/organization` | Organization details |
-| `GET` | `/v1/organization/stats` | Overall statistics |
+**Response**
 
-### Metrics
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| `GET` | `/v1/metrics/overview` | Metrics overview |
-| `GET` | `/v1/metrics/equipment/:id` | Metrics for a piece of equipment |
-| `GET` | `/v1/metrics/alerts` | List active alerts |
-
-## Pagination
-
-Endpoints that return lists support pagination:
-
-```
-GET /v1/equipments?page=1&per_page=25
+```json
+{
+  "data": [...],
+  "pagination": { "total": 142, "limit": 50, "offset": 0 }
+}
 ```
 
-| Parameter | Default | Max | Description |
-|-----------|--------|-----|-------------|
-| `page` | 1 | — | Page number |
-| `per_page` | 25 | 100 | Number of items per page |
+### `POST /equipments/bulk-create`
+
+Creates up to 100 pieces of equipment at once and generates their install tokens.
+
+**Request body**
+
+```json
+{
+  "items": [
+    {
+      "name": "PC-ACCOUNTING-01",
+      "type": "workstation",
+      "platform": "windows",
+      "location": "1st floor office",
+      "unitId": "...",
+      "managedBy": "...",
+      "assignToUserId": "..."
+    }
+  ],
+  "tokenKind": "bulk"
+}
+```
+
+Only `name` and `type` are required for each item in `items`. `tokenKind` is `bulk` or `invitation` (optional).
+
+**Permission**: `equipment:write` (the "Manage equipment" action).
+
+**Response**
+
+```json
+{
+  "requested": 1,
+  "created": 1,
+  "failed": 0,
+  "items": [
+    { "name": "PC-ACCOUNTING-01", "id": "...", "installUrl": "https://..." }
+  ]
+}
+```
+
+### `GET /tickets`
+
+Lists tickets, paginated.
+
+**Query parameters**
+
+| Parameter | Description |
+|-----------|-------------|
+| `limit` | Number of results (1-200, default 50) |
+| `offset` | Pagination offset (default 0) |
+| `status` | Optional status filter |
+| `priority` | Optional priority filter |
+
+**Permission**: `tickets:read`. Without the permission to view all of the organization's tickets, only tickets created by the key's owner are returned.
+
+**Response**
+
+```json
+{
+  "data": [...],
+  "pagination": { "total": 38, "limit": 50, "offset": 0 }
+}
+```
+
+### `POST /tickets`
+
+Creates a ticket on behalf of the key's owner.
+
+**Request body**
+
+| Field | Type | Required | Detail |
+|-------|------|----------|--------|
+| `title` | string | Yes | 5 to 200 characters |
+| `description` | string | Yes | 10 to 5000 characters |
+| `priority` | string | No | `low`, `medium`, `high`, or `critical` (default `medium`) |
+| `equipmentId` | uuid | No | Related equipment |
+
+**Permission**: `tickets:write`
+
+**Response `201`**
+
+```json
+{
+  "id": "...",
+  "title": "Printer out of service",
+  "status": "open",
+  "priority": "high",
+  "equipment_id": "...",
+  "created_by": "...",
+  "created_at": "2026-06-11T10:00:00Z"
+}
+```
+
+### `GET /users`
+
+Lists the organization's members, paginated.
+
+**Query parameters**: `limit` (1-200, default 50), `offset` (default 0)
+
+**Permission**: `users:read`. The `email` field is included in `profile` only if the key's owner has the user management permission.
+
+**Response**
+
+```json
+{
+  "data": [
+    { "userId": "...", "role": "technician", "profile": { ... } }
+  ],
+  "pagination": { "total": 12, "limit": 50, "offset": 0 }
+}
+```
+
+### `GET /whoami`
+
+Returns the identity associated with the key: organization, user and effective role, plus the key's metadata (name, scopes, expiration).
+
+No specific scope is required: a valid key is enough. Useful for debugging an integration.
+
+**Response**
+
+```json
+{
+  "organization": { "id": "...", "name": "..." },
+  "user": { "id": "...", "role": "admin" },
+  "apiKey": {
+    "name": "Inventory sync script",
+    "scopes": ["equipment:read", "tickets:write"],
+    "expiresAt": "2026-12-01T00:00:00Z"
+  }
+}
+```
+
+### `GET /health`
+
+Checks that the key is valid and that its associated quotas are not exceeded.
+
+**Response**
+
+```json
+{ "status": "ok" }
+```
+
+## Pagination & filtering
+
+### Pagination
+
+Endpoints that return lists (`/equipments`, `/tickets`, `/users`) are paginated via two query parameters:
+
+| Parameter | Default | Range | Description |
+|-----------|--------|-------|-------------|
+| `limit` | 50 | 1-200 | Number of items returned |
+| `offset` | 0 | — | Number of items to skip |
 
 The response includes pagination metadata:
 
 ```json
 {
   "data": [...],
-  "pagination": {
-    "page": 1,
-    "per_page": 25,
-    "total": 142,
-    "total_pages": 6
-  }
+  "pagination": { "total": 142, "limit": 50, "offset": 0 }
 }
 ```
 
-## Filtering and sorting
+### Filtering
 
-### Filters
-
-Use query parameters to filter results:
-
-```
-GET /v1/equipments?type=workstation&status=active&tag=Accounting
-GET /v1/tickets?status=open&priority=high&assigned_to=user_id
-```
-
-### Sorting
-
-Use the `sort` parameter:
+| Endpoint | Filter parameters |
+|----------|----------------------|
+| `/equipments` | `status` |
+| `/tickets` | `status`, `priority` |
 
 ```
-GET /v1/equipments?sort=name:asc
-GET /v1/tickets?sort=created_at:desc
+GET /api/v1/equipments?status=active&limit=20
+GET /api/v1/tickets?status=open&priority=high
+```
+
+> No sort parameter (`sort`) is currently available.
+
+## Rate limiting
+
+Two distinct mechanisms apply to every request.
+
+### 1. Per-minute limit (anti-abuse)
+
+| Limit | Value |
+|--------|--------|
+| Per IP address | 60 requests / minute |
+| Per API key | 600 requests / minute |
+| Burst | 10 requests / second |
+
+Response headers:
+
+- `X-RateLimit-Limit`
+- `X-RateLimit-Remaining`
+- `X-RateLimit-Reset`
+
+If the limit is exceeded, the API returns `429` with a `Retry-After` header (in seconds):
+
+```json
+{ "error": "Too many requests", "retryAfter": 12 }
+```
+
+or, if it's the per-key limit that was reached:
+
+```json
+{ "error": "API key rate limit exceeded", "retryAfter": 12 }
+```
+
+### 2. Daily quota per plan
+
+Each organization has a daily quota of `/api/v1` requests (24h rolling window), depending on its plan. This quota can be unlimited depending on the plan.
+
+Response headers:
+
+- `X-Quota-Limit`
+- `X-Quota-Used`
+- `X-Quota-Remaining`
+
+If the quota is exceeded, the API returns `429` with `Retry-After: 3600`:
+
+```json
+{ "error": "API quota exceeded", "limit": 5000, "used": 5000, "window": "24h" }
 ```
 
 ## Error handling
 
-The API uses standard HTTP status codes:
+The API uses standard HTTP status codes. Errors are returned in a simple, flat format:
+
+```json
+{ "error": "message describing the error" }
+```
 
 | Code | Meaning |
-|------|--------------|
+|------|----------------|
 | `200` | Success |
 | `201` | Resource created |
-| `400` | Invalid request (missing or incorrect parameters) |
-| `401` | Not authenticated (missing or invalid API key) |
-| `403` | Forbidden (insufficient permissions) |
+| `400` | Invalid request. For validation errors, the response also includes a `details` field |
+| `401` | Missing, invalid, or expired API key, or the key's owner is no longer a member of the organization |
+| `403` | Insufficient permissions (scope or role) |
 | `404` | Resource not found |
-| `429` | Too many requests (rate limit reached) |
+| `429` | Rate limit or daily quota exceeded |
 | `500` | Server error |
 
-Errors include a descriptive message:
+Validation error example (`400`):
 
 ```json
 {
-  "error": {
-    "code": "RATE_LIMIT_EXCEEDED",
-    "message": "You have exceeded the limit of 60 requests per minute. Please try again in 45 seconds.",
-    "retry_after": 45
-  }
+  "error": "Validation failed",
+  "details": [
+    { "path": ["title"], "message": "String must contain at least 5 character(s)" }
+  ]
 }
 ```
-
-## Rate Limiting
-
-Rate limits are enforced per API key:
-
-- Response headers indicate your quota:
-  - `X-RateLimit-Limit`: number of allowed requests
-  - `X-RateLimit-Remaining`: requests remaining
-  - `X-RateLimit-Reset`: timestamp when the counter resets
-- If the limit is exceeded, the API returns a `429` status code along with the wait time
 
 ## Usage examples
 
@@ -196,7 +365,7 @@ Rate limits are enforced per API key:
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     "https://api.hasfy.fr/v1/equipments?status=active&sort=name:asc"
+     "https://app.hasfy.fr/api/v1/equipments?status=active&limit=20"
 ```
 
 ### Creating a ticket
@@ -208,18 +377,32 @@ curl -X POST \
      -d '{
        "title": "Printer out of service",
        "description": "The printer on the 2nd floor has not been responding since this morning.",
-       "category": "incident",
        "priority": "high",
-       "equipment_id": "eq_abc123"
+       "equipmentId": "5b1f7e2a-6e3a-4b8b-9a90-2f6a6f0c7e10"
      }' \
-     "https://api.hasfy.fr/v1/tickets"
+     "https://app.hasfy.fr/api/v1/tickets"
 ```
 
-### Retrieving metrics for a piece of equipment
+### Creating multiple equipment items at once
+
+```bash
+curl -X POST \
+     -H "Authorization: Bearer YOUR_API_KEY" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "items": [
+         { "name": "PC-ACCOUNTING-01", "type": "workstation", "location": "1st floor" },
+         { "name": "PC-ACCOUNTING-02", "type": "workstation", "location": "1st floor" }
+       ]
+     }' \
+     "https://app.hasfy.fr/api/v1/equipments/bulk-create"
+```
+
+### Checking the key's identity
 
 ```bash
 curl -H "Authorization: Bearer YOUR_API_KEY" \
-     "https://api.hasfy.fr/v1/metrics/equipment/eq_abc123?period=7d"
+     "https://app.hasfy.fr/api/v1/whoami"
 ```
 
 ## Best practices
@@ -229,5 +412,5 @@ curl -H "Authorization: Bearer YOUR_API_KEY" \
 | Store keys securely | Environment variables or a secrets vault |
 | Handle errors | Implement retries with exponential backoff for 429 and 5xx errors |
 | Pagination | Always paginate large lists instead of loading everything at once |
-| Caching | Cache data that changes infrequently (user lists, tags) |
-| Monitoring | Monitor your quota usage to anticipate your needs |
+| Caching | Cache data that changes infrequently (user lists) |
+| Monitoring | Watch the `X-Quota-*` headers to anticipate your needs |

@@ -1,0 +1,122 @@
+---
+title: Utilisateurs & groupes
+description: Gérez les membres de votre organisation, leurs rôles, vos groupes et vos rôles personnalisés dans Hasfy.
+---
+
+# Utilisateurs & groupes
+
+La page **Utilisateurs & groupes** centralise la gestion des accès à votre organisation Hasfy : qui peut se connecter, avec quel rôle, et comment sont organisées vos équipes.
+
+## Vue d'ensemble
+
+Accédez à cette page depuis le **menu de navigation principal** (icône Utilisateurs). Elle est réservée aux rôles **Owner** et **Admin** : les autres rôles n'y ont pas accès.
+
+Elle comporte 3 onglets :
+
+- **Utilisateurs** : la liste de tous les membres de votre organisation
+- **Groupes** : regroupement de membres (par exemple par équipe, par site ou par client)
+- **Rôles personnalisés** : création de rôles sur-mesure (voir plus bas)
+
+![Page Utilisateurs & groupes avec la table des membres et les 3 onglets](/images/userandgroups.jpg)
+
+### La table des utilisateurs
+
+| Colonne | Description |
+|---------|-------------|
+| **Nom** | Prénom, nom et avatar du membre |
+| **Email** | Adresse email du compte |
+| **Poste** | Intitulé de poste renseigné pour ce membre |
+| **Rôle** | Owner, Admin, Technicien, Employé ou rôle personnalisé |
+| **Actions** | Menu d'actions : changer le rôle, désactiver/réactiver, renvoyer l'invitation, retirer de l'organisation |
+
+La table est paginée (« Affichage de X à Y sur Z utilisateurs »).
+
+## Les rôles
+
+Hasfy propose **4 rôles intégrés**. Le rôle technique « viewer » est affiché **« Employé »** dans l'interface.
+
+- **Owner (Propriétaire)** : toutes les permissions sans exception (facturation, suppression de l'organisation, transfert de propriété). Une organisation a un seul Owner, attribué automatiquement à sa création.
+- **Admin (Administrateur)** : gestion quasi complète de l'organisation (équipements, tickets, automatisations, utilisateurs, intégrations, etc.), à l'exception de la facturation et de la suppression/transfert de l'organisation.
+- **Technicien (Technician)** : accès opérationnel au quotidien (équipements, tickets, automatisations, alertes...), sans accès à la gestion des utilisateurs ni aux paramètres de l'organisation.
+- **Employé (Employee)** : rôle en lecture seule sur le parc, avec création de tickets en self-service.
+
+### Permissions par rôle
+
+| Domaine | Owner | Admin | Technicien | Employé |
+|---------|-------|-------|------------|---------|
+| **Équipements** | Tout | Voir, gérer, installer l'agent, exporter le parc | Voir, gérer, installer l'agent (pas d'export) | Voir uniquement (ses équipements + le parc) |
+| **Tickets** | Tout | Créer, voir tous les tickets, assigner, clôturer, gérer les tags | Créer, voir tous les tickets, assigner, clôturer (pas de gestion des tags) | Créer ses propres tickets (self-service) + voir tous les tickets |
+| **Tableaux de bord** | Tout | Voir, créer, gérer tous les tableaux de bord, gérer la visibilité | Voir, créer des tableaux de bord | Voir uniquement |
+| **Automatisations & scripts** | Tout | Gérer les automatisations et les scripts | Exécuter des scripts uniquement | Aucun accès |
+| **Alertes** | Tout | Voir, gérer, acquitter | Voir, acquitter | Voir uniquement |
+| **Base de connaissance** | Tout | Voir, gérer | Voir | Voir |
+| **Portail client** | Tout | Accès + gestion | Accès | Accès |
+| **Utilisateurs & groupes** | Tout | Voir, inviter, changer le rôle, retirer, désactiver/réactiver, gérer les groupes | Aucun accès (ne peut pas voir la liste) | Aucun accès |
+| **Paramètres organisation** | Tout (y compris facturation, suppression, transfert) | Voir, modifier (hors facturation, suppression, transfert) | Aucun accès | Aucun accès |
+| **Clés API** | Toutes | Ses clés + voir et révoquer celles des autres | Ses propres clés (créer, voir) | Voir ses propres clés |
+| **Clients MSP** | Tout (y compris facturation MSP) | Voir, gérer les clients et le portail (hors facturation MSP) | Voir les clients et le portail | Voir les clients |
+| **Audit** | Oui | Oui | Non | Non |
+| **Accès distant** | Tout | Utiliser, gérer | Utiliser | Aucun accès |
+
+> ⚠️ **À noter** : un **Technicien** n'a pas accès à la page Utilisateurs & groupes et ne peut pas voir la liste des membres de l'organisation. Seuls les **Owner** et **Admin** consultent et gèrent les utilisateurs.
+
+## Rôles personnalisés
+
+En plus des 4 rôles intégrés, l'onglet **« Rôles personnalisés »** permet de créer des rôles sur-mesure avec des permissions granulaires, adaptés à l'organisation de votre équipe. Cette fonctionnalité est disponible pour toutes les organisations sur l'abonnement Hasfy Pro, en complément des 4 rôles intégrés.
+
+![Onglet Rôles personnalisés](/images/customroles.jpg)
+
+## Ajouter des utilisateurs
+
+Le bouton **« Ajouter un utilisateur »** ouvre une fenêtre avec deux onglets :
+
+### Formulaire
+
+Pour ajouter un utilisateur à la fois, en renseignant :
+
+- **Email**
+- **Prénom**
+- **Nom**
+- **Poste**
+- **Rôle**
+
+### Import CSV
+
+Pour ajouter plusieurs utilisateurs en une seule fois, importez un fichier CSV. L'import est soumis à une limite de lignes par fichier : si le fichier dépasse cette limite, Hasfy affiche un message indiquant le nombre d'utilisateurs ajoutés et le nombre rejeté.
+
+## Cycle de vie d'un compte
+
+### Invitation
+
+Lorsque vous ajoutez un utilisateur (formulaire ou import CSV), son compte est créé immédiatement avec le statut **« en attente »**. Un email d'invitation lui est envoyé, contenant un lien vers la page de création de mot de passe. Une fois son mot de passe défini, son compte passe au statut **« actif »**.
+
+Le lien d'invitation a une durée de validité limitée. Si le destinataire ne l'a pas utilisé à temps, cliquez sur **« Renvoyer l'invitation »** depuis le menu d'actions tant que le compte est « en attente ».
+
+### Désactivation et réactivation
+
+Un Owner ou un Admin peut **désactiver** le compte d'un membre : la personne ne peut plus se connecter, mais ses données et son historique sont conservés. Le compte peut être **réactivé** à tout moment depuis le même menu d'actions.
+
+### Retrait de l'organisation
+
+L'action **« Retirer »** retire le membre de votre organisation. Cela ne supprime **pas** son compte Hasfy : la personne pourra rejoindre une autre organisation par la suite. Il ne s'agit pas d'une suppression de compte au sens RGPD.
+
+> Le rôle **Owner** ne peut jamais être retiré de cette façon. Pour changer de Owner, utilisez **« Transférer la propriété »** depuis **Paramètres &gt; Organisation** (réservé au Owner, confirmation par mot de passe requise).
+
+
+
+## Changer le rôle d'un utilisateur
+
+Le changement de rôle d'un membre est réservé aux **Admin** et **Owner**, depuis le menu d'actions de la table des utilisateurs. Chaque changement (ancien rôle → nouveau rôle) est enregistré dans le **journal d'audit** (Paramètres &gt; Audit).
+
+> Le rôle **Owner** ne se modifie pas via cette fonction : il faut passer par **« Transférer la propriété »** (voir ci-dessus).
+
+## Sièges et facturation
+
+Sur cette page, Hasfy calcule automatiquement :
+
+- les **sièges facturables** : comptes **Admin** et **Technicien**
+- les **utilisateurs standards gratuits** (« Employé ») : **250 inclus par siège facturable**
+
+La gestion de l'abonnement et de la facturation se fait depuis **Paramètres &gt; Facturation** (réservé au Owner). Voir [Facturation & paiement](/configuration/billing).
+
+> Si l'**essai gratuit** de votre organisation est terminé sans abonnement actif, vous ne pouvez plus inviter de nouveaux utilisateurs tant que l'abonnement n'est pas activé.

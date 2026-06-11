@@ -1,124 +1,157 @@
 ---
-title: Quick Start — Démarrage rapide
+title: "Quick Start : Démarrage rapide"
 description: Guide pas à pas pour créer votre compte Hasfy, configurer votre organisation, ajouter votre premier équipement et installer l'agent de supervision.
 ---
 
-# Quick Start — Démarrage rapide
+# Quick Start : Démarrage rapide
 
-Ce guide vous accompagne de la création de votre compte jusqu'à la visualisation de vos premières métriques de supervision. Comptez environ **10 minutes** pour compléter l'ensemble des étapes.
+Ce guide vous accompagne de la création de votre compte jusqu'à la prise en main de votre tableau de bord. Comptez environ **10 à 15 minutes** pour compléter l'ensemble des étapes.
 
 ## Prérequis
 
 Avant de commencer, assurez-vous de disposer de :
 
-- Une adresse email professionnelle valide
+- Une adresse email valide (professionnelle ou personnelle)
 - Un navigateur web moderne (Chrome, Firefox, Safari, Edge)
-- Un poste de travail (Windows 10+, macOS 12+ ou Linux) pour l'installation de l'agent *(optionnel pour cette première prise en main)*
+- Un accès à un terminal pour l'installation de l'agent *(optionnel pour cette première prise en main)*
 
 ## Étape 1 : Créer votre compte
 
 1. Rendez-vous sur **[app.hasfy.fr](https://app.hasfy.fr)** et cliquez sur **« Créer un compte »**
-2. Saisissez votre **adresse email** et choisissez un **mot de passe sécurisé** (minimum 8 caractères, incluant majuscule, minuscule et chiffre)
-3. Vous pouvez également vous inscrire via un **lien magique** (magic link) envoyé par email — aucun mot de passe nécessaire dans ce cas
-4. Validez votre inscription en cliquant sur le lien de confirmation reçu par email
-5. Vous êtes redirigé vers l'écran d'onboarding
+2. Remplissez le formulaire d'inscription : **prénom**, **nom**, **adresse email** et **mot de passe**
+3. Vous pouvez également vous inscrire en un clic via **Google**, **GitHub** ou **Microsoft** (OAuth)
+4. Vous êtes aussitôt redirigé vers le parcours d'onboarding
 
-> **Astuce** : Le lien magique est particulièrement pratique pour une première connexion rapide. Vous pourrez configurer un mot de passe définitif ultérieurement dans les paramètres de votre compte.
+> **Astuce** : La connexion via OAuth (Google, GitHub ou Microsoft) est la méthode la plus rapide pour démarrer. Vous pouvez activer l'authentification multi-facteurs (MFA TOTP) à tout moment depuis vos paramètres de sécurité.
 
 ## Étape 2 : Compléter l'onboarding
 
-L'onboarding Hasfy vous guide dans la configuration initiale de votre espace de travail :
+L'onboarding Hasfy est un parcours de **7 étapes** qui s'adapte automatiquement à votre profil :
 
-1. **Informations personnelles** : complétez votre nom, prénom et téléphone de contact
-2. **Création de l'organisation** : donnez un nom à votre organisation (ex. « Acme Corp IT ») et renseignez son secteur d'activité
-3. **Questions de calibrage** : répondez à quelques questions sur la taille de votre parc informatique, vos besoins prioritaires et votre niveau d'expérience. Ces réponses permettent à Hasfy de personnaliser votre expérience
-4. **Photo de profil** *(optionnel)* : uploadez un avatar pour personnaliser votre compte
-5. Cliquez sur **« Terminer la configuration »**
+### Étape 1 — Questions de calibration
 
-Vous accédez alors au **tableau de bord** de votre organisation, prêt à être alimenté.
+Les questions posées dépendent de votre profil :
+
+- **IT Team (propriétaire)** : taille de l'entreprise, outil ITSM actuel, objectifs
+- **MSP** : nombre de clients gérés, outils RMM/PSA utilisés, objectifs
+- **Membre** : votre rôle (admin / technicien / helpdesk / terrain), usages prioritaires, niveau de familiarité
+
+### Étape 2 — Informations sur l'organisation
+
+Renseignez : nom de l'organisation, pays (France, Belgique, Suisse, Luxembourg, Monaco, Andorre), ville, logo, domaine, nombre d'employés, présence d'un département IT dédié.
+
+### Étape 3 — Profil utilisateur
+
+Complétez vos prénom et nom, configurez vos préférences de notifications email et activez le mode sombre si vous le souhaitez.
+
+### Étapes 4 à 7
+
+- **Invitations** : invitez les membres de votre équipe
+- **Sélection du plan** : choisissez entre Starter, Pro ou Max
+- **Facturation** : renseignez vos informations de paiement
+- **Finalisation** : votre espace de travail est prêt
+
+> **Note** : Vous pouvez ignorer les invitations et la facturation lors de l'onboarding et y revenir plus tard depuis l'onglet **Admin**.
 
 ## Étape 3 : Ajouter votre premier équipement
 
-Depuis le tableau de bord, accédez au module **Équipements** :
+Depuis le tableau de bord, accédez au module **Équipements** et cliquez sur **« + Ajouter un équipement »**. Deux modes sont disponibles :
 
-1. Cliquez sur le bouton **« + Ajouter un équipement »** en haut à droite
-2. Remplissez les informations de base :
-   - **Nom** : un identifiant parlant (ex. « PC-Bureau-Martin », « Serveur-Prod-01 »)
-   - **Type** : sélectionnez le type d'équipement (Poste de travail, Serveur, Imprimante, Réseau, Mobile, Autre)
-   - **Système d'exploitation** : Windows, macOS, Linux ou Autre
-   - **Numéro de série** *(optionnel)* : le numéro de série du fabricant
-   - **Assignation** *(optionnel)* : attribuez l'équipement à un utilisateur de votre organisation
-3. Ajoutez des **tags** pour faciliter le filtrage (ex. « Comptabilité », « Salle serveur », « Critique »)
-4. Cliquez sur **« Enregistrer »**
+### Mode Agent (recommandé pour une supervision immédiate)
 
-L'équipement apparaît désormais dans votre inventaire avec le statut **« Actif — En attente d'agent »**.
+1. Sélectionnez **« Via Agent »**
+2. Un nom est généré automatiquement pour l'équipement
+3. Le flux d'installation de l'agent démarre directement (voir Étape 4)
 
-> **Note** : Vous pouvez ajouter des équipements manuellement même sans installer l'agent. L'inventaire fonctionnera alors comme un registre statique. L'agent apporte la dimension de supervision en temps réel.
+### Mode Manuel (inventaire sans agent)
 
-## Étape 4 : Installer l'agent Hasfy
+1. Sélectionnez **« Ajout manuel »**
+2. Remplissez les informations :
+   - **Nom** : identifiant de l'équipement (ex. « PC-Bureau-Martin », « Serveur-Prod-01 »)
+   - **Type** : laptop, desktop, serveur, mobile, tablette, imprimante, réseau, autre
+   - **Localisation** et **unité organisationnelle**
+   - **Plateforme** : Windows, macOS ou Linux
+   - **Spécifications** *(optionnel)* : modèle, OS, CPU, RAM, stockage, GPU, adresse IP, adresse MAC
+   - **Champs personnalisés** *(optionnel)* : paires clé-valeur libres
+3. Cliquez sur **« Enregistrer »**
 
-L'agent Hasfy est un logiciel léger qui s'installe sur chaque machine que vous souhaitez superviser. Il remonte automatiquement les métriques système vers votre tableau de bord.
+L'équipement apparaît dans votre inventaire avec le statut **`not_connected`** (en attente d'agent) ou **`pending`**.
 
-### Téléchargement
+> **Note** : Le mode manuel permet de construire votre inventaire sans installer d'agent. La supervision en temps réel (métriques, alertes) nécessite l'installation de l'agent décrite ci-dessous.
 
-1. Depuis la fiche de l'équipement, cliquez sur **« Installer l'agent »**, ou rendez-vous dans **Paramètres &gt; Agents &gt; Télécharger**
-2. Sélectionnez le **système d'exploitation** de la machine cible :
-   - **Windows** : installateur `.exe` (compatible Windows 10 et supérieur)
-   - **macOS** : installateur `.dmg` (compatible macOS 12 Monterey et supérieur)
-   - **Linux** : paquet `.deb` (Debian/Ubuntu) ou `.rpm` (RHEL/Fedora)
+## Étape 4 : Installer l'agent de supervision
 
-### Installation
+L'agent (Elastic Agent v9.3.2) est installé via un **script en ligne de commande** — il n'existe pas d'assistant graphique. Le script est pré-configuré avec vos identifiants (organisation, équipement, utilisateur) et est disponible directement dans la fiche de l'équipement.
 
-**Sur Windows :**
-1. Exécutez le fichier `.exe` téléchargé
-2. Suivez l'assistant d'installation (acceptez les conditions, choisissez le dossier d'installation)
-3. À l'étape « Configuration », collez la **clé d'enrôlement** fournie par Hasfy
-4. L'agent démarre automatiquement en tant que service Windows
+### Sur Windows (PowerShell)
 
-**Sur macOS :**
-1. Ouvrez le fichier `.dmg` et glissez l'application dans le dossier Applications
-2. Lancez l'application — elle vous demandera la **clé d'enrôlement**
-3. Autorisez les permissions système demandées (accès disque, réseau)
-4. L'agent s'exécute en arrière-plan et démarre automatiquement au boot
+Ouvrez **PowerShell en tant qu'administrateur** et exécutez le script affiché dans la fiche équipement :
 
-**Sur Linux :**
-```bash
-# Debian/Ubuntu
-sudo dpkg -i hasfy-agent_latest_amd64.deb
-sudo hasfy-agent enroll --key VOTRE_CLE_DENROLEMENT
-sudo systemctl enable --now hasfy-agent
-
-# RHEL/Fedora
-sudo rpm -i hasfy-agent_latest_x86_64.rpm
-sudo hasfy-agent enroll --key VOTRE_CLE_DENROLEMENT
-sudo systemctl enable --now hasfy-agent
+```powershell
+# Script généré par Hasfy — copiez-le depuis la fiche équipement
+Invoke-WebRequest -Uri "<URL_AGENT>" -OutFile elastic-agent.zip
+Expand-Archive elastic-agent.zip -DestinationPath .\elastic-agent
+cd .\elastic-agent
+.\elastic-agent.exe install --fleet-url=<FLEET_URL> --enrollment-token=<TOKEN>
 ```
+
+### Sur macOS (Bash)
+
+Ouvrez un **Terminal** et exécutez le script affiché dans la fiche équipement :
+
+```bash
+# Script généré par Hasfy — copiez-le depuis la fiche équipement
+curl -O <URL_AGENT>
+tar xzf elastic-agent-*.tar.gz
+cd elastic-agent-*/
+sudo ./elastic-agent install --fleet-url=<FLEET_URL> --enrollment-token=<TOKEN>
+```
+
+Le script macOS affiche une sortie colorée et effectue un nettoyage automatique des fichiers temporaires.
+
+### Sur Linux (Bash — script universel)
+
+Ouvrez un **terminal** et exécutez le script affiché dans la fiche équipement :
+
+```bash
+# Script généré par Hasfy — copiez-le depuis la fiche équipement
+curl -O <URL_AGENT>
+tar xzf elastic-agent-*.tar.gz
+cd elastic-agent-*/
+sudo ./elastic-agent install --fleet-url=<FLEET_URL> --enrollment-token=<TOKEN>
+```
+
+> **Important** : L'installation Linux utilise uniquement le **script universel** (archive `.tar.gz`). Il n'existe pas de paquet `.rpm`. Ce script est compatible avec toutes les distributions Linux supportées.
 
 ### Vérification
 
-Après l'installation, retournez sur Hasfy :
-1. Ouvrez la fiche de l'équipement concerné
-2. Le statut passe de **« En attente d'agent »** à **« Agent connecté »** (indicateur vert)
-3. Les premières métriques apparaissent sous quelques secondes : CPU, RAM, espace disque, réseau
+Après l'installation, retournez sur la fiche équipement dans Hasfy :
+
+- Le statut passe de **`not_connected`** → **`pending`** → **`up`** (équipement en ligne)
+- Les métriques détaillées (CPU, RAM, disque, réseau) sont disponibles dans la fiche équipement
 
 ## Étape 5 : Explorer le tableau de bord
 
-Rendez-vous sur la page **Tableau de bord** pour visualiser vos données :
+Rendez-vous sur la page **Tableau de bord**. Il présente **4 cartes** :
 
-- **Cartes de synthèse** : nombre total d'équipements, équipements en ligne, alertes actives, tickets ouverts
-- **Graphique de santé** : état global du parc (normal, avertissement, critique)
-- **Métriques temps réel** : utilisation CPU, RAM et disque de vos machines supervisées
-- **Activité récente** : dernières actions effectuées dans votre organisation
+| Carte | Contenu |
+|-------|---------|
+| **Assistance** | Dernier ticket (titre, statut, priorité, technicien assigné) + bouton « Nouveau ticket » |
+| **Équipements** | Carrousel de vos appareils + bouton « Ajouter un équipement » |
+| **Alertes** | Compteurs Critique et Warning + dernier message d'alerte + lien « Voir tout » |
+| **Vue d'ensemble** | Tickets ouverts, tickets critiques, total équipements + liens vers les modules |
+
+> **Note** : Les métriques temps réel (CPU, RAM, disque) et les graphiques de santé sont disponibles dans la **fiche détaillée** de chaque équipement, pas sur la page d'accueil du tableau de bord.
 
 ## Et ensuite ?
 
-Vous avez maintenant un compte Hasfy opérationnel avec votre premier équipement supervisé. Voici les prochaines étapes recommandées :
+Vous avez maintenant un compte Hasfy opérationnel avec votre premier équipement. Voici les prochaines étapes recommandées :
 
 | Action | Guide |
 |--------|-------|
-| Inviter votre équipe | [Gestion des utilisateurs](/settings-security/usermanagment) |
+| Inviter votre équipe | [Utilisateurs & groupes](/core-features/usermanagement) |
 | Configurer les notifications | [Notifications](/core-features/notifications) |
 | Créer votre premier ticket | [Assistance & Tickets](/core-features/assistance) |
 | Personnaliser votre tableau de bord | [KPIs & Dashboard](/core-features/kpis) |
-| Activer l'authentification 2FA | [Authentification multi-facteurs](/settings-security/mfas) |
+| Activer l'authentification MFA | [Authentification multi-facteurs](/settings-security/mfas) |
 | Explorer les plans tarifaires | [Tarification](/pricing) |

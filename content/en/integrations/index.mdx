@@ -1,77 +1,88 @@
 ---
-title: Integrations — Overview
-description: Discover the integrations available in Hasfy and how they connect your IT platform to your tools.
+title: "Integrations: Overview"
+description: Discover what's natively included in Hasfy Pro and the integrations available in the Hasfy marketplace.
 ---
 
 # Integrations
 
-Hasfy integrates with the essential tools and services to centralize your IT fleet management and automate your workflows. This page presents the available integrations, how they work, and the prerequisites for setting them up.
+Hasfy connects to your IT ecosystem to centralize fleet management and automate your workflows. This page covers what's natively included in your Hasfy Pro subscription, the integrations available today in the marketplace, and what's on our roadmap.
 
-## Available integrations
+## Included in Hasfy Pro
 
-### Mollie — Billing and subscription
+Two essential capabilities are part of the Hasfy Pro foundation and are **not integrations to activate**. They're available as soon as your organization is created, with no extra setup.
 
-Hasfy relies on **Mollie** to handle payment and billing for your Hasfy Pro subscription:
+### Monitoring agent
 
-- **Subscription**: sign up for the single Hasfy Pro plan, with a 14-day free trial
-- **Payment methods**: credit card and other payment methods depending on your country
-- **Automatic invoices**: generated automatically, with a downloadable PDF history
-- **Seat management**: adding (pro rata) and removing (at next renewal) billable seats
+Installed on every piece of equipment you want to monitor, the Hasfy agent automatically collects system metrics (CPU, RAM, disk, network, uptime) and reports them to your dashboard.
 
-➡️ [Full billing & payment guide](/integrations/stripe)
+➡️ [Install the Hasfy agent](/quickstart#step-4-install-the-hasfy-agent)
 
-### Elastic Agent — Monitoring
+### REST API
 
-Hasfy's monitoring agent is based on **Elastic Agent** and handles metrics reporting:
+The Hasfy REST API is included with the Pro subscription and accessible via API keys, from **Settings &gt; API**.
 
-- **System metrics**: CPU, RAM, disk, network, uptime
-- **Continuous collection**: data sent every 60 seconds
-- **Alerts**: alerts triggered when thresholds are exceeded
-- **History**: metrics retained according to your plan's duration
+➡️ [Hasfy API documentation](/api)
 
-The agent is managed via **Elastic Fleet**, which enables centralized deployment and updates of agents.
+## Integrations marketplace
 
-> **Note**: The Elastic integration is native to Hasfy. No additional configuration is required — installing the agent is enough.
+All integrations are managed from the **Integrations** page, accessible from the main navigation menu (**Automation** section, puzzle icon 🧩). This page is restricted to the **Owner** and **Admin** roles.
 
-### REST API — Custom integrations
+It's a marketplace organized into categories, accessible via tabs:
 
-Hasfy's REST API lets you connect any tool or system:
+All · Accounting · Communication · Security · Monitoring · CRM · Productivity · Payment · Calendar
 
-- **Reading data**: programmatically retrieve your equipment, tickets, and metrics
-- **Creating data**: create tickets, add equipment via scripts or integrations
-- **Webhooks** *(coming soon)*: receive automatic notifications in your tools
+![Integrations page: marketplace view with category and status grid](/images/integration-page.jpg)
 
-➡️ [API Documentation](/api)
+A search bar lets you filter integrations by name. Each integration displays one of the following statuses:
 
-## Upcoming integrations
+| Status | Meaning |
+|--------|----------------|
+| **Connected** | The integration is active on your organization |
+| **Available** | Can be activated immediately ("Activate" / "Manage" button) |
+| **In development** | Announced and under development, not yet usable |
+| **Coming soon** | On the roadmap, no availability date communicated |
 
-Hasfy's roadmap includes new integrations:
+## Available today
 
-| Integration | Description | Status |
-|-------------|-------------|--------|
-| **Slack** | Ticket and alert notifications in your Slack channels | 🔜 Planned |
-| **Microsoft Teams** | Notifications and ticket creation from Teams | 🔜 Planned |
-| **Zapier** | Connect Hasfy to 5,000+ apps with no code | 🔜 Planned |
-| **Active Directory / LDAP** | User synchronization and SSO authentication | 🔜 Planned |
-| **Jira** | Ticket synchronization between Hasfy and Jira | 📋 Under consideration |
-| **Google Workspace** | Calendar integration and SSO authentication | 📋 Under consideration |
-| **GLPI** | Import equipment from an existing GLPI inventory | 📋 Under consideration |
+### Mollie Connect: Payment
 
-> **Suggest an integration**: Need an integration that isn't listed? Contact us at **feedback@hasfy.fr** or via the [Contact](/contactus) page. The most requested integrations are prioritized on our roadmap.
+**Mollie Connect** is, as of today, the only integration that can be activated from the marketplace. It lets you connect your own Mollie account to charge your clients:
 
-## General prerequisites
+- Create **payment links** for your client invoices
+- **Real-time tracking** of payment status
+- **Issue invoices** directly from Hasfy
+- Manage your Mollie **payment profiles**
 
-To use Hasfy integrations, you need:
+> **Don't confuse this with**: Mollie Connect is about charging **your clients**, via your own Mollie account. Payment for **your Hasfy Pro subscription** also uses Mollie, but is managed separately from [Settings &gt; Billing](/configuration/billing).
 
-- A Hasfy account with the **Admin** or **Owner** role (configuring integrations requires administrative rights)
-- An active **Hasfy Pro** subscription (the API and all integrations are included, with no extra option to enable)
-- The credentials or API keys of the third-party service to integrate
+➡️ [Set up Mollie Connect](/integrations/mollie-connect)
 
-## Configuration
+## In development
 
-All integrations are configured from **Settings &gt; Integrations**. Each integration has its own configuration page with:
+These integrations have been announced and are under development, but aren't usable yet.
 
-- **Status**: enabled/disabled
-- **Configuration**: integration-specific settings
-- **Tests**: ability to test the connection
-- **Logs**: log of exchanges between Hasfy and the third-party service
+| Integration | Category | Description |
+|-------------|-----------|-------------|
+| **Pennylane** | Accounting | Accounting sync, invoice and expense export |
+| **Notion** | Productivity | Export your knowledge base to Notion |
+
+## Coming soon
+
+These integrations are on the Hasfy roadmap, with no availability date communicated.
+
+| Category | Integrations | Description |
+|-----------|--------------|-------------|
+| Accounting | QuickBooks, Sage, FreshBooks | — |
+| Communication | Slack | Alerts and tickets in your channels |
+| Communication | Microsoft Teams | Notifications and ticket creation from Teams |
+| Communication | Google Workspace | Calendar, Gmail, Drive |
+| Security | SentinelOne, CrowdStrike, Bitdefender, ESET | Import EDR alerts and incidents into the Alerts/Tickets module |
+| Monitoring | Datadog, PagerDuty, Zabbix, Grafana | Import external alerts, trigger automations |
+| CRM | Salesforce, HubSpot | Sync customers and contacts |
+| Productivity | Jira | Two-way ticket sync |
+| Productivity | Microsoft 365, Linear | — |
+| Calendar | Google Calendar, iCloud, Outlook | Sync via CalDAV |
+
+## Suggest an integration
+
+Don't see an integration you need? Let us know via the [Contact](/contactus) page. The most requested integrations are prioritized on our roadmap.

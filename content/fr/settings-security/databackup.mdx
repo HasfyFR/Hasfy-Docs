@@ -1,169 +1,115 @@
 ---
 title: Données & Sauvegardes
-description: Politique de stockage des données, sauvegardes automatiques, export de données, rétention et conformité RGPD de la plateforme Hasfy.
+description: Hébergement, chiffrement, sauvegardes, exports de données et droits RGPD sur la plateforme Hasfy.
 ---
 
 # Données & Sauvegardes
 
-Hasfy prend la protection de vos données au sérieux. Cette page détaille comment vos données sont stockées, sauvegardées, exportées et protégées, en conformité avec la réglementation européenne.
+Cette page décrit où sont hébergées vos données, comment elles sont protégées, les exports disponibles depuis l'interface, et vos droits en matière de protection des données.
 
-## Stockage des données
+## Localisation des données
 
-### Localisation
+Toutes les données utilisateurs et organisationnelles de Hasfy sont hébergées sur un serveur **OVHcloud** situé dans le datacenter de **Gravelines (GRA), en France**.
 
-Toutes les données de Hasfy sont hébergées sur des **serveurs situés en France**, conformément aux exigences de souveraineté des données :
+| Composant | Hébergement | Localisation |
+|-----------|-------------|-------------|
+| Base de données PostgreSQL (Supabase self-hosted) | OVH Gravelines | 🇫🇷 France |
+| Authentification (Supabase Auth) | OVH Gravelines | 🇫🇷 France |
+| Elasticsearch + Kibana + Fleet (agents) | OVH Gravelines | 🇫🇷 France |
+| API backend (Next.js) | OVH Gravelines | 🇫🇷 France |
+| Interface web (frontend) | Vercel CDN | Mondial (CDN) |
 
-- **Base de données** : PostgreSQL hébergé via Supabase, datacenter européen
-- **Fichiers et pièces jointes** : Supabase Storage avec réplication
-- **Métriques de monitoring** : Elasticsearch pour les données de supervision remontées par les agents
-- **Sauvegardes** : stockage géographiquement séparé pour la résilience
+> **RGPD** : la totalité de vos données organisationnelles (tickets, équipements, utilisateurs, audit) est physiquement localisée en France. L'interface web (Vercel) ne stocke pas de données utilisateur.
 
-### Types de données stockées
+## Chiffrement
 
-| Catégorie | Données | Durée de rétention |
-|-----------|---------|-------------------|
-| **Profils utilisateurs** | Nom, email, avatar, rôle | Durée du compte |
-| **Organisation** | Nom, paramètres, configuration | Durée de l'abonnement |
-| **Équipements** | Fiches, caractéristiques, tags | Durée de l'abonnement |
-| **Tickets** | Contenu, conversations, pièces jointes | Durée de l'abonnement |
-| **Métriques** | CPU, RAM, disque, réseau (via agent) | 1 an |
-| **Logs d'audit** | Actions utilisateurs, modifications | 1 an |
-| **Événements calendrier** | Interventions, maintenances | Durée de l'abonnement |
-| **Factures** | Historique de facturation | 10 ans (obligation légale) |
+### En transit
+Toutes les communications entre votre navigateur, l'agent de supervision, l'API et nos serveurs sont chiffrées en **HTTPS/TLS**.
 
-### Chiffrement
+### Au repos
 
-- **En transit** : toutes les communications entre votre navigateur, l'agent et les serveurs Hasfy sont chiffrées via **TLS 1.3**
-- **Au repos** : les données sont chiffrées au repos avec **AES-256** sur les volumes de stockage
-- **Pièces jointes** : les fichiers uploadés sont chiffrés individuellement avant stockage
+| Données | Chiffrement au repos |
+|---------|---------------------|
+| Volume disque OVH (PostgreSQL, Elasticsearch…) | ❌ Non chiffré au niveau disque |
+| Tickets, équipements, profils, tickets (PostgreSQL) | ❌ Pas de chiffrement disque — protégés par RLS et contrôles réseau |
+| Mots de passe CalDAV et tokens OAuth calendrier | ✅ **AES-256-GCM** (chiffrement applicatif) |
 
-## Sauvegardes automatiques
+Le chiffrement applicatif AES-256-GCM s'applique spécifiquement aux secrets de connexion calendrier (CalDAV, Google Calendar, Outlook). La clé de chiffrement est stockée en variable d'environnement serveur et n'est jamais exposée côté client.
 
-### Politique de sauvegarde
+> **Note** : l'absence de chiffrement disque est compensée par des contrôles d'accès stricts : le serveur PostgreSQL n'est pas exposé sur l'internet public, l'accès est restreint au réseau privé OVH, et toutes les tables appliquent le **Row Level Security (RLS)** Supabase — chaque requête est filtrée par `organization_id`.
 
-Hasfy effectue des sauvegardes automatiques à plusieurs niveaux :
+## Sauvegardes
 
-| Type de sauvegarde | Fréquence | Rétention | Délai de restauration |
-|-------------------|-----------|-----------|----------------------|
-| **Snapshot base de données** | Toutes les 6 heures | 7 jours | &lt; 1 heure |
-| **Sauvegarde complète** | Quotidienne (02:00 UTC) | 30 jours | &lt; 4 heures |
-| **Sauvegarde hebdomadaire** | Chaque dimanche | 12 semaines | &lt; 8 heures |
-| **Sauvegarde mensuelle** | 1er du mois | 12 mois | &lt; 12 heures |
-| **Fichiers et pièces jointes** | Continue (réplication) | Identique aux données | &lt; 1 heure |
+Hasfy utilise le mécanisme de sauvegarde automatique de Supabase self-hosted :
 
-### Vérification des sauvegardes
+- **pg_dump quotidien** : export complet de la base PostgreSQL chaque nuit
+- **WAL archiving** (Write-Ahead Log) : enregistrement continu des transactions, permettant une **restauration point-in-time** (PITR) à n'importe quel moment dans la fenêtre d'archivage
 
-Les sauvegardes sont **testées automatiquement** chaque semaine :
-- Restauration sur un environnement de test
-- Vérification de l'intégrité des données
-- Rapport de validation envoyé à l'équipe infrastructure Hasfy
+> **RPO / RTO** : les objectifs de point de reprise (RPO) et de délai de reprise (RTO) sont en cours de définition avec notre équipe infrastructure. Contactez-nous via [Nous contacter](/contactus) pour toute question sur la continuité de service.
 
-### Restauration
+## Isolation des données entre organisations
 
-En cas de besoin de restauration (perte de données accidentelle, corruption) :
+L'isolation des données entre organisations est appliquée à deux niveaux indépendants :
 
-1. Contactez le support Hasfy via **support@hasfy.fr** ou depuis l'interface
-2. Précisez la **nature de la perte** et la **date approximative** de la dernière version correcte
-3. L'équipe Hasfy procède à l'analyse et propose une restauration
-4. Après validation, les données sont restaurées dans les délais indiqués ci-dessus
+1. **Row Level Security (RLS)** : toutes les tables Supabase filtrent automatiquement chaque requête par `organization_id` au niveau de la base de données
+2. **Validation applicative** : toutes les routes API vérifient l'appartenance de l'utilisateur à l'organisation avant d'autoriser toute lecture ou écriture
 
-> Tous les comptes Hasfy Pro disposent d'un accès à la restauration en self-service pour les snapshots des 24 dernières heures, directement depuis **Paramètres &gt; Données &gt; Restauration**.
+Ces deux couches sont indépendantes : une compromission de l'une ne suffit pas à exposer les données d'une autre organisation.
 
-## Export de données
+## Exports de données
 
-### Export depuis l'interface
+Hasfy ne propose pas (encore) de centre de téléchargement unique pour l'ensemble de vos données. Plusieurs exports sont en revanche disponibles directement depuis les pages concernées :
 
-Vous pouvez exporter vos données à tout moment depuis l'interface Hasfy :
+| Donnée | Où l'exporter | Format |
+|--------|---------------|--------|
+| **Parc d'équipements** | Page **Équipements**, bouton « Exporter les équipements » (permission requise) | CSV / JSON / Markdown |
+| **Tickets** | Page **Assistance**, export des tickets | CSV / JSON / Markdown |
+| **Journal d'audit** | **Paramètres &gt; Audit**, avec filtres par sévérité et plage de dates | CSV / JSON / Markdown |
 
-| Données | Format | Accès |
-|---------|--------|-------|
-| Équipements | CSV, PDF | Paramètres &gt; Données &gt; Export |
-| Tickets | CSV, PDF | Paramètres &gt; Données &gt; Export |
-| Métriques de monitoring | CSV | Paramètres &gt; Données &gt; Export |
-| Utilisateurs | CSV | Paramètres &gt; Données &gt; Export |
-| Logs d'audit | CSV | Paramètres &gt; Données &gt; Export |
-| Rapport complet | ZIP (CSV + fichiers) | Paramètres &gt; Données &gt; Export complet |
+![Export du parc d'équipements](/images/exportequipment.jpg)
 
-### Export complet (portabilité)
-
-Conformément au RGPD, vous pouvez demander un **export complet** de toutes vos données :
-
-1. Accédez à **Paramètres &gt; Données &gt; Export complet**
-2. Cliquez sur **« Demander un export complet »**
-3. Hasfy prépare une archive ZIP contenant toutes vos données en format ouvert (CSV, JSON)
-4. Vous recevez un email avec un lien de téléchargement sécurisé (valide 48 heures)
-
-Le délai de préparation dépend du volume de données (généralement 1 à 24 heures).
+![Journal d'audit avec options d'export et filtres](/images/logs.jpg)
 
 ### Export via API
 
-L'API REST de Hasfy permet d'exporter les données par programmation. Consultez la [documentation API](/api) pour les endpoints disponibles.
+L'API REST de Hasfy permet également de récupérer vos données par programmation. Consultez la [documentation API](/api) pour la liste des endpoints disponibles.
 
-## Rétention des données
+## Vos droits RGPD
 
-### Politique de rétention active
+Hasfy traite des données à caractère personnel dans le cadre de son service et respecte les droits prévus par le RGPD : droit d'accès, de rectification, d'effacement, de portabilité et d'opposition.
 
-Tant que votre abonnement est actif, toutes vos données sont conservées selon les durées indiquées dans le tableau de stockage ci-dessus. Les métriques de monitoring anciennes sont automatiquement archivées puis supprimées selon votre plan.
+Pour exercer l'un de ces droits, contactez-nous via la page [Nous contacter](/contactus). Vous pouvez également supprimer votre compte directement depuis **Paramètres &gt; Compte** (voir [Gestion du compte](/configuration/account)).
 
-### Après résiliation
-
-En cas de résiliation de l'abonnement :
-
-| Étape | Délai | Action |
-|-------|-------|--------|
-| Résiliation | J | Accès en lecture seule pendant 30 jours |
-| J+30 | Fin de l'accès | Plus de connexion possible |
-| J+60 | Suppression des données | Suppression définitive et irréversible |
-| Notification | J, J+15, J+25 | Rappels par email pour exporter vos données |
-
-> **Important** : Exportez vos données avant la fin du délai de grâce de 30 jours. Après suppression, les données ne sont pas récupérables.
-
-## Conformité RGPD
-
-Hasfy est conforme au **Règlement Général sur la Protection des Données (RGPD)** :
-
-### Droits des utilisateurs
-
-| Droit | Comment l'exercer |
-|-------|-------------------|
-| **Droit d'accès** | Paramètres &gt; Données &gt; Export complet |
-| **Droit de rectification** | Modification directe dans l'interface |
-| **Droit à l'effacement** | Paramètres &gt; Mon compte &gt; Supprimer mon compte |
-| **Droit à la portabilité** | Export complet en format ouvert (CSV, JSON) |
-| **Droit d'opposition** | Contact support@hasfy.fr |
-| **Droit de limitation** | Contact dpo@hasfy.fr |
-
-### Mesures techniques
-
-- **Minimisation des données** : Hasfy ne collecte que les données nécessaires au fonctionnement du service
-- **Pseudonymisation** : les métriques de monitoring sont associées à des identifiants techniques, non à des personnes
-- **Registre des traitements** : maintenu et disponible sur demande
-- **Analyse d'impact** (DPIA) : réalisée pour les traitements à risque
-- **DPO** : un Délégué à la Protection des Données est désigné et joignable à dpo@hasfy.fr
-
-### Sous-traitants
+## Sous-traitants et partenaires techniques
 
 | Sous-traitant | Usage | Localisation des données |
-|---------------|-------|-------------------------|
-| Supabase | Base de données, authentification, stockage | Europe |
-| Elastic | Monitoring et métriques | Europe |
-| Mollie | Paiements | Europe |
-| OVH | Hébergement | France |
+|---------------|-------|--------------------------|
+| **OVHcloud** | Hébergement serveur principal | 🇫🇷 France (Gravelines) |
+| **Supabase** (self-hosted) | Base de données, authentification, stockage | 🇫🇷 France (OVH Gravelines) |
+| **Elasticsearch / Kibana** | Métriques de supervision des agents | 🇫🇷 France (OVH Gravelines) |
+| **Vercel** | Livraison de l'interface web (CDN) | Mondial (pas de données utilisateur) |
+| **Mollie** | Paiements (abonnement Hasfy) | 🇪🇺 UE |
+| **Brevo** | Emails transactionnels (invitations, confirmations) | 🇪🇺 UE |
+| **Mistral AI** | Traitement IA (si add-on activé) | Hors UE — voir [Assistant IA](/advanced-features/ia) |
+| **Pennylane** | Comptabilité (si intégration activée) | 🇫🇷 France |
 
-La liste complète des sous-traitants est disponible sur demande.
-
-## Suppression de données
-
-### Suppression de compte utilisateur
-
-La suppression d'un compte utilisateur entraîne :
-- Anonymisation de toutes les contributions (tickets, commentaires) : le nom est remplacé par « Utilisateur supprimé »
-- Suppression de toutes les données personnelles (profil, avatar)
-- Conservation des données d'activité anonymisées pour l'intégrité de l'historique
+## Suppression de compte ou d'organisation
 
 ### Suppression de l'organisation
 
-La suppression d'une organisation (Owner uniquement) entraîne :
-- Suppression de **toutes** les données : équipements, tickets, métriques, fichiers, audit
-- Suppression sous 30 jours (période de grâce pour annulation)
-- Confirmation par saisie du nom de l'organisation et code envoyé par email
+Le rôle **Owner** peut supprimer définitivement l'organisation depuis **Paramètres &gt; Organisation** :
+
+1. Ouvrez la zone de danger de la page Organisation
+2. Saisissez le **nom exact de l'organisation** pour confirmer
+3. Ressaisissez votre **mot de passe**
+4. Confirmez la suppression
+
+La suppression d'organisation entraîne une **cascade sur l'ensemble des données associées** : équipements, tickets, messages, membres, connexions calendrier, tokens API, données de facturation.
+
+> Cette action est **irréversible**. Si vous souhaitez conserver l'organisation mais changer de Owner, utilisez **« Transférer la propriété »** depuis la même page.
+
+![Zone de danger — suppression de l'organisation](/images/deleteorga.jpg)
+
+### Suppression de votre compte personnel
+
+Consultez la section dédiée dans [Gestion du compte](/configuration/account) pour le détail complet de la procédure de suppression de compte utilisateur.

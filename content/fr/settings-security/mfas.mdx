@@ -1,39 +1,56 @@
 ---
 title: Authentification à deux facteurs (2FA)
-description: Renforcez la sécurité de votre compte Hasfy avec l'authentification à deux facteurs via une application d'authentification (TOTP).
+description: Renforcez la sécurité de votre compte Hasfy avec l'authentification à deux facteurs (TOTP), depuis Paramètres > Sécurité.
 ---
 
 # Authentification à deux facteurs (2FA)
 
-L'authentification à deux facteurs (2FA), aussi appelée authentification multi-facteurs (MFA), ajoute une **couche de sécurité supplémentaire** à votre compte Hasfy. En plus de votre mot de passe, vous devez fournir un second facteur d'identification — un code à usage unique généré par une application — pour vous connecter.
+L'authentification à deux facteurs (2FA), aussi appelée authentification multi-facteurs (MFA), ajoute une **couche de sécurité supplémentaire** à votre compte Hasfy. En plus de votre mot de passe, vous devez fournir un second facteur d'identification (un code à usage unique généré par une application) pour vous connecter.
 
 ## Pourquoi activer la 2FA ?
 
-Un mot de passe seul est vulnérable : il peut être deviné, obtenu par phishing ou exposé lors d'une fuite de données. La 2FA protège votre compte même si votre mot de passe est compromis, car l'attaquant aurait également besoin de votre application d'authentification.
+Un mot de passe seul est vulnérable : il peut être deviné, obtenu par phishing ou exposé lors d'une fuite de données. La 2FA protège votre compte même si votre mot de passe est compromis, car il faudrait également avoir accès à votre application d'authentification.
 
-> **Recommandation forte** : activez la 2FA sur votre compte, et tout particulièrement si vous occupez un rôle **administrateur** ou **technicien** — ces comptes ont accès aux données et équipements de vos clients, et leur compromission aurait un impact bien plus large qu'un compte standard.
+> **Recommandation forte** : activez la 2FA sur votre compte, et tout particulièrement si vous occupez un rôle **Owner**, **Admin** ou **Technicien**. Ces comptes ont accès aux données et équipements de votre organisation, et leur compromission aurait un impact bien plus large qu'un compte standard.
 
 ## Comment l'activer
 
-Hasfy prend en charge la 2FA via une **application d'authentification** générant des codes temporaires (TOTP — Time-based One-Time Password), comme Google Authenticator ou Authy.
+Hasfy prend en charge la 2FA via le standard **TOTP** (Time-based One-Time Password), avec une application d'authentification comme Google Authenticator, Authy ou 1Password.
 
-1. Ouvrez **Paramètres &gt; Mon compte &gt; Sécurité**
-2. Dans la section **Authentification à deux facteurs**, cliquez sur **« Activer »**
-3. Un **QR code** s'affiche à l'écran
-4. Ouvrez votre application d'authentification (Google Authenticator, Authy, ou tout autre gestionnaire compatible TOTP) et scannez le QR code
+1. Ouvrez la fenêtre **Paramètres**, section **Sécurité**
+2. Cliquez sur **« Activer la 2FA »**
+3. Un **QR code** et un **secret** (avec un bouton de copie) s'affichent à l'écran
+4. Scannez le QR code avec votre application d'authentification (ou saisissez le secret manuellement)
 5. L'application génère un **code à 6 chiffres**, renouvelé toutes les 30 secondes
-6. Saisissez ce code dans Hasfy pour valider la configuration
+6. Saisissez ce code dans Hasfy pour vérifier et activer la 2FA
 
-Une fois validée, la 2FA est active : à chaque connexion, après votre mot de passe, vous devrez saisir le code généré par votre application.
+Une fois activée, la date d'ajout du facteur est affichée (« Ajouté le ... »). La 2FA est disponible pour **tous les rôles** (Owner, Admin, Technicien, Employé) : chaque utilisateur active et gère sa propre 2FA, indépendamment des autres membres de l'organisation.
+
+## Applications compatibles
+
+Hasfy s'appuie sur le standard **TOTP**, compatible avec la plupart des applications d'authentification : Google Authenticator, Authy, 1Password, Microsoft Authenticator, etc.
+
+> Hasfy ne propose pas de 2FA par SMS ou par email, ni de codes de récupération (backup codes). Si vous perdez l'accès à votre application d'authentification, contactez notre équipe via la page [Nous contacter](/contactus).
 
 ## Comment la désactiver
 
-1. Ouvrez **Paramètres &gt; Mon compte &gt; Sécurité**
-2. Dans la section **Authentification à deux facteurs**, cliquez sur **« Désactiver »**
+1. Ouvrez **Paramètres &gt; Sécurité**
+2. Cliquez sur **« Retirer »** sur le facteur actif
 3. Confirmez la désactivation
 
 > **Attention** : désactiver la 2FA réduit la sécurité de votre compte. Ne la désactivez que temporairement (par exemple lors d'un changement de téléphone) et réactivez-la dès que possible.
 
+
+
+## Sécurité de la session
+
+- À chaque connexion, si un facteur 2FA actif existe sur votre compte, Hasfy vous demande votre code TOTP avant d'établir la session
+- Une fois la 2FA validée (ou si elle n'est pas activée), Hasfy déconnecte automatiquement toutes vos **autres sessions actives** sur vos autres appareils
+
+> Il ne s'agit pas d'une fonctionnalité « gérer mes appareils » : c'est un comportement automatique de sécurité appliqué à chaque connexion, sans interface dédiée de gestion des sessions.
+
 ## Traçabilité
 
-Chaque activation et désactivation de la 2FA sur un compte est enregistrée dans le **journal d'audit de l'organisation** (entrées « MFA activé » / « MFA désactivé »), consultable par les administrateurs depuis **Paramètres &gt; Sécurité &gt; Journal d'audit**.
+Chaque activation et désactivation de la 2FA sur un compte est enregistrée dans le **journal d'audit de l'organisation** (entrées « MFA activé » / « MFA désactivé »), consultable par les rôles **Owner** et **Admin** depuis **Paramètres &gt; Audit**, avec export CSV/JSON/Markdown et filtres par sévérité et plage de dates.
+
+

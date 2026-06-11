@@ -1,79 +1,63 @@
 ---
 title: Security best practices
-description: Recommendations and best practices for securing your use of Hasfy — passwords, sessions, API keys, and access control.
+description: "Recommendations for securing your use of Hasfy: passwords, 2FA, sessions, API keys, and access control."
 ---
 
 # Security best practices
 
 This guide gathers security recommendations to protect your organization and your data on Hasfy. Following these best practices significantly reduces the risk of unauthorized access and compromise.
 
-## Password management
+## Passwords
 
-### Minimum requirements
+### Rules enforced by Hasfy
 
-Hasfy enforces the following criteria for all passwords:
+Hasfy enforces a password length of **8 to 128 characters**. No complexity rule (uppercase, digit, special character) is enforced by the application.
 
-- Minimum **8 characters**
-- At least **1 uppercase letter**
-- At least **1 lowercase letter**
-- At least **1 digit**
-
-### Advanced recommendations
+### Our recommendations
 
 | Practice | Recommendation |
 |----------|---------------|
 | Length | 12 characters or more |
-| Complexity | Include special characters (!@#$%^&*) |
+| Complexity | Mix letters, digits, and special characters |
 | Uniqueness | Never reuse the same password as on other services |
-| Manager | Use a password manager (1Password, Bitwarden, etc.) |
+| Manager | Use a password manager (1Password, Bitwarden, etc.) to generate and store your passwords |
 | Change | Change your password immediately if you suspect a compromise |
 | Sharing | Never share your password, even with a colleague or the Hasfy team |
 
 ### Passphrases
 
-An effective technique is to use a **passphrase**: a string of random words that's easy to remember but hard to guess. For example, `horse-battery-correct-stapler` is more secure and more memorable than `P@ssw0rd123!`.
+An effective technique is to use a **passphrase**: a string of random words that's easy to remember but hard to guess. For example, `horse-battery-correct-stapler` is longer, more memorable, and more secure than `P@ssw0rd123!`.
 
-## Multi-factor authentication
+## Enable 2FA on every account
 
-Enabling MFA is the single most impactful security measure you can take. See the full guide on the [Multi-factor authentication](/settings-security/mfas) page.
+Enabling 2FA is the single most impactful security measure you can take. It's available to **all roles** (Owner, Admin, Technician, Employee). Each user enables it individually from **Settings &gt; Security**. See the [Two-factor authentication](/settings-security/mfas) guide.
 
-**Activation priority:**
+> **Recommendation**: enable 2FA on every account in your organization, prioritizing **Owner**, **Admin**, and **Technician** accounts, which have access to your fleet's data and equipment.
 
-1. **Immediately**: Owner and Admin accounts
-2. **Within 7 days**: Technician accounts
-3. **Recommended**: Employee accounts
+## Sessions
 
-## Session management
+Hasfy automatically applies the following rules to your sessions, with no configuration needed:
 
-### Active sessions
+- **Inactivity timeout**: a session expires after 24 hours without activity
+- **Maximum lifetime**: a session expires after 7 days at the latest, even if it remains active in the meantime
+- **Automatic sign-out of other sessions**: on every successful login, Hasfy automatically signs you out of all your other active sessions on your other devices
 
-- Regularly review your **active sessions** in **My account &gt; Security &gt; Sessions**
-- Revoke any session you don't recognize
-- After using a shared computer, **log out** every time
+> **Recommendation**: on a shared computer, always sign out after use: don't rely solely on automatic expiration.
 
-### Session expiration
+### Password reset
 
-Hasfy sessions expire automatically:
+The link you receive via **"Forgot password?"** has a limited validity period. If it has expired, simply request a new one.
 
-| Setting | Default duration | Configurable |
-|-----------|------------------|--------------|
-| Active session | 24 hours of inactivity | ✅ (1h - 30 days) |
-| "Remember me" session | 30 days | ✅ (7 - 90 days) |
-| Reset token | 1 hour | ❌ |
-| Magic link | 5 minutes | ❌ |
+### Protection against repeated login attempts
 
-> **Recommendation**: Reduce session duration to **8 hours** for high-security environments.
-
-### Lockout after failed attempts
-
-After **5 consecutive failed login attempts**, the account is temporarily locked for **15 minutes**. This mechanism protects against brute-force attacks.
+Our authentication provider (Supabase Auth) includes basic protections against brute-force attacks on the login page.
 
 ## Browser security
 
 ### Recommendations
 
 - Use an **up-to-date browser**: the latest version of Chrome, Firefox, Safari, or Edge
-- **HTTPS**: make sure the URL shows `https://app.hasfy.fr` with the green padlock
+- **HTTPS**: make sure the URL shows `https://app.hasfy.fr` with the padlock
 - **Extensions**: limit browser extensions, as some can intercept your data
 - **Private mode**: use private browsing mode on shared computers
 - **Autofill**: if you don't use a password manager, disable automatic password saving in your browser
@@ -85,33 +69,32 @@ Hasfy will never ask you for:
 - To click a link to "verify" your account (except as part of actions you've just initiated)
 - To install software outside the official agent installation process
 
-If you receive a suspicious email claiming to be from Hasfy, forward it to **security@hasfy.fr**.
+If you receive a suspicious email claiming to be from Hasfy, forward it to us via the [Contact](/contactus) page.
 
-## API key management
-
-### Creation and use
+## API keys
 
 If you use the Hasfy API (see [API documentation](/api)), follow these principles:
 
 | Practice | Detail |
 |----------|--------|
-| **Principle of least privilege** | Create keys with only the permissions they need |
-| **Regular rotation** | Regenerate your API keys every 90 days |
-| **Separation** | Use different keys for each application/integration |
-| **Secure storage** | Never hard-code keys in source code |
-| **Environment variables** | Use environment variables or a secrets vault |
-| **Immediate revocation** | Revoke a key as soon as it's no longer needed or if it's compromised |
+| **Principle of least privilege** | Create keys with only the scopes they need |
+| **Expiration** | At creation, choose a validity period: never, 30, 90, 180, or 365 days |
+| **Regular rotation** | To enforce periodic rotation, choose a 90-day expiration at creation rather than "never" |
+| **Separation** | Use a different key for each application or integration |
+| **Secure storage** | Never hard-code a key in source code: use environment variables or a secrets vault |
+| **Immediate revocation** | Revoke a key as soon as it's no longer needed or if you have any doubt |
 
 ### Monitoring
 
-- Review the **usage logs** of your API keys in **Settings &gt; API &gt; Activity**
-- Set up **alerts** for abnormal usage (unusual request volume, unknown IP)
+In **Settings &gt; API**, each key directly displays its **last use** (date and IP address) and its **call count**, with no separate tab needed. Key creation and revocation are recorded in the audit log (**Settings &gt; Audit**).
 
-## Access control
+
+
+## Access control and offboarding
 
 ### Principle of least privilege
 
-Assign each user the **minimum role necessary** to perform their tasks:
+Assign each user the **minimum role necessary** to perform their tasks. See the full permissions breakdown by role on the [Users & Groups](/core-features/usermanagement) page:
 
 - A user who only creates tickets → **Employee**
 - A technician who manages equipment and tickets → **Technician**
@@ -120,48 +103,43 @@ Assign each user the **minimum role necessary** to perform their tasks:
 
 ### Regular access reviews
 
-Carry out an **access review** at least every quarter:
+Carry out access reviews regularly from the [Users & Groups](/core-features/usermanagement) page:
 
-1. Go to **Settings &gt; Users**
-2. Identify **inactive** accounts (last login &gt; 90 days)
-3. Check that **roles** still match current responsibilities
-4. **Disable** accounts of people who have left the organization
-5. **Adjust** roles if responsibilities have changed
+1. Check that **roles** still match each member's current responsibilities
+2. **Disable** the accounts of people who have left the organization
+3. **Adjust** roles if responsibilities have changed
 
 ### Offboarding checklist
 
-When a team member leaves your organization:
+When a team member leaves your organization, from the [Users & Groups](/core-features/usermanagement) page (Admin/Owner):
 
-- [ ] Disable their Hasfy account immediately
-- [ ] Revoke all their active sessions
-- [ ] Reassign their ongoing tickets
-- [ ] Reassign their equipment
-- [ ] Revoke any API keys they created
-- [ ] Check the audit log for their most recent actions
-- [ ] Update emergency contacts if applicable
+- [ ] Disable their account, or remove them from the organization
+- [ ] If their responsibilities are taken over by someone else, adjust that person's role
+- [ ] Revoke their personal API keys (an Admin/Owner can revoke any member's keys)
+- [ ] Check the audit log (**Settings &gt; Audit**) for their most recent actions
 
-## Agent security
+## Agent and equipment enrollment security
 
-The Hasfy agent installed on your machines communicates over HTTPS with Hasfy servers:
+The Hasfy agent installed on your machines communicates with Hasfy servers over HTTPS.
 
-- **Encrypted communication**: TLS 1.3 for all exchanges
-- **Mutual authentication**: the agent identifies itself with a unique enrollment key
-- **Automatic updates**: the agent updates itself to fix vulnerabilities
-- **Minimal permissions**: the agent only has access to system metrics, not user files
+### Install tokens
 
-### Enrollment key
+To install the agent on a piece of equipment, you generate an **install token** from the **Equipment &gt; Install** page:
 
-- The enrollment key is **single-use** per machine
-- Do not share enrollment keys over unsecured channels
-- If you suspect a compromise, **regenerate** the key from the Hasfy console
+- **Single-use**: the token is invalidated as soon as it's used once
+- **Limited lifetime**: 30 minutes for an interactive install from the app, 7 days for an email invitation or a bulk (MDM) deployment
+- **Scoped to your organization**: a token can only be used for your organization
+- **Manual revocation**: you can revoke a token at any time from the same page
 
-## Reporting incidents
+Every token generation, use, and revocation is recorded in the audit log (**Settings &gt; Audit**).
+
+![Install token generation screen](/images/tokenagent.jpg)
+
+## Reporting a security incident
 
 If you suspect a security incident:
 
 1. **Change your password immediately**
-2. **Revoke** all active sessions
-3. Contact **security@hasfy.fr** with the details of the incident
-4. If applicable, notify the Owner of your organization
-
-Hasfy is committed to handling any security report within **24 business hours** and communicating the measures taken.
+2. If 2FA isn't enabled yet, enable it (see [Two-factor authentication](/settings-security/mfas)): your next login will automatically sign out your other sessions
+3. Contact our team via the [Contact](/contactus) page, describing the incident
+4. If applicable, notify your organization's Owner

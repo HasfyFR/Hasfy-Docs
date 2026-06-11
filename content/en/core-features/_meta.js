@@ -4,6 +4,7 @@ const meta = {
   'calendar': 'Calendar',
   'kpis': 'KPIs',
   'notifications': 'Notifications',
+  'usermanagement': 'Users & Groups',
 }
 
 export default meta;

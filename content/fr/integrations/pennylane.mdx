@@ -1,0 +1,61 @@
+---
+title: Pennylane
+description: Synchronisez automatiquement votre facturation client avec votre comptabilité Pennylane.
+---
+
+# Pennylane
+
+## À quoi sert l'intégration Pennylane ?
+
+L'intégration **Pennylane** synchronise automatiquement la facturation client du module MSP de Hasfy avec votre comptabilité Pennylane :
+
+- Chaque facture envoyée est **créée puis finalisée** dans Pennylane
+- Un **tiers** (client) Pennylane est créé ou mis à jour pour chaque client Hasfy
+- Les paiements (carte bancaire, virement, prélèvement SEPA) sont **enregistrés et lettrés** côté Pennylane
+- Possibilité d'**exporter en masse** l'historique des factures déjà envoyées ou payées qui ne sont pas encore dans Pennylane
+
+## Prérequis
+
+- Un **compte Pennylane actif**
+- Une **clé API Pennylane**, au format `pln_live_...` (récupérable dans Pennylane via **Paramètres → Intégrations → API**)
+- Un rôle **Owner** ou **Admin** sur votre organisation Hasfy (permission de gestion des paramètres d'organisation)
+
+## Connexion
+
+1. Allez dans la page **Intégrations** (menu de navigation principal &gt; Automatisation), catégorie **Comptabilité** (ou **Tout**)
+2. Ouvrez la carte **« Pennylane »**
+3. Collez votre clé API Pennylane (format `pln_live_...`) dans le champ **« Clé API Pennylane »**
+
+   ![Panneau Pennylane avant connexion : champ clé API et bullets « Ce que la sync Pennylane fait »](/images/pennylaneinstruction.jpg)
+
+4. Cliquez sur **« Connecter »**
+5. Hasfy vérifie la clé auprès de l'API Pennylane avant de l'enregistrer :
+   - Si la clé est invalide, le message **« Clé API invalide — vérifiez dans Pennylane »** s'affiche
+   - Si la clé est valide, le panneau affiche **« Connecté — Les factures se synchronisent automatiquement »**
+
+## Ce qui se synchronise automatiquement
+
+Une fois la connexion établie, l'intégration réagit automatiquement aux événements suivants :
+
+| Événement dans Hasfy | Action dans Pennylane |
+|-----------------------|-------------------------|
+| Facture envoyée | Création puis finalisation de la facture |
+| Paiement reçu via Mollie | Lettrage du paiement enregistré |
+| Paiement marqué comme payé manuellement | Lettrage du paiement enregistré |
+| Prélèvement SEPA automatique | Création de la facture et du paiement associé |
+
+À chaque facture envoyée, un tiers Pennylane est créé ou mis à jour pour le client Hasfy concerné.
+
+## Export de l'historique des factures
+
+Le bouton **« Exporter l'historique »** envoie en une fois vers Pennylane toutes les factures existantes (statut **envoyée** ou **payée**) qui n'y figurent pas encore.
+
+À la fin de l'export, Hasfy affiche un résultat indiquant le **nombre de factures exportées** et les **erreurs éventuelles**.
+
+## Déconnexion
+
+Depuis le même panneau, sur la page **Intégrations &gt; Pennylane**, cliquez sur **« Déconnecter Pennylane »**.
+
+- La clé API est supprimée de Hasfy
+- Les factures déjà exportées restent dans Pennylane
+- La synchronisation automatique s'arrête jusqu'à reconnexion

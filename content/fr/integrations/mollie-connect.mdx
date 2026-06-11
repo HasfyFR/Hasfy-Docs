@@ -1,0 +1,61 @@
+---
+title: Mollie Connect
+description: "Connectez votre compte Mollie à Hasfy pour encaisser vos clients : liens de paiement, suivi des paiements et facturation."
+---
+
+# Mollie Connect
+
+## À quoi sert Mollie Connect ?
+
+**Mollie Connect** vous permet de connecter votre **propre compte Mollie** (celui de votre entreprise ou de votre MSP) à Hasfy, afin d'encaisser vos clients directement depuis la plateforme :
+
+- Créer des **liens de paiement** pour vos factures clients
+- Suivre le **statut des paiements** en temps réel
+- **Émettre des factures** directement depuis Hasfy
+- Gérer vos **profils de paiement** Mollie
+
+> **À ne pas confondre** : Mollie Connect concerne l'encaissement de **vos clients**, via votre propre compte Mollie. Le paiement de **votre abonnement Hasfy Pro** utilise également Mollie, mais se gère séparément depuis **Paramètres &gt; Facturation**. Voir la page [Facturation & paiement](/configuration/billing).
+
+## Prérequis
+
+- Un **compte Mollie** existant pour votre entreprise. Si vous n'en avez pas encore, Mollie Connect vous redirige vers la création de compte sur [mollie.com](https://mollie.com)
+- Un rôle **Owner** ou **Admin** sur votre organisation Hasfy
+
+## Permissions demandées
+
+Lors de la connexion, Hasfy demande l'autorisation (OAuth) d'accéder aux éléments suivants de votre compte Mollie :
+
+| Permission | Détail |
+|------------|--------|
+| **Organisations** | Lire les informations de votre organisation Mollie |
+| **Onboarding** | Lire le statut d'onboarding, pour vérifier que votre compte Mollie est activé et peut recevoir des paiements |
+| **Paiements** | Lire les paiements ; créer des paiements et des liens de paiement |
+| **Profils** | Lire vos profils de paiement ; créer et gérer des profils |
+
+## Connecter votre compte
+
+1. Allez dans la page **Intégrations** (menu de navigation principal &gt; Automatisation), catégorie **Paiement** (ou **Tout**)
+2. Ouvrez la carte **« Mollie Connect »**
+3. Lisez le panneau **« Ce que Mollie Connect permet »** ainsi que la liste des permissions demandées
+
+   ![Panneau Mollie Connect avant connexion : ce que Mollie Connect permet](/images/mollieinstruction.jpg)
+
+4. Cliquez sur **« Connecter avec Mollie »**
+5. Vous êtes redirigé vers Mollie pour autoriser l'accès (OAuth). Si vous n'avez pas encore de compte Mollie, vous pouvez en créer un à cette étape
+6. Une fois l'autorisation accordée, vous revenez automatiquement sur Hasfy : la carte passe au statut **« Connecté »**, avec le nom de votre organisation Mollie et son statut affichés
+
+## Utiliser les liens de paiement sur vos factures
+
+Une fois Mollie Connect connecté, la page **Facturation** du module MSP (factures clients) propose, sur chaque facture :
+
+- Un badge **« Mollie · \{statut\} »** indiquant l'état du paiement
+- Un bouton **« Créer un lien de paiement Mollie »**, qui génère un lien à envoyer à votre client
+- **« Régénérer le lien Mollie »** si besoin
+- **« Copier le lien de paiement »**
+- La possibilité de **« Marquer comme payée »** manuellement, en complément
+
+## Déconnecter / révoquer l'accès
+
+Depuis la page **Intégrations &gt; Mollie Connect**, vous pouvez révoquer la connexion à votre compte Mollie à tout moment.
+
+Une fois déconnecté, les liens de paiement Mollie ne peuvent plus être créés, régénérés ou gérés depuis Hasfy. Les paiements déjà initiés restent gérés au niveau de votre compte Mollie, indépendamment de la connexion à Hasfy.

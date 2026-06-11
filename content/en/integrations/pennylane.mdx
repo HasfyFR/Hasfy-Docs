@@ -1,0 +1,61 @@
+---
+title: Pennylane
+description: Automatically sync your client invoicing with your Pennylane accounting.
+---
+
+# Pennylane
+
+## What is the Pennylane integration for?
+
+The **Pennylane** integration automatically syncs client invoicing from Hasfy's MSP module with your Pennylane accounting:
+
+- Each sent invoice is **created and then finalized** in Pennylane
+- A Pennylane **customer record** is created or updated for each Hasfy client
+- Payments (card, bank transfer, SEPA direct debit) are **recorded and reconciled** in Pennylane
+- You can **bulk-export** the history of already sent or paid invoices that aren't in Pennylane yet
+
+## Prerequisites
+
+- An **active Pennylane account**
+- A **Pennylane API key**, in `pln_live_...` format (found in Pennylane under **Settings → Integrations → API**)
+- An **Owner** or **Admin** role on your Hasfy organization (organization settings management permission)
+
+## Connecting
+
+1. Go to the **Integrations** page (main navigation menu &gt; Automation), **Accounting** category (or **All**)
+2. Open the **"Pennylane"** card
+3. Paste your Pennylane API key (format `pln_live_...`) into the **"Pennylane API key"** field
+
+   ![Pennylane panel before connection: API key field and "What Pennylane sync does" bullets](/images/pennylaneinstruction.jpg)
+
+4. Click **"Connect"**
+5. Hasfy verifies the key against the Pennylane API before saving it:
+   - If the key is invalid, the message **"Invalid API key — check it in Pennylane"** is shown
+   - If the key is valid, the panel shows **"Connected — Invoices sync automatically"**
+
+## What syncs automatically
+
+Once connected, the integration automatically reacts to the following events:
+
+| Event in Hasfy | Action in Pennylane |
+|-----------------|------------------------|
+| Invoice sent | Invoice created and then finalized |
+| Payment received via Mollie | Payment reconciliation recorded |
+| Payment manually marked as paid | Payment reconciliation recorded |
+| Automatic SEPA direct debit | Invoice and associated payment created |
+
+For each sent invoice, a Pennylane customer record is created or updated for the corresponding Hasfy client.
+
+## Exporting invoice history
+
+The **"Export history"** button sends, in a single batch, all existing invoices (status **sent** or **paid**) that aren't in Pennylane yet.
+
+When the export finishes, Hasfy shows a result with the **number of invoices exported** and any **errors**.
+
+## Disconnecting
+
+From the same panel, on the **Integrations &gt; Pennylane** page, click **"Disconnect Pennylane"**.
+
+- The API key is removed from Hasfy
+- Invoices already exported remain in Pennylane
+- Automatic sync stops until you reconnect

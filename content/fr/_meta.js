@@ -61,10 +61,6 @@ const meta = {
     title: 'Voir Hasfy',
     href: 'https://hasfy.fr',
   },
-  'roadmap': {
-    title: 'Roadmap',
-    href: 'https://dynamic-wrench-36e.notion.site/ROADMAP-HASFY-2025-1854c935aab18101974dd846e8effeac',
-  },
   'pricing': {
     title: 'Tarifs',
     type: 'page',

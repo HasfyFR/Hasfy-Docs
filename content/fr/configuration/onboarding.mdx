@@ -1,119 +1,239 @@
 ---
-title: Onboarding — Configuration initiale
-description: Guide détaillé du processus d'onboarding Hasfy — création de compte, configuration de l'organisation, calibrage et personnalisation.
+title: "Onboarding : Configuration initiale"
+description: "Guide détaillé du processus d'onboarding Hasfy : création de compte, configuration de l'organisation, calibrage et personnalisation selon votre rôle."
 ---
 
-# Onboarding — Configuration initiale
+# Onboarding : Configuration initiale
 
-Lors de votre première connexion à Hasfy, un assistant d'onboarding vous guide à travers la configuration de votre espace de travail. Ce processus en plusieurs étapes permet à Hasfy de personnaliser votre expérience en fonction de la taille de votre parc, de votre rôle et de vos priorités.
+Lors de votre première connexion à Hasfy, un parcours d'onboarding vous guide à travers la configuration de votre espace de travail. **Le flux s'adapte automatiquement à votre rôle** : le créateur d'une organisation suit un parcours Owner (5 à 6 étapes), tandis qu'un membre invité suit un parcours allégé de 3 étapes.
+
+---
 
 ## Création du compte
 
-### Inscription par email et mot de passe
+Accédez à **[app.hasfy.fr/auth/signup](https://app.hasfy.fr/auth/signup)** et remplissez le formulaire d'inscription :
 
-1. Accédez à **[app.hasfy.fr/auth/signup](https://app.hasfy.fr/auth/signup)**
-2. Renseignez votre **adresse email professionnelle**
-3. Choisissez un **mot de passe sécurisé** respectant les critères suivants :
-   - Minimum 8 caractères
-   - Au moins une lettre majuscule et une minuscule
-   - Au moins un chiffre
-   - Les caractères spéciaux sont recommandés
-4. Cliquez sur **« Créer mon compte »**
-5. Un email de confirmation est envoyé à l'adresse renseignée — cliquez sur le lien pour valider votre compte
+- **Prénom** *(obligatoire)*
+- **Nom** *(obligatoire)*
+- **Adresse email** *(obligatoire)*
+- **Mot de passe** *(obligatoire)* — la visibilité peut être activée via le bouton dédié
 
-### Inscription par lien magique (Magic Link)
+Vous pouvez aussi créer votre compte en un clic via **Google**, **GitHub** ou **Microsoft** (OAuth).
 
-Si vous préférez ne pas définir de mot de passe immédiatement :
+> **Astuce** : Si vous avez reçu un lien d'invitation contenant le paramètre `?plan=`, le plan correspondant (Starter, Pro ou Max) sera présélectionné automatiquement à l'étape d'abonnement.
 
-1. Sur la page d'inscription, cliquez sur **« Connexion par lien magique »**
-2. Saisissez votre adresse email
-3. Consultez votre boîte de réception et cliquez sur le lien reçu
-4. Vous êtes automatiquement connecté et redirigé vers l'onboarding
+---
 
-> **Note** : Vous pourrez définir un mot de passe ultérieurement depuis **Paramètres &gt; Mon compte &gt; Sécurité**.
+## Flux Owner — Créateur d'organisation
 
-## Étape 1 : Informations personnelles
+Ce flux s'applique à toute personne qui crée une nouvelle organisation Hasfy. Le créateur obtient automatiquement le rôle **Owner** (non révocable, mais transférable).
 
-La première étape de l'onboarding vous demande de compléter votre profil :
+### Étape 0 — Calibration
 
-- **Prénom et nom** : utilisés pour l'affichage dans l'interface, les assignations de tickets et les notifications
-- **Numéro de téléphone** *(optionnel)* : pour les notifications SMS critiques (si activées dans votre plan)
-- **Photo de profil** *(optionnel)* : cliquez sur l'avatar par défaut pour uploader une photo. Formats acceptés : JPG, PNG, WebP. Taille maximale : 2 Mo
+La première chose à faire est de choisir votre **type d'organisation** entre deux options présentées sous forme de cartes visuelles :
 
-## Étape 2 : Configuration de l'organisation
+- **IT Team** : équipe IT interne d'une entreprise
+- **MSP** : prestataire de services managés gérant plusieurs clients
 
-Cette étape crée l'espace de travail partagé par votre équipe :
+Ce choix détermine les questions suivantes et conditionne l'affichage de l'étape de facturation MSP.
 
-- **Nom de l'organisation** : le nom de votre entreprise ou de votre service IT (ex. « Acme Corp », « IT Services Lyon »). Ce nom apparaîtra dans l'en-tête de l'application et dans les communications
-- **Secteur d'activité** : sélectionnez votre secteur parmi la liste proposée (Santé, Finance, Éducation, Industrie, Services, Commerce, Technologie, Autre). Cette information permet à Hasfy d'adapter certaines recommandations
-- **Taille de l'entreprise** : indiquez la tranche correspondante (1-10, 11-50, 51-200, 201-500, 500+)
-- **Pays** : la localisation principale de votre organisation
+#### Questions IT Team (3 questions)
 
-> **Important** : Le créateur du compte devient automatiquement **Owner** (propriétaire) de l'organisation. Ce rôle confère tous les droits d'administration, y compris la gestion de la facturation et la suppression de l'organisation. Ce rôle ne peut pas être révoqué mais peut être transféré.
+1. **Taille de l'entreprise**
+   `1-10` | `11-50` | `51-250` | `250+`
 
-## Étape 3 : Questions de calibrage
+2. **Solution actuelle**
+   - Rien / ad hoc
+   - Tableurs
+   - Équipe IT interne
+   - Outil existant *(saisie texte libre si sélectionné)*
 
-Hasfy pose une série de questions pour adapter l'interface à votre contexte :
+3. **Objectif principal** *(avec icônes)*
+   - Surveiller la santé des appareils
+   - Renforcer la sécurité
+   - Simplifier le support employé
+   - Centraliser l'inventaire
+   - Autre *(saisie texte libre)*
 
-### Taille du parc informatique
-- Combien d'équipements gérez-vous ? (1-25, 26-100, 101-500, 500+)
-- Cette information permet d'ajuster les limites par défaut et les recommandations d'affichage
+#### Questions MSP (3 questions)
 
-### Besoins prioritaires
-Sélectionnez vos priorités parmi :
-- **Inventaire et gestion du parc** : suivi des actifs, cycle de vie, assignations
-- **Supervision et monitoring** : alertes temps réel, métriques de performance
-- **Ticketing et support** : gestion des incidents, suivi des interventions
-- **Reporting et KPIs** : tableaux de bord, indicateurs de performance
-- **Tout à la fois** : configuration complète
+1. **Nombre de clients gérés**
+   `1-5` | `6-20` | `21-50` | `50+`
 
-### Votre rôle
-- Responsable IT / DSI
-- Technicien / Support
-- Prestataire MSP
-- Gérant / Direction
-- Autre
+2. **Outils actuels**
+   - Aucun
+   - RMM uniquement
+   - PSA uniquement
+   - RMM + PSA
+   - Autre *(saisie texte libre)*
 
-### Expérience avec les outils ITSM
-- Première utilisation d'un outil de ce type
-- Utilisation occasionnelle d'outils similaires
-- Utilisateur expérimenté
+3. **Objectif principal**
+   - Gérer à l'échelle
+   - Automatiser
+   - Sécuriser
+   - Centraliser
+   - Autre *(saisie texte libre)*
 
-> **Note** : Ces réponses n'ont aucun impact sur les fonctionnalités disponibles. Elles servent uniquement à personnaliser l'expérience initiale (tutoriels contextuels, ordre des modules mis en avant, complexité des vues par défaut).
+> **Note** : Les réponses à la calibration sont sauvegardées en base. Si vous revenez sur le parcours, elles ne vous sont pas redemandées.
 
-## Étape 4 : Invitation de l'équipe
+---
 
-Avant de finaliser l'onboarding, vous pouvez inviter les premiers membres de votre équipe :
+### Étape 1 — Informations sur l'organisation
 
-1. Saisissez les **adresses email** des personnes à inviter (une par ligne ou séparées par des virgules)
-2. Pour chaque invité, sélectionnez un **rôle** :
-   - **Admin** : accès complet à la gestion de l'organisation (sauf facturation et suppression)
-   - **Technician** : gestion des équipements, tickets et interventions
-   - **Employee** : accès en lecture seule, possibilité de créer des tickets
-3. Cliquez sur **« Envoyer les invitations »**
+Renseignez les informations de votre organisation :
 
-Les invités reçoivent un email contenant un lien pour rejoindre votre organisation. Ils devront créer leur propre compte Hasfy s'ils n'en possèdent pas déjà un.
+| Champ | Obligatoire | Détail |
+|-------|:-----------:|--------|
+| Logo | Non | Upload image — bouton de suppression visible au survol |
+| Nom de l'organisation | **Oui** | Apparaît dans l'interface et les communications |
+| Pays | **Oui** | 6 options uniquement : France 🇫🇷, Belgique 🇧🇪, Suisse 🇨🇭, Luxembourg 🇱🇺, Monaco 🇲🇨, Andorre 🇦🇩 |
+| Ville | **Oui** | Saisie texte libre |
 
-> **Astuce** : Vous pouvez passer cette étape et inviter des membres ultérieurement depuis **Paramètres &gt; Utilisateurs &gt; Inviter**.
+Le bouton **Continuer** reste désactivé tant que le nom, le pays et la ville ne sont pas renseignés.
 
-## Étape 5 : Finalisation
+> **Important** : Le créateur du compte devient automatiquement **Owner** de l'organisation. Ce rôle confère tous les droits d'administration. Il ne peut pas être révoqué mais peut être transféré à un autre membre.
 
-Une fois toutes les étapes complétées :
+---
 
-1. Un récapitulatif de votre configuration s'affiche
-2. Cliquez sur **« Commencer à utiliser Hasfy »**
-3. Vous êtes redirigé vers le **tableau de bord** de votre organisation
+### Étape 2 — Membres de l'équipe
 
-L'onboarding affiche ensuite des **tutoriels contextuels** (tooltips) lors de votre première navigation pour vous guider dans la découverte de l'interface. Vous pouvez désactiver ces tutoriels à tout moment depuis **Paramètres &gt; Préférences &gt; Tutoriels**.
+Invitez les membres de votre équipe avant de finaliser le parcours. Deux méthodes sont disponibles :
+
+#### Ajout manuel
+
+Pour chaque membre, renseignez :
+- Email, Prénom, Nom, Titre de poste, Rôle
+
+#### Import CSV
+
+Téléchargez le template fourni et importez un fichier avec les en-têtes suivants :
+
+```
+firstName, lastName, email, job, role
+```
+
+Les erreurs de validation indiquent le **numéro de ligne** concerné.
+
+#### Rôles assignables
+
+| Rôle | Libellé affiché | Limite |
+|------|----------------|--------|
+| `user` | Employé | — |
+| `technician` | Technicien | — |
+| `admin` | Admin | **2 admins maximum** par organisation |
+
+> **Note** : Chaque organisation est limitée à **250 utilisateurs**. Vous pouvez cliquer sur **« Faire ça plus tard »** pour passer cette étape et inviter des membres depuis la page **Utilisateurs & groupes**.
+
+---
+
+### Étape 3 — Facturation (MSP uniquement)
+
+Cette étape s'affiche **exclusivement** pour les organisations de type MSP.
+
+Une seule option est disponible : **Facturation manuelle** (`msp_billing_mode = "manual"`).
+
+---
+
+### Étape 3 ou 4 — Abonnement
+
+Hasfy propose un plan unique affiché avec un badge **Beta** :
+
+| | Tarif |
+|-|-------|
+| Plan de base | **150 €/utilisateur/mois** ~~200 €~~ |
+| Add-on IA *(optionnel)* | +30 €/siège/mois |
+
+Le nombre de sièges est calculé automatiquement :
+
+```
+Sièges = max(1, nombre de membres ajoutés + 1)
+```
+*(l'Owner est inclus dans le décompte)*
+
+Le paiement est traité via **Mollie** — vous êtes redirigé vers une page de checkout externe. Au retour sur Hasfy (`?payment_return=true`), les **invitations sont envoyées automatiquement** à tous les membres ajoutés à l'étape précédente.
+
+---
+
+### Étape finale — Completion
+
+Un écran animé confirme la finalisation de votre configuration avec un résumé en 3 éléments :
+
+1. **Inviter des membres** — marqué complété si au moins un membre a été ajouté
+2. **Configurer la sécurité** — toujours marqué complété
+3. **Facturation** — toujours marqué complété
+
+Cliquez sur **« Accéder au tableau de bord »** pour être redirigé vers `/app`.
+
+---
+
+## Flux Member — Membre invité
+
+Ce flux s'applique à toute personne rejoignant une organisation déjà existante via une invitation.
+
+### Étape 0 — Calibration membre
+
+3 questions pour personnaliser votre expérience :
+
+1. **Votre rôle dans l'équipe**
+   Admin | Technicien | Helpdesk | Technicien terrain
+
+2. **Usage principal**
+   Monitoring | Tickets | Reporting | Tout
+
+3. **Familiarité avec les outils RMM**
+   Débutant | Quelques bases | Expert
+
+---
+
+### Étape 1 — Profil
+
+Vérifiez ou complétez vos informations personnelles :
+
+- **Prénom** *(obligatoire)* — pré-rempli depuis l'authentification
+- **Nom** *(obligatoire)* — pré-rempli depuis l'authentification
+
+Deux préférences à configurer :
+
+| Préférence | Valeur par défaut |
+|------------|:-----------------:|
+| Notifications email | Activé |
+| Mode sombre | Désactivé |
+
+---
+
+### Étape 2 — Notifications
+
+Affinez vos préférences de notifications avec 4 toggles :
+
+| Notification | Valeur par défaut |
+|--------------|:-----------------:|
+| Nouveaux tickets | Activé |
+| Mises à jour des tickets | Activé |
+| Alertes critiques | Activé |
+| Rapport hebdomadaire | Désactivé |
+
+---
+
+### Étape finale — Completion membre
+
+L'écran final affiche 3 indicateurs de statut **en ligne** (points verts) :
+
+- Monitoring client
+- Gestion des tickets
+- Notifications
+
+Cliquez sur **« Aller au tableau de bord »** pour être redirigé vers `/app`.
+
+---
 
 ## Modification ultérieure
 
-Toutes les informations renseignées durant l'onboarding sont modifiables après coup :
+Les informations renseignées durant l'onboarding sont modifiables depuis les paramètres de l'application :
 
 | Information | Où la modifier |
 |-------------|----------------|
-| Profil personnel | Paramètres &gt; Mon profil |
-| Nom de l'organisation | Paramètres &gt; Organisation |
-| Secteur et taille | Paramètres &gt; Organisation |
-| Membres de l'équipe | Paramètres &gt; Utilisateurs |
-| Préférences d'affichage | Paramètres &gt; Préférences |
+| Profil personnel (prénom, nom) | Paramètres › Mon profil |
+| Logo et nom de l'organisation | Paramètres › Organisation |
+| Membres de l'équipe | [Utilisateurs & groupes](/core-features/usermanagement) |
+| Préférences de notifications | Paramètres › Notifications |
+| Mode sombre | Paramètres › Apparence |

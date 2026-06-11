@@ -1,11 +1,11 @@
 ---
 title: Gestion du compte
-description: Paramétrez votre profil Hasfy — modification des informations personnelles, email, mot de passe, avatar et préférences de notification.
+description: "Paramétrez votre profil Hasfy : modification des informations personnelles, email, mot de passe, avatar et préférences de notification."
 ---
 
 # Gestion du compte
 
-La section **Mon compte** vous permet de gérer l'ensemble de vos informations personnelles et vos préférences de sécurité. Accédez-y depuis le menu utilisateur en haut à droite de l'interface, puis **« Mon profil »**, ou directement via **Paramètres &gt; Mon compte**.
+La section **Compte** vous permet de gérer l'ensemble de vos informations personnelles et vos préférences de sécurité. Accédez-y depuis le menu utilisateur en haut à droite de l'interface, puis **« Mon profil »**, ou directement via **Paramètres &gt; Compte**.
 
 ## Informations du profil
 
@@ -37,7 +37,7 @@ Pour supprimer votre avatar et revenir à l'icône par défaut, cliquez sur **«
 
 La modification de l'adresse email associée à votre compte nécessite une vérification en deux étapes :
 
-1. Accédez à **Mon compte &gt; Sécurité &gt; Email**
+1. Accédez à **Paramètres &gt; Compte**
 2. Saisissez votre **nouvelle adresse email**
 3. Confirmez avec votre **mot de passe actuel**
 4. Cliquez sur **« Mettre à jour l'email »**
@@ -51,18 +51,11 @@ La modification de l'adresse email associée à votre compte nécessite une vér
 
 Pour modifier votre mot de passe :
 
-1. Accédez à **Mon compte &gt; Sécurité &gt; Mot de passe**
+1. Accédez à **Paramètres &gt; Compte**
 2. Saisissez votre **mot de passe actuel**
-3. Saisissez votre **nouveau mot de passe** en respectant les critères :
-   - Minimum 8 caractères
-   - Au moins une lettre majuscule
-   - Au moins une lettre minuscule
-   - Au moins un chiffre
-   - Caractères spéciaux recommandés
+3. Saisissez votre **nouveau mot de passe** : 8 caractères minimum (128 maximum). Aucune règle de complexité n'est imposée, mais nous recommandons un mot de passe long et unique, par exemple généré par un gestionnaire de mots de passe
 4. Confirmez le nouveau mot de passe
 5. Cliquez sur **« Mettre à jour le mot de passe »**
-
-Un indicateur de force du mot de passe vous aide à choisir un mot de passe robuste. Après modification, toutes vos sessions actives sont conservées mais vous pouvez les révoquer manuellement.
 
 ### Mot de passe oublié
 
@@ -71,7 +64,7 @@ Si vous avez oublié votre mot de passe :
 1. Sur la page de connexion, cliquez sur **« Mot de passe oublié ? »**
 2. Saisissez l'adresse email de votre compte
 3. Un email contenant un lien de réinitialisation est envoyé
-4. Cliquez sur le lien (valide 1 heure) et définissez un nouveau mot de passe
+4. Cliquez sur le lien et définissez un nouveau mot de passe. Ce lien a une durée de validité limitée
 
 ## Préférences de notification du compte
 
@@ -84,32 +77,50 @@ Gérez les notifications liées spécifiquement à votre compte :
 | Modification d'email | Confirmation de changement d'adresse | ✅ | — |
 | Expiration de session | Rappel lorsque votre session est sur le point d'expirer | — | ✅ |
 
-Pour modifier ces préférences, rendez-vous dans **Mon compte &gt; Notifications**.
+Pour modifier ces préférences, rendez-vous dans **Paramètres &gt; Notifications**.
 
-## Sessions actives
+## Sécurité de la session
 
-La section **Sessions actives** affiche la liste de toutes les sessions ouvertes pour votre compte :
+Hasfy applique automatiquement les règles de sécurité suivantes à votre session, sans configuration possible :
 
-- **Appareil** : type d'appareil et navigateur utilisé
-- **Localisation approximative** : basée sur l'adresse IP
-- **Date de dernière activité**
-- **Session actuelle** : marquée d'un badge « Actuelle »
+- **Expiration par inactivité** : votre session expire après 24 heures sans activité
+- **Durée de vie maximale** : une session expire au plus tard 7 jours après la connexion, même si vous restez actif entre-temps
+- **Déconnexion automatique des autres sessions** : à chaque connexion réussie, Hasfy déconnecte automatiquement toutes vos autres sessions actives sur vos autres appareils
 
-Vous pouvez **révoquer** une session individuelle en cliquant sur **« Déconnecter »**, ou révoquer toutes les autres sessions en cliquant sur **« Déconnecter tous les appareils »**.
-
-> **Conseil de sécurité** : Si vous repérez une session que vous ne reconnaissez pas, révoquez-la immédiatement et changez votre mot de passe.
+> **Conseil de sécurité** : Si vous pensez que votre compte a été compromis, changez immédiatement votre mot de passe. Votre prochaine connexion déconnectera automatiquement toute session ouverte par un tiers.
 
 ## Suppression du compte
 
-Pour supprimer définitivement votre compte Hasfy :
+### Suppression standard (soft-delete)
 
-1. Accédez à **Mon compte &gt; Zone dangereuse**
-2. Cliquez sur **« Supprimer mon compte »**
-3. Une fenêtre de confirmation vous avertit des conséquences :
-   - Suppression irréversible de toutes vos données personnelles
-   - Retrait de toutes les organisations dont vous êtes membre
-   - Si vous êtes **Owner**, vous devez transférer la propriété avant la suppression
-4. Saisissez **« SUPPRIMER »** pour confirmer
-5. Votre compte est supprimé sous 30 jours (période de grâce permettant l'annulation)
+Vous pouvez supprimer votre compte depuis **Paramètres &gt; Compte**, section **« Zone de danger »**. La suppression peut également être déclenchée par un administrateur de votre organisation.
 
-> **Attention** : La suppression du compte est irréversible après la période de grâce de 30 jours. Toutes les données associées seront définitivement effacées conformément au RGPD.
+La procédure de suppression se déroule comme suit :
+
+1. **Anonymisation du profil** : votre prénom devient `[Deleted]`, votre nom `User`, et les champs avatar, téléphone et poste sont effacés
+2. **Bannissement permanent du compte** : votre compte d'authentification est désactivé de façon permanente — vous ne pouvez plus vous connecter
+3. **Retrait de toutes les organisations** : vous êtes retiré de toutes les organisations auxquelles vous apparteniez
+4. **Email de confirmation** envoyé à votre adresse via Brevo
+
+**Ce qui est conservé après suppression :**
+
+| Donnée | Traitement |
+|--------|-----------|
+| Enregistrement d'authentification | Conservé (anonymisé + banni) — requis pour la traçabilité RGPD |
+| Logs d'audit liés à votre compte | Conservés |
+| Tickets que vous avez créés ou auxquels vous étiez assigné | Conservés — l'auteur affiché devient `[Deleted] User` |
+| Messages dans les tickets | Conservés — l'auteur affiché devient `[Deleted] User` |
+
+**Ce qui est supprimé à la suppression :**
+
+- Connexions calendrier (CalDAV, OAuth)
+- Sessions actives
+- Associations organisationnelles
+
+> ⚠️ **La suppression est irréversible.** Aucune période de grâce n'est implémentée : une fois votre compte supprimé, les données anonymisées ne peuvent pas être restaurées.
+
+### Suppression complète (hard delete)
+
+Si vous souhaitez la suppression physique complète de votre enregistrement d'authentification (hard delete), contactez-nous via [Nous contacter](/contactus). Cette opération n'est pas disponible en self-service et est traitée manuellement par notre équipe.
+
+> Si vous êtes **Owner** d'une organisation, vous devez d'abord **transférer la propriété** (Paramètres &gt; Organisation) avant de pouvoir supprimer votre compte.
